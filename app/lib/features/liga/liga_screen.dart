@@ -13,6 +13,7 @@ import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
 import '../shell/home_shell.dart';
 import 'chip_rango.dart';
+import '../../core/avatar.dart';
 
 String _enlacePersonal(String token) => '${Env.webInvitacion}/$token';
 
@@ -328,9 +329,9 @@ class _Miembros extends ConsumerWidget {
         Padding(padding: const EdgeInsets.fromLTRB(16, 24, 16, 4), child: Text('Solicitudes (${solicitudes.length})', style: t.titleSmall)),
         for (final m in solicitudes)
           ListTile(
-            leading: CircleAvatar(child: Text(m.inicial)),
+            leading: AvatarMiembro(m),
             title: Text(m.nombre),
-            subtitle: Text(etiquetaPosicion(m.posicion)),
+            subtitle: Text([etiquetaPosicion(m.posicion), if (textoEdad(m) != null) textoEdad(m)!].join(' · ')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(
                 tooltip: 'Rechazar',
@@ -374,7 +375,8 @@ class _Miembros extends ConsumerWidget {
         ),
       for (final m in activos)
         ListTile(
-          leading: CircleAvatar(child: Text(m.inicial)),
+          leading: AvatarMiembro(m),
+          onTap: () => context.push('/clasificacion/jugador/${m.id}'),
           title: Row(children: [
             Flexible(child: Text(m.nombre + (m.id == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 8),
@@ -383,6 +385,7 @@ class _Miembros extends ConsumerWidget {
           subtitle: Text([
             if (m.esAdmin) 'Administrador',
             if (!m.registrado) 'Pendiente de registro' else etiquetaPosicion(m.posicion),
+            if (textoEdad(m) != null) textoEdad(m)!,
           ].join(' · ')),
           trailing: mi.soyAdmin
               ? PopupMenuButton<String>(

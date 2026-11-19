@@ -6,6 +6,7 @@ import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/stats_repo.dart';
+import '../../core/avatar.dart';
 
 final historialProvider = FutureProvider.autoDispose.family<List<PuntosFantasy>, String>(
   (ref, miembroId) => StatsRepo.historial(miembroId),
@@ -29,12 +30,12 @@ class FichaScreen extends ConsumerWidget {
 
     final cuerpo = ListView(padding: const EdgeInsets.all(16), children: [
       Row(children: [
-        CircleAvatar(radius: 32, child: Text(miembro?.inicial ?? '?', style: const TextStyle(fontSize: 28))),
+        AvatarMiembro(miembro, radio: 36),
         const SizedBox(width: 16),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(miembro?.nombre ?? '…', style: Theme.of(context).textTheme.headlineSmall),
-            Text(etiquetaPosicion(miembro?.posicion)),
+            Text([etiquetaPosicion(miembro?.posicion), if (textoEdad(miembro) != null) textoEdad(miembro)!].join(' · ')),
           ]),
         ),
       ]),

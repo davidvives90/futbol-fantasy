@@ -63,7 +63,10 @@ class PartidoDetalleScreen extends ConsumerWidget {
               ],
               bottom: TabBar(isScrollable: tabs.length > 3, tabs: [for (final t in tabs) Tab(text: t.$1)]),
             ),
-            body: TabBarView(children: [for (final t in tabs) t.$2]),
+            body: Column(children: [
+              if (admin) _SiguientePaso(partido: p, pestanas: [for (final t in tabs) t.$1]),
+              Expanded(child: TabBarView(children: [for (final t in tabs) t.$2])),
+            ]),
           ),
         );
       },
@@ -132,6 +135,89 @@ class _MenuAdmin extends ConsumerWidget {
           const PopupMenuItem(value: 'cerrar', child: Text('Cerrar plazo y cruzar partes')),
         if (e.antesDeJugar) const PopupMenuItem(value: 'cancelar', child: Text('Cancelar partido')),
       ],
+    );
+  }
+}
+
+
+/// Barra «siguiente paso» para el admin: la acción que toca ahora, a un toque (antes estaba escondida en ⋮).
+class _SiguientePaso extends ConsumerWidget {
+  const _SiguientePaso({required this.partido, required this.pestanas});
+  final Partido partido;
+  final List<String> pestanas;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final e = partido.estado;
+    final yaEmpezo = DateTime.now().isAfter(partido.fechaHora);
+    void irA(String pestana) {
+      final i = pestanas.indexOf(pestana);
+      if (i >= 0) DefaultTabController.of(context).animateTo(i);
+    }
+
+    final (IconData icono, String texto, String boton, Future<void> Function() accion)? paso = switch (e) {
+      EstadoPartido.abierto || EstadoPartido.completo => (
+          Icons.groups_2_outlined,
+          e == EstadoPartido.completo ? 'Lista completa: ya puedes hacer los equipos' : 'Cuando esté la lista, haz los equipos',
+          'Equipos',
+          () async => irA('Equipos'),
+        ),
+      EstadoPartido.equipos_hechos when yaEmpezo => (
+          Icons.sports_score,
+          '¿Ya se ha jugado? Ábrelo para que voten',
+          'Partido jugado',
+          () async {
+            if (await confirmar(context, 'Partido jugado',
+                'Se cargará a cada confirmado su parte del coste y se abrirá el plazo para enviar resultado y notas.')) {
+              if (context.mounted) {
+                await ejecutar(context, () => PartidosRepo.marcarJugado(partido.id), ok: 'Post-partido abierto');
+              }
+            }
+          },
+        ),
+      EstadoPartido.post_partido => (
+          Icons.how_to_vote_outlined,
+          partido.votacionCierra == null
+              ? 'Votación abierta'
+              : 'Votación abierta hasta ${fechaHora(partido.votacionCierra!)}',
+          'Cerrar ya',
+          () async {
+            if (await confirmar(context, 'Cerrar la votación',
+                'Se cruzan los partes de todos. Si algo no cuadra lo verás en Revisión.')) {
+              if (context.mounted) {
+                await ejecutar(context, () => PartidosRepo.cerrarPostPartido(partido.id), ok: 'Partes cruzados');
+              }
+            }
+          },
+        ),
+      EstadoPartido.en_revision => (
+          Icons.report_outlined,
+          'Hay datos que no cuadran: resuélvelos para publicar los puntos',
+          'Revisar',
+          () async => irA('Revisión'),
+        ),
+      _ => null,
+    };
+    if (paso == null) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    return Material(
+      color: cs.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(children: [
+          Icon(paso.$1, color: cs.onPrimaryContainer),
+          const SizedBox(width: 12),
+          Expanded(child: Text(paso.$2, style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.w600))),
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 40), backgroundColor: cs.surface),
+            onPressed: () async {
+              await paso.$4();
+              ref.invalidate(partidosProvider(partido.ligaId));
+            },
+            child: Text(paso.$3),
+          ),
+        ]),
+      ),
     );
   }
 }

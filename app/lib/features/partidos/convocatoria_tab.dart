@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -7,6 +8,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../liga/chip_rango.dart';
+import '../../core/avatar.dart';
 
 /// Lista de inscritos en tiempo real + botones Voy / Duda / No voy.
 class ConvocatoriaTab extends ConsumerWidget {
@@ -91,6 +93,7 @@ class ConvocatoriaTab extends ConsumerWidget {
                 },
                 onSelectionChanged: (s) {
                   if (s.isEmpty) return;
+                  HapticFeedback.selectionClick();
                   ejecutar(context, () => PartidosRepo.cambiarEstado(partido.id, mi.yo.id, s.first));
                 },
               ),
@@ -107,8 +110,8 @@ class ConvocatoriaTab extends ConsumerWidget {
                 ),
               ),
             ),
-          _Seccion('Confirmados', conf, nombre, rangoDeIns, numerar: true, mi: mi, partido: partido),
-          _Seccion('En duda', duda, nombre, rangoDeIns, mi: mi, partido: partido),
+          _Seccion('Confirmados', conf, nombre, rangoDeIns, numerar: true, mi: mi, partido: partido, miembros: miembros),
+          _Seccion('En duda', duda, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
           _Seccion(
             liga.esperaPorPrioridad ? 'Lista de espera · por prioridad' : 'Lista de espera · por orden de apuntarse',
             espera,
@@ -117,8 +120,9 @@ class ConvocatoriaTab extends ConsumerWidget {
             numerar: true,
             mi: mi,
             partido: partido,
+            miembros: miembros,
           ),
-          _Seccion('No van', baja, nombre, rangoDeIns, mi: mi, partido: partido),
+          _Seccion('No van', baja, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
           if (mi.soyAdmin && partido.estado.antesDeJugar)
             _AnadirJugador(
               partido: partido,
@@ -133,7 +137,8 @@ class ConvocatoriaTab extends ConsumerWidget {
 
 class _Seccion extends StatelessWidget {
   const _Seccion(this.titulo, this.lista, this.nombre, this.rango,
-      {this.numerar = false, required this.mi, required this.partido});
+      {this.numerar = false, required this.mi, required this.partido, required this.miembros});
+  final Map<String, Miembro> miembros;
   final String titulo;
   final List<Inscripcion> lista;
   final String Function(String) nombre;
@@ -153,7 +158,20 @@ class _Seccion extends StatelessWidget {
       for (final (i, ins) in lista.indexed)
         ListTile(
           dense: true,
-          leading: numerar ? CircleAvatar(radius: 14, child: Text('${i + 1}')) : const SizedBox(width: 28),
+          leading: Row(mainAxisSize: MainAxisSize.min, children: [
+            SizedBox(
+              width: 22,
+              child: numerar
+                  ? Text('${i + 1}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurfaceVariant))
+                  : null,
+            ),
+            const SizedBox(width: 6),
+            AvatarMiembro(miembros[ins.miembroId], radio: 16),
+          ]),
+          selected: ins.miembroId == mi.yo.id,
           title: Row(children: [
             Flexible(
               child: Text(nombre(ins.miembroId) + (ins.miembroId == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis),

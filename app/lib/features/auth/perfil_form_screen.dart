@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../core/supabase.dart';
 import '../../core/utils.dart';
@@ -23,6 +25,9 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
   final _apodo = TextEditingController();
   final _telefono = TextEditingController();
   String? _posicion;
+  String? _avatarUrl;
+  DateTime? _nacimiento;
+  bool _subiendo = false;
   bool _cargado = false;
   bool _guardando = false;
 
@@ -40,18 +45,84 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
     if (p == null) {
       final meta = sb.auth.currentUser?.userMetadata;
       _nombre.text = (meta?['full_name'] ?? meta?['name'] ?? '') as String;
+      _avatarUrl = meta?['avatar_url'] as String?;
       return;
     }
     _nombre.text = p.nombre;
     _apodo.text = p.apodo ?? '';
     _telefono.text = p.telefono ?? '';
     _posicion = p.posicion;
+    _avatarUrl = p.avatarUrl;
+    _nacimiento = p.fechaNacimiento;
+  }
+
+  /// Elige foto (galería o cámara), la reduce a 512 px y la sube a Storage (carpeta propia).
+  Future<void> _cambiarFoto() async {
+    final opcion = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: const Text('Elegir de la galería'),
+            onTap: () => Navigator.pop(c, 'galeria'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: const Text('Hacer una foto'),
+            onTap: () => Navigator.pop(c, 'camara'),
+          ),
+          if (_avatarUrl != null)
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: Theme.of(c).colorScheme.error),
+              title: const Text('Quitar foto'),
+              onTap: () => Navigator.pop(c, 'quitar'),
+            ),
+        ]),
+      ),
+    );
+    if (opcion == null) return;
+    if (opcion == 'quitar') {
+      setState(() => _avatarUrl = null);
+      return;
+    }
+    final foto = await ImagePicker().pickImage(
+      source: opcion == 'camara' ? ImageSource.camera : ImageSource.gallery,
+      preferredCameraDevice: CameraDevice.front,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 82,
+    );
+    if (foto == null || !mounted) return;
+    setState(() => _subiendo = true);
+    final ok = await ejecutar(context, () async {
+      final bytes = await foto.readAsBytes();
+      final ruta = '${uidActual!}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await sb.storage.from('avatares').uploadBinary(ruta, bytes,
+          fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true));
+      _avatarUrl = sb.storage.from('avatares').getPublicUrl(ruta);
+    }, ok: 'Foto lista: pulsa Guardar');
+    if (mounted) setState(() => _subiendo = false);
+    if (!ok) return;
+  }
+
+  Future<void> _elegirNacimiento() async {
+    final hoy = DateTime.now();
+    final f = await showDatePicker(
+      context: context,
+      initialDate: _nacimiento ?? DateTime(hoy.year - 30, 1, 1),
+      firstDate: DateTime(1930),
+      lastDate: DateTime(hoy.year - 10, hoy.month, hoy.day),
+      initialDatePickerMode: DatePickerMode.year,
+      helpText: 'Fecha de nacimiento',
+    );
+    if (f != null) setState(() => _nacimiento = f);
   }
 
   Future<void> _guardar() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _guardando = true);
-    final actual = ref.read(miPerfilProvider).valueOrNull;
     final ok = await ejecutar(
       context,
       () => LigasRepo.guardarPerfil(Perfil(
@@ -60,7 +131,8 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
         apodo: _apodo.text.trim().isEmpty ? null : _apodo.text.trim(),
         telefono: _telefono.text.trim().isEmpty ? null : _telefono.text.trim(),
         posicion: _posicion,
-        avatarUrl: actual?.avatarUrl ?? sb.auth.currentUser?.userMetadata?['avatar_url'] as String?,
+        avatarUrl: _avatarUrl,
+        fechaNacimiento: _nacimiento,
       )),
     );
     if (!mounted) return;
@@ -84,6 +156,33 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
               padding: EdgeInsets.only(bottom: 16),
               child: Text('Así te verán tus compañeros en las convocatorias y en la clasificación.'),
             ),
+          Center(
+            child: Stack(children: [
+              CircleAvatar(
+                radius: 52,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundImage: _avatarUrl == null ? null : NetworkImage(_avatarUrl!),
+                child: _subiendo
+                    ? const CircularProgressIndicator()
+                    : Icon(Icons.person, size: 52, color: Theme.of(context).colorScheme.onPrimaryContainer),
+              ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: IconButton.filled(
+                  tooltip: 'Cambiar foto',
+                  onPressed: _subiendo ? null : _cambiarFoto,
+                  icon: const Icon(Icons.photo_camera_outlined),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text('Con foto, tus compañeros te reconocen al momento',
+                style: Theme.of(context).textTheme.bodySmall),
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _nombre,
             decoration: const InputDecoration(labelText: 'Nombre y apellido'),
@@ -105,6 +204,23 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
             items: [for (final p in posiciones) DropdownMenuItem(value: p, child: Text(etiquetaPosicion(p)))],
             onChanged: (v) => setState(() => _posicion = v),
             validator: (v) => v == null ? 'Elige una posición' : null,
+          ),
+          const SizedBox(height: 12),
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _elegirNacimiento,
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Fecha de nacimiento',
+                helperText: 'Tus compañeros solo verán tu edad',
+                suffixIcon: Icon(Icons.cake_outlined),
+              ),
+              isEmpty: _nacimiento == null,
+              child: _nacimiento == null
+                  ? null
+                  : Text('${_nacimiento!.day}/${_nacimiento!.month}/${_nacimiento!.year} · '
+                      '${Perfil(id: '', nombre: '', fechaNacimiento: _nacimiento).edad} años'),
+            ),
           ),
           const SizedBox(height: 12),
           TextFormField(

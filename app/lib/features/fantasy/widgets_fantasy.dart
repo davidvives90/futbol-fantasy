@@ -1,26 +1,13 @@
+export '../../core/avatar.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../core/avatar.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
-
-class AvatarMiembro extends StatelessWidget {
-  const AvatarMiembro(this.miembro, {super.key, this.radio = 20});
-  final Miembro? miembro;
-  final double radio;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = miembro?.perfil?.avatarUrl;
-    return CircleAvatar(
-      radius: radio,
-      backgroundImage: url == null || url.isEmpty ? null : NetworkImage(url),
-      child: url == null || url.isEmpty ? Text(miembro?.inicial ?? '?') : null,
-    );
-  }
-}
 
 /// Insignia "Invitado ×1,5" (rango Invitado en la liga, v0.3).
 class InsigniaNoHabitual extends StatelessWidget {

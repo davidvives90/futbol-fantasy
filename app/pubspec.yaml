@@ -25,6 +25,7 @@ dependencies:
   share_plus: ^10.1.0
   uuid: ^4.5.1
   # Push (FCM). Se activa solo si la compilación recibe --dart-define=FIREBASE_APP_ID=…
+  image_picker: any
   firebase_core: any
   firebase_messaging: any
 

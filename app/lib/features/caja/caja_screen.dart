@@ -8,6 +8,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/caja_repo.dart';
 import '../shell/home_shell.dart';
+import '../../core/avatar.dart';
 
 final _movimientosProvider = FutureProvider.autoDispose.family<List<Movimiento>, String>(
   (ref, miembroId) => CajaRepo.movimientos(miembroId),
@@ -171,7 +172,7 @@ class _Deudores extends ConsumerWidget {
             for (final s in ordenados)
               if (miembros[s.miembroId] != null)
                 ListTile(
-                  leading: CircleAvatar(child: Text(miembros[s.miembroId]!.inicial)),
+                  leading: AvatarMiembro(miembros[s.miembroId]),
                   title: Text(miembros[s.miembroId]!.nombre),
                   trailing: Text(euros(s.saldo),
                       style: AppTheme.tabular(Theme.of(context).textTheme.bodyLarge)

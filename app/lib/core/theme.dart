@@ -160,6 +160,10 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: fondo,
+      splashFactory: InkSparkle.splashFactory,
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+      }),
       canvasColor: fondo,
       textTheme: tt,
       dividerColor: bordeSuave,
@@ -293,7 +297,10 @@ class AppTheme {
         contentTextStyle: tt.bodyMedium?.copyWith(color: cs.onInverseSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      // Fila seleccionada (p. ej. «tú» en listas) bien visible
       listTileTheme: ListTileThemeData(
+        selectedColor: cs.onPrimaryContainer,
+        selectedTileColor: cs.primaryContainer.withValues(alpha: 0.45),
         iconColor: textoSec,
         titleTextStyle: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
         subtitleTextStyle: tt.bodyMedium?.copyWith(color: textoSec),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -7,6 +8,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../../data/repos/post_partido_repo.dart';
+import '../../core/avatar.dart';
 
 /// Encuentros que definió el admin (quién contra quién); cada asistente solo pone el marcador.
 final _encuentrosDefProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
@@ -358,6 +360,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
               jugadores: [
                 for (final a in asistentes.where((a) => a.equipo == eq))
                   _FilaGoles(
+                    miembro: miembros[a.miembroId],
                     nombre: '${miembros[a.miembroId]?.nombre ?? '…'}${a.miembroId == widget.mi.yo.id ? ' (tú)' : ''}',
                     goles: b.goles[a.miembroId] ?? 0,
                     asistencias: b.asistencias[a.miembroId] ?? 0,
@@ -399,6 +402,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           const SizedBox(height: 6),
           for (final a in companeros)
             _TarjetaNota(
+              miembro: miembros[a.miembroId],
               nombre: miembros[a.miembroId]?.nombre ?? '…',
               equipo: a.equipo!,
               nota: b.notas[a.miembroId] ?? 3,
@@ -610,6 +614,7 @@ class _BloqueEquipo extends StatelessWidget {
 
 class _FilaGoles extends StatelessWidget {
   const _FilaGoles({
+    required this.miembro,
     required this.nombre,
     required this.goles,
     required this.asistencias,
@@ -617,6 +622,7 @@ class _FilaGoles extends StatelessWidget {
     required this.onAsistencias,
     this.extras = const [],
   });
+  final Miembro? miembro;
   final String nombre;
   final int goles, asistencias;
   final ValueChanged<int> onGoles, onAsistencias;
@@ -628,6 +634,8 @@ class _FilaGoles extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
+          AvatarMiembro(miembro, radio: 15),
+          const SizedBox(width: 8),
           Expanded(child: Text(nombre, overflow: TextOverflow.ellipsis)),
           _ChipContador(icono: '⚽', valor: goles, onCambio: onGoles),
           const SizedBox(width: 6),
@@ -659,8 +667,18 @@ class _ChipContador extends StatelessWidget {
       shape: const StadiumBorder(),
       child: InkWell(
         customBorder: const StadiumBorder(),
-        onTap: valor < 50 ? () => onCambio(valor + 1) : null,
-        onLongPress: valor > 0 ? () => onCambio(valor - 1) : null,
+        onTap: valor < 50
+            ? () {
+                HapticFeedback.selectionClick();
+                onCambio(valor + 1);
+              }
+            : null,
+        onLongPress: valor > 0
+            ? () {
+                HapticFeedback.mediumImpact();
+                onCambio(valor - 1);
+              }
+            : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Text('$icono $valor',
@@ -702,6 +720,7 @@ const _nombresDestacado = {
 
 class _TarjetaNota extends StatelessWidget {
   const _TarjetaNota({
+    required this.miembro,
     required this.nombre,
     required this.equipo,
     required this.nota,
@@ -718,6 +737,7 @@ class _TarjetaNota extends StatelessWidget {
     required this.onAbrir,
     required this.onCambio,
   });
+  final Miembro? miembro;
   final String nombre;
   final int equipo, nota;
   final bool detallada, esMvp, sinValorar, abierto;
@@ -741,12 +761,8 @@ class _TarjetaNota extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 4, 4, 8),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: AppColores.of(context).equipo(equipo), shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
+            AvatarMiembro(miembro, radio: 16, anillo: AppColores.of(context).equipo(equipo)),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(nombre,
                   style: t.titleSmall?.copyWith(
@@ -856,7 +872,10 @@ class _BotonNota extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(children: [

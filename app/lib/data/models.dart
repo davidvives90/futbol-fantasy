@@ -74,10 +74,29 @@ String etiquetaPosicion(String? p) => switch (p) {
 // ---------------------------------------------------------------------------
 
 class Perfil {
-  Perfil({required this.id, required this.nombre, this.apodo, this.avatarUrl, this.posicion, this.telefono});
+  Perfil({
+    required this.id,
+    required this.nombre,
+    this.apodo,
+    this.avatarUrl,
+    this.posicion,
+    this.telefono,
+    this.fechaNacimiento,
+  });
   final String id;
   final String nombre;
   final String? apodo, avatarUrl, posicion, telefono;
+  final DateTime? fechaNacimiento;
+
+  /// Edad en años cumplidos (null si no la ha indicado).
+  int? get edad {
+    final f = fechaNacimiento;
+    if (f == null) return null;
+    final hoy = DateTime.now();
+    var e = hoy.year - f.year;
+    if (hoy.month < f.month || (hoy.month == f.month && hoy.day < f.day)) e--;
+    return e;
+  }
 
   factory Perfil.fromMap(Map<String, dynamic> m) => Perfil(
         id: m['id'] as String,
@@ -86,6 +105,7 @@ class Perfil {
         avatarUrl: m['avatar_url'] as String?,
         posicion: m['posicion'] as String?,
         telefono: m['telefono'] as String?,
+        fechaNacimiento: m['fecha_nacimiento'] == null ? null : DateTime.parse(m['fecha_nacimiento'] as String),
       );
 
   Map<String, dynamic> toMap() => {
@@ -95,6 +115,9 @@ class Perfil {
         'avatar_url': avatarUrl,
         'posicion': posicion,
         'telefono': telefono,
+        'fecha_nacimiento': fechaNacimiento == null
+            ? null
+            : '${fechaNacimiento!.year.toString().padLeft(4, '0')}-${fechaNacimiento!.month.toString().padLeft(2, '0')}-${fechaNacimiento!.day.toString().padLeft(2, '0')}',
       };
 }
 
@@ -309,7 +332,7 @@ class Miembro {
   /// Select con el perfil embebido (FK miembros.perfil_id → perfiles.id).
   /// Columnas explícitas: `token_invitacion` y `contacto` no son legibles (ver `enlaces_invitacion`).
   static const select = 'id, liga_id, perfil_id, nombre_provisional, posicion, rol, estado, rango, invitado_por, unido_en, '
-      'perfil:perfiles!miembros_perfil_id_fkey(id, nombre, apodo, avatar_url, posicion, telefono)';
+      'perfil:perfiles!miembros_perfil_id_fkey(id, nombre, apodo, avatar_url, posicion, telefono, fecha_nacimiento)';
 
   factory Miembro.fromMap(Map<String, dynamic> m) => Miembro(
         id: m['id'] as String,

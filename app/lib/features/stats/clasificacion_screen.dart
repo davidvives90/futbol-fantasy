@@ -7,6 +7,7 @@ import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../shell/home_shell.dart';
+import '../../core/avatar.dart';
 
 /// Una pestaña del ranking: cómo ordenar y qué valor mostrar.
 class _Ranking {
@@ -98,17 +99,23 @@ class _Lista extends StatelessWidget {
         final esYo = r.miembroId == yo;
         return ListTile(
           selected: esYo,
-          leading: CircleAvatar(
-            // Podio: oro (premium), plata y bronce sobrios
-            backgroundColor: switch (pos) {
+          leading: Row(mainAxisSize: MainAxisSize.min, children: [
+            SizedBox(
+              width: 26,
+              child: Text('$pos',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.tabular(Theme.of(context).textTheme.titleMedium)
+                      ?.copyWith(fontWeight: FontWeight.w800, color: pos <= 3 ? null : Theme.of(context).colorScheme.onSurfaceVariant)),
+            ),
+            const SizedBox(width: 6),
+            // Podio: anillo oro (premium), plata y bronce sobrios
+            AvatarMiembro(m, anillo: switch (pos) {
               1 => Theme.of(context).colorScheme.tertiary,
-              2 => const Color(0xFFC9CCCB),
+              2 => const Color(0xFFB9BDBC),
               3 => const Color(0xFFC79A74),
-              _ => Theme.of(context).colorScheme.surfaceContainer,
-            },
-            foregroundColor: pos == 1 ? Theme.of(context).colorScheme.onTertiary : Theme.of(context).colorScheme.onSurface,
-            child: Text('$pos', style: AppTheme.tabular(Theme.of(context).textTheme.labelLarge)),
-          ),
+              _ => null,
+            }),
+          ]),
           title: Text(m?.nombre ?? '…'),
           subtitle: Text('${r.partidos} partidos · media ${r.puntosMedia.toStringAsFixed(1)} pts'),
           trailing: Text(ranking.texto(r), style: AppTheme.numero(context, size: 20)),

@@ -10,6 +10,7 @@ import '../../data/models_fantasy.dart';
 import '../../data/repos/fantasy_repo.dart';
 import '../../data/repos/post_partido_repo.dart';
 import '../fantasy/widgets_fantasy.dart';
+import '../../core/avatar.dart';
 
 class _DatosResultado {
   _DatosResultado(this.encuentros, this.puntos, this.acta);
@@ -91,8 +92,8 @@ class ResultadoTab extends ConsumerWidget {
           Text('Puntos Fantasy', style: Theme.of(context).textTheme.titleMedium),
           for (final (i, p) in d.puntos.indexed)
             ExpansionTile(
-              leading: CircleAvatar(child: Text('${i + 1}')),
-              title: Text(miembros[p.miembroId]?.nombre ?? '…'),
+              leading: AvatarMiembro(miembros[p.miembroId], anillo: p.esMvp ? Theme.of(context).colorScheme.tertiary : null),
+              title: Text('${i + 1}. ${miembros[p.miembroId]?.nombre ?? '…'}'),
               subtitle: Text([
                 if ((d.acta[p.miembroId]?['goles'] ?? 0) as num > 0) '⚽ ${d.acta[p.miembroId]!['goles']}',
                 if ((d.acta[p.miembroId]?['asistencias'] ?? 0) as num > 0) '🅰️ ${d.acta[p.miembroId]!['asistencias']}',
