@@ -58,3 +58,9 @@ Insignias: MVP e "Invitado ×1,5" en dorado (tertiaryContainer + texto onTertiar
 - `AppButtons.premium(context)` y `AppButtons.peligro(context)` (ButtonStyle) en el mismo fichero.
 - Recorrer las pantallas y aplicar la tabla de jerarquía (una principal por pantalla; acciones de dinero en dorado; admin en tonal; destructivas en rojo con diálogo). Sustituir colores fijos sueltos (Colors.blue, Colors.red, etc.) por los del tema.
 - Sin pérdida de funcionalidad: no se mueve ni se quita ninguna acción.
+
+## Modo oscuro (v0.3c)
+- Perfil → Opciones → Apariencia: **Claro** (por defecto), **Oscuro** o **Sistema**. Se guarda en el dispositivo.
+- Antes la app seguía el modo del móvil: con el móvil en oscuro se veía un tema genérico. Ahora el claro es el predeterminado.
+- El oscuro usa el mismo sistema de componentes (`AppTheme._construir`) con otra paleta: fondo carbón verdoso #0F1513, tarjetas #171F1C, verde menta #86CDAD como principal, oro #E2B65E para premium, rojo suave #F2A59E para destructivo. Colores de equipo y estados aclarados (`AppColores.oscuro`).
+- Regla para pantallas nuevas: nunca colores fijos de la paleta clara; usar `Theme.of(context).colorScheme` y `AppColores.of(context)`.

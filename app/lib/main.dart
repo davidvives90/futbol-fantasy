@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/liga_activa.dart';
 import 'core/router.dart';
 import 'core/supabase.dart';
+import 'core/tema.dart';
 import 'core/theme.dart';
 
 Future<void> main() async {
@@ -72,6 +73,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.claro(),
       darkTheme: AppTheme.oscuro(),
+      themeMode: ref.watch(temaProvider),
       locale: const Locale('es'),
       supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: const [

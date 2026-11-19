@@ -40,8 +40,6 @@ class AppTheme {
   static const equipo3 = Color(0xFFB08A1E);
   static const equipo4 = Color(0xFF5B3F8C);
 
-  static const _semilla = Color(0xFF1B8A3A);
-
   static const ColorScheme _esquemaClaro = ColorScheme(
     brightness: Brightness.light,
     primary: verde,
@@ -100,21 +98,70 @@ class AppTheme {
     );
   }
 
-  static ThemeData claro() {
-    const cs = _esquemaClaro;
-    final base = ThemeData(useMaterial3: true, brightness: Brightness.light, colorScheme: cs);
+  /// Modo oscuro premium: carbón verdoso cálido, verde menta y oro (mismo lenguaje que el claro).
+  static const fondoOscuro = Color(0xFF0F1513);
+  static const tarjetaOscura = Color(0xFF171F1C);
+
+  static const ColorScheme _esquemaOscuro = ColorScheme(
+    brightness: Brightness.dark,
+    primary: Color(0xFF86CDAD),
+    onPrimary: Color(0xFF00382A),
+    primaryContainer: Color(0xFF1F4A3C),
+    onPrimaryContainer: Color(0xFFC3EAD8),
+    secondary: Color(0xFFA9C2B6),
+    onSecondary: Color(0xFF15291F),
+    secondaryContainer: Color(0xFF2A3A33),
+    onSecondaryContainer: Color(0xFFD5E5DC),
+    tertiary: Color(0xFFE2B65E),
+    onTertiary: Color(0xFF2B1F05),
+    tertiaryContainer: Color(0xFF4A3814),
+    onTertiaryContainer: Color(0xFFF6E4BE),
+    error: Color(0xFFF2A59E),
+    onError: Color(0xFF5C1410),
+    errorContainer: Color(0xFF6B1E18),
+    onErrorContainer: Color(0xFFF9DEDB),
+    surface: fondoOscuro,
+    onSurface: Color(0xFFE8ECE8),
+    onSurfaceVariant: Color(0xFFA6B1AB),
+    surfaceDim: Color(0xFF0B100E),
+    surfaceBright: Color(0xFF2B3531),
+    surfaceContainerLowest: Color(0xFF0B100E),
+    surfaceContainerLow: Color(0xFF131A17),
+    surfaceContainer: Color(0xFF1C2421),
+    surfaceContainerHigh: Color(0xFF232C28),
+    surfaceContainerHighest: Color(0xFF2A3430),
+    outline: Color(0xFF6F7C75),
+    outlineVariant: Color(0xFF2B3631),
+    shadow: Color(0xFF000000),
+    scrim: Color(0xFF000000),
+    inverseSurface: Color(0xFFE8ECE8),
+    onInverseSurface: Color(0xFF1B2420),
+    inversePrimary: verde,
+    surfaceTint: Colors.transparent,
+  );
+
+  static ThemeData claro() => _construir(_esquemaClaro, AppColores.claro, tarjeta);
+  static ThemeData oscuro() => _construir(_esquemaOscuro, AppColores.oscuro, tarjetaOscura);
+
+  /// Mismo sistema de componentes para claro y oscuro; solo cambian los colores.
+  static ThemeData _construir(ColorScheme cs, AppColores colores, Color tarjeta) {
+    final base = ThemeData(useMaterial3: true, brightness: cs.brightness, colorScheme: cs);
     final tt = _texto(base.textTheme, cs.onSurface);
     final radioBoton = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
     const tamBoton = Size(64, 48);
     final etiqueta = tt.labelLarge;
+    final fondo = cs.surface;
+    final texto = cs.onSurface;
+    final textoSec = cs.onSurfaceVariant;
+    final bordeSuave = cs.outlineVariant;
 
     return base.copyWith(
       scaffoldBackgroundColor: fondo,
       canvasColor: fondo,
       textTheme: tt,
       dividerColor: bordeSuave,
-      dividerTheme: const DividerThemeData(color: bordeSuave, thickness: 1, space: 1),
-      extensions: const [AppColores.claro],
+      dividerTheme: DividerThemeData(color: bordeSuave, thickness: 1, space: 1),
+      extensions: [colores],
       appBarTheme: AppBarTheme(
         backgroundColor: fondo,
         foregroundColor: texto,
@@ -131,7 +178,7 @@ class AppTheme {
         margin: const EdgeInsets.symmetric(vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: bordeSuave),
+          side: BorderSide(color: bordeSuave),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -146,15 +193,15 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: tamBoton,
           shape: radioBoton,
-          foregroundColor: verde,
-          side: const BorderSide(color: verde),
+          foregroundColor: cs.primary,
+          side: BorderSide(color: cs.primary),
           textStyle: etiqueta,
           padding: const EdgeInsets.symmetric(horizontal: 20),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: verde,
+          foregroundColor: cs.primary,
           shape: radioBoton,
           textStyle: etiqueta,
         ),
@@ -164,29 +211,29 @@ class AppTheme {
           minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
           textStyle: WidgetStatePropertyAll(etiqueta),
           shape: WidgetStatePropertyAll(radioBoton),
-          side: const WidgetStatePropertyAll(BorderSide(color: bordeSuave)),
+          side: WidgetStatePropertyAll(BorderSide(color: bordeSuave)),
           backgroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? verdeClaro : tarjeta,
+            (s) => s.contains(WidgetState.selected) ? cs.primaryContainer : tarjeta,
           ),
           foregroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? verdeOscuro : texto,
+            (s) => s.contains(WidgetState.selected) ? cs.onPrimaryContainer : texto,
           ),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: verde,
-        foregroundColor: Colors.white,
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: contenedor,
-        selectedColor: verdeClaro,
-        side: const BorderSide(color: bordeSuave),
+        backgroundColor: cs.surfaceContainer,
+        selectedColor: cs.primaryContainer,
+        side: BorderSide(color: bordeSuave),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         labelStyle: tt.labelMedium?.copyWith(color: texto),
-        secondaryLabelStyle: tt.labelMedium?.copyWith(color: verdeOscuro),
-        checkmarkColor: verdeOscuro,
+        secondaryLabelStyle: tt.labelMedium?.copyWith(color: cs.onPrimaryContainer),
+        checkmarkColor: cs.onPrimaryContainer,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -194,35 +241,35 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borde),
+          borderSide: BorderSide(color: cs.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borde),
+          borderSide: BorderSide(color: cs.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: verde, width: 1.6),
+          borderSide: BorderSide(color: cs.primary, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: rojo),
+          borderSide: BorderSide(color: cs.error),
         ),
-        labelStyle: tt.bodyMedium?.copyWith(color: textoSecundario),
+        labelStyle: tt.bodyMedium?.copyWith(color: textoSec),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: tarjeta,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        indicatorColor: verdeClaro,
+        indicatorColor: cs.primaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (s) => tt.labelMedium?.copyWith(
             fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
-            color: s.contains(WidgetState.selected) ? verdeOscuro : textoSecundario,
+            color: s.contains(WidgetState.selected) ? cs.onPrimaryContainer : textoSec,
           ),
         ),
         iconTheme: WidgetStateProperty.resolveWith(
-          (s) => IconThemeData(color: s.contains(WidgetState.selected) ? verdeOscuro : textoSecundario),
+          (s) => IconThemeData(color: s.contains(WidgetState.selected) ? cs.onPrimaryContainer : textoSec),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -231,43 +278,35 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: tt.titleLarge,
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
+      bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: tarjeta,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       ),
+      popupMenuTheme: PopupMenuThemeData(color: tarjeta, surfaceTintColor: Colors.transparent),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF26302B),
-        contentTextStyle: tt.bodyMedium?.copyWith(color: Colors.white),
+        backgroundColor: cs.inverseSurface,
+        contentTextStyle: tt.bodyMedium?.copyWith(color: cs.onInverseSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       listTileTheme: ListTileThemeData(
-        iconColor: textoSecundario,
+        iconColor: textoSec,
         titleTextStyle: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-        subtitleTextStyle: tt.bodyMedium?.copyWith(color: textoSecundario),
+        subtitleTextStyle: tt.bodyMedium?.copyWith(color: textoSec),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       ),
       tabBarTheme: TabBarThemeData(
-        labelColor: verdeOscuro,
-        unselectedLabelColor: textoSecundario,
-        indicatorColor: verde,
+        labelColor: cs.brightness == Brightness.light ? cs.onPrimaryContainer : cs.primary,
+        unselectedLabelColor: textoSec,
+        indicatorColor: cs.primary,
         dividerColor: bordeSuave,
         labelStyle: tt.labelLarge,
         unselectedLabelStyle: tt.labelLarge?.copyWith(fontWeight: FontWeight.w500),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(color: verde, linearTrackColor: contenedor),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: cs.primary, linearTrackColor: cs.surfaceContainer),
     );
   }
-
-  /// Tema oscuro (secundario): el de siempre, desde semilla.
-  static ThemeData oscuro() => ThemeData(
-        colorSchemeSeed: _semilla,
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
-        extensions: const [AppColores.oscuro],
-      );
 
   /// Color estable para el equipo n (1..4).
   static Color colorEquipo(int equipo) => switch (equipo) {
@@ -416,9 +455,10 @@ class AppButtons {
   static ButtonStyle segmentoEstado(BuildContext context, String? seleccionado) {
     final cs = Theme.of(context).colorScheme;
     final c = AppColores.of(context);
+    final sobre = cs.brightness == Brightness.dark ? const Color(0xFF0F1513) : Colors.white;
     final (fondo, texto) = switch (seleccionado) {
-      'confirmado' || 'espera' => (c.exito, Colors.white),
-      'duda' => (c.aviso, Colors.white),
+      'confirmado' || 'espera' => (c.exito, sobre),
+      'duda' => (c.aviso, sobre),
       'baja' => (cs.surfaceContainerHighest, cs.onSurface),
       _ => (cs.primaryContainer, cs.onPrimaryContainer),
     };

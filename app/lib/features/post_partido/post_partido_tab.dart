@@ -518,7 +518,7 @@ class _Marcador extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.colorEquipo(equipo);
+    final color = AppColores.of(context).equipo(equipo);
     return Column(children: [
       Text('Equipo ${letraEquipo(equipo)}', style: TextStyle(color: color, fontWeight: FontWeight.w700)),
       Row(mainAxisSize: MainAxisSize.min, children: [
@@ -580,7 +580,7 @@ class _BloqueEquipo extends StatelessWidget {
             Container(
               width: 10,
               height: 10,
-              decoration: BoxDecoration(color: AppTheme.colorEquipo(equipo), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: AppColores.of(context).equipo(equipo), shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Text('Equipo ${letraEquipo(equipo)}', style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -743,7 +743,7 @@ class _TarjetaNota extends StatelessWidget {
             Container(
               width: 8,
               height: 8,
-              decoration: BoxDecoration(color: AppTheme.colorEquipo(equipo), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: AppColores.of(context).equipo(equipo), shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Expanded(

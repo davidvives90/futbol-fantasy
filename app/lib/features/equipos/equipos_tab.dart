@@ -196,7 +196,7 @@ class _BarraEquilibrio extends StatelessWidget {
           for (var i = 0; i < sumas.length; i++)
             Expanded(
               flex: max(1, (1000 * (total == 0 ? 1 : sumas[i] / total)).round()),
-              child: Container(height: 12, color: AppTheme.colorEquipo(i + 1)),
+              child: Container(height: 12, color: AppColores.of(context).equipo(i + 1)),
             ),
         ]),
       ),
@@ -223,7 +223,7 @@ class _TarjetaEquipo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.colorEquipo(numero);
+    final color = AppColores.of(context).equipo(numero);
     final ordenados = [...jugadores]..sort((a, b) => b.rating.compareTo(a.rating));
     return Card(
       shape: RoundedRectangleBorder(side: BorderSide(color: color, width: 2), borderRadius: BorderRadius.circular(12)),

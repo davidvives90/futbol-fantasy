@@ -70,10 +70,10 @@ class ResultadoTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                   Text('Equipo ${e.equipoLocal}',
-                      style: TextStyle(color: AppTheme.colorEquipo(e.equipoLocal), fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: AppColores.of(context).equipo(e.equipoLocal), fontWeight: FontWeight.w600)),
                   Text('${e.golesLocal} - ${e.golesVisitante}', style: AppTheme.numero(context)),
                   Text('Equipo ${e.equipoVisitante}',
-                      style: TextStyle(color: AppTheme.colorEquipo(e.equipoVisitante), fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: AppColores.of(context).equipo(e.equipoVisitante), fontWeight: FontWeight.w600)),
                 ]),
               ),
             ),
