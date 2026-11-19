@@ -164,3 +164,10 @@ Contrato: `docs/v03_liga.md`. Cotejado con las migraciones 0015–0019 y probado
 | `mercado_jugador.no_habitual` | ahora = rango Invitado; la app lo rotula «Invitado ×1,5» | Mercado, Mi equipo, alineación, resultado | OK (sin cambios de contrato) |
 | `v_rendimiento` | `partidos, puntos_total, puntos_media, goles, goles_partido, asistencias, nota_media, mvps, pct_victorias` | Clasificación (Fantasy, Pichichi, Asistencias, MVPs, % victorias con mínimo 3 partidos), ficha | OK (revisado) |
 | `puntos_fantasy.es_mvp` | varios a la vez = MVP compartido | Resultado: «MVP compartido» si hay más de uno | OK |
+
+## v0.3b · Post-partido rápido (0020)
+- `enviar_post_partido(p_partido, p_resultados, p_jugadores, p_notas, p_mvp)` → `{parte, notas, mvp}`. Sustituye notas, destacados y voto MVP previos del votante.
+- `mi_post_partido(p_partido)` → `{resultados, jugadores, notas:[{votado_id, nota, aspectos, destacados}], mvp}` (solo lo propio).
+- `ligas.modo_valoracion` 'rapida' | 'detallada' (admin, update directo). Aspecto `general` (no se muestra en ajustes).
+- `puntos_fantasy.desglose`: añade `destacados` {aspecto: n} y `votos_mvp` (informativos, no suman). Vista `v_destacados`.
+- MVP: mejor nota (≥ 3 votantes) → más votos «Mi MVP» → goles + asistencias → compartido.

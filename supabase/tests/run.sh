@@ -33,3 +33,4 @@ for f in migrations/00*.sql; do
   if [ "$n" -ge 15 ] 2>/dev/null; then aplicar "$f"; fi
 done
 aplicar tests/escenario_v03.sql
+aplicar tests/escenario_votacion.sql

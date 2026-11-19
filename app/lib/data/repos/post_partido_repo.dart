@@ -36,50 +36,29 @@ class PostPartidoRepo {
     return r.isNotEmpty;
   }
 
-  /// Envía el parte completo. Resultados + estadísticas van en UNA llamada a `enviar_parte` (v0.3),
-  /// que valida en el servidor que los goles de los jugadores cuadren con el resultado indicado;
-  /// después se guardan las valoraciones (anónimas).
-  /// [valoraciones]: votadoId → aspecto → nota (1..10).
-  static Future<void> enviar({
+  /// v0.3b: envía parte + notas + destacados + voto MVP en UNA llamada atómica (`enviar_post_partido`).
+  /// [jugadores]: filas del parte (sin las de equipos marcados «No me fijé»; null en un campo = no sé).
+  /// [notas]: [{votado_id, nota | aspectos, destacados}]. Sustituye todo lo que este jugador enviara antes.
+  static Future<void> enviarPostPartido({
     required String partidoId,
-    required String reporteroId,
-    required List<ReporteEncuentro> encuentros,
-    required List<ReporteJugador> jugadores,
-    required Map<String, Map<String, int>> valoraciones,
+    required List<Map<String, dynamic>> resultados,
+    required List<Map<String, dynamic>> jugadores,
+    required List<Map<String, dynamic>> notas,
+    String? mvp,
   }) async {
-    await sb.rpc('enviar_parte', params: {
+    await sb.rpc('enviar_post_partido', params: {
       'p_partido': partidoId,
-      // Los equipos de cada encuentro los fija el admin; aquí solo el marcador.
-      'p_resultados': [
-        for (final e in encuentros) {'n': e.n, 'goles_local': e.golesLocal, 'goles_visitante': e.golesVisitante},
-      ],
-      // "No sé" = no se envía la fila (no cuenta para el consenso).
-      'p_jugadores': [
-        for (final j in jugadores.where((j) => !j.noSe))
-          {
-            'sujeto_id': j.sujetoId,
-            'goles': j.goles,
-            'asistencias': j.asistencias,
-            'autogoles': j.autogoles,
-            'paradas_clave': j.paradasClave,
-            'penaltis_parados': j.penaltisParados,
-            'penaltis_fallados': j.penaltisFallados,
-          }
-      ],
+      'p_resultados': resultados,
+      'p_jugadores': jugadores,
+      'p_notas': notas,
+      'p_mvp': mvp,
     });
+  }
 
-    final notas = [
-      for (final v in valoraciones.entries)
-        for (final a in v.value.entries)
-          {
-            'partido_id': partidoId,
-            'votante_id': reporteroId,
-            'votado_id': v.key,
-            'aspecto': a.key,
-            'nota': a.value,
-          }
-    ];
-    if (notas.isNotEmpty) await sb.from('valoraciones').upsert(notas);
+  /// Lo que este jugador ya envió (solo lo suyo), para reabrir y corregir.
+  static Future<Map<String, dynamic>> miPostPartido(String partidoId) async {
+    final r = await sb.rpc('mi_post_partido', params: {'p_partido': partidoId});
+    return (r as Map).cast<String, dynamic>();
   }
 
   /// Número de asistentes que ya han enviado su parte (sin revelar qué han puesto).

@@ -109,3 +109,5 @@ Contrato: `docs/v03_liga.md` (y la sección v0.3 de `docs/contrato_app_backend.m
 MVP y estadísticas revisados (sin cambios de regla, sin errores encontrados): mayor nota con ≥ 3 votantes, desempate goles + asistencias, empate persistente compartido, sin MVP con < 3 votantes, sin duplicar al recalcular; `v_rendimiento`, `v_clasificacion`, `v_pichichi` correctos con varios partidos.
 
 `tests/escenario_v03.sql` (116 comprobaciones) se ejecuta tras aplicar 0015+ sobre los datos de todos los escenarios anteriores. Termina con `ESCENARIO V0.3 COMPLETADO SIN ERRORES`.
+
+Versión 0.3 desplegada el 19-11-2026: 0015–0019 (copia exacta en `desplegado_v03/`; en 0015 la firma antigua de precrear_jugadores se renombra a precrear_jugadores_obsoleta en vez de borrarse). Verificado: 29 tablas, 21 vistas, 109 funciones, todas con RLS, nada ejecutable por anon.

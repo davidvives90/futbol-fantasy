@@ -155,12 +155,14 @@ class _Aspectos extends ConsumerWidget {
         loading: () => const Cargando(),
         error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(_aspectosProvider(ligaId))),
         data: (lista) => ListView(children: [
+          const _ModoValoracion(),
+          const Divider(),
           const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Aspectos que los compañeros valoran del 1 al 10 tras cada partido. '
-                'Se aplican a todos los jugadores por igual, porque no hay posiciones fijas.'),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text('Aspectos: en modo rápido son los chips de «Destacó en…»; en modo detallado se puntúan '
+                'del 1 al 10. Se aplican a todos los jugadores por igual, porque no hay posiciones fijas.'),
           ),
-          for (final a in lista)
+          for (final a in lista.where((a) => a.clave != 'general'))
             SwitchListTile(
               title: Text(a.nombre),
               subtitle: Text(a.clave),
@@ -176,6 +178,36 @@ class _Aspectos extends ConsumerWidget {
             ),
         ]),
       ),
+    );
+  }
+}
+
+
+/// v0.3b: rápida (una nota general por compañero + destacados) o detallada (nota por aspecto).
+class _ModoValoracion extends ConsumerWidget {
+  const _ModoValoracion();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mi = ref.watch(ligaActualProvider);
+    if (mi == null) return const SizedBox.shrink();
+    final detallada = mi.liga.valoracionDetallada;
+    return SwitchListTile(
+      title: const Text('Valoración detallada'),
+      subtitle: Text(detallada
+          ? 'Cada compañero se puntúa del 1 al 10 en cada aspecto (más lento).'
+          : 'Rápida: una nota general por compañero (6 = normal), «Destacó en…» y voto MVP. ~1 minuto.'),
+      value: detallada,
+      onChanged: mi.soyAdmin
+          ? (v) async {
+              final ok = await ejecutar(
+                context,
+                () => LigasRepo.actualizarLiga(mi.liga.id, {'modo_valoracion': v ? 'detallada' : 'rapida'}),
+                ok: v ? 'Valoración detallada activada' : 'Valoración rápida activada',
+              );
+              if (ok) ref.invalidate(misLigasProvider);
+            }
+          : null,
     );
   }
 }

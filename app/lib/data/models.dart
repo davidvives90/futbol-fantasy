@@ -119,7 +119,12 @@ class Liga {
     this.modoCobro = 'por_partido',
     this.precioInvitado,
     this.plazasFijas,
+    this.modoValoracion = 'rapida',
   });
+
+  /// v0.3b: 'rapida' (una nota general por compañero) | 'detallada' (nota por aspecto).
+  final String modoValoracion;
+  bool get valoracionDetallada => modoValoracion == 'detallada';
 
   // ---- v0.3: convocatoria con fijos y cobro ----
   /// 'prioridad' (fijos que vuelven, reservas, invitados) | 'anotacion' (por orden de apuntarse).
@@ -169,6 +174,7 @@ class Liga {
       modoCobro: (m['modo_cobro'] ?? 'por_partido') as String,
       precioInvitado: toDouble(m['precio_invitado']),
       plazasFijas: m['plazas_fijas'] == null ? null : toInt(m['plazas_fijas']),
+      modoValoracion: (m['modo_valoracion'] ?? 'rapida') as String,
     );
   }
 }

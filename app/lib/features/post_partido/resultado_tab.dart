@@ -97,11 +97,13 @@ class ResultadoTab extends ConsumerWidget {
                 if ((d.acta[p.miembroId]?['goles'] ?? 0) as num > 0) '⚽ ${d.acta[p.miembroId]!['goles']}',
                 if ((d.acta[p.miembroId]?['asistencias'] ?? 0) as num > 0) '🅰️ ${d.acta[p.miembroId]!['asistencias']}',
                 if (p.notaMedia != null) 'nota ${p.notaMedia!.toStringAsFixed(1)}',
+                if (((p.desglose['votos_mvp'] ?? 0) as num) > 0) '⭐ ${p.desglose['votos_mvp']}',
+                if (_destacados(p).isNotEmpty) _destacados(p),
               ].join('  ')),
               trailing: Text(p.total.toStringAsFixed(p.total % 1 == 0 ? 0 : 1),
                   style: AppTheme.numero(context, size: 22)),
               children: [
-                for (final e in p.desglose.entries.where((e) => (e.value is num) && e.value != 0))
+                for (final e in p.desglose.entries.where((e) => (e.value is num) && e.value != 0 && e.key != 'votos_mvp'))
                   ListTile(
                     dense: true,
                     title: Text(_etiqueta(e.key)),
@@ -188,4 +190,21 @@ class _PuntosManagerSeccion extends ConsumerWidget {
       ),
     );
   }
+}
+
+const _nombreDestacado = {
+  'ataque': 'ataque',
+  'defensa': 'defensa',
+  'pase_vision': 'pase',
+  'esfuerzo': 'esfuerzo',
+  'juego_limpio': 'juego limpio',
+  'porteria': 'portería',
+};
+
+/// «Destacó en defensa ×3, pase ×1» (v0.3b), a partir de desglose.destacados.
+String _destacados(PuntosFantasy p) {
+  final d = p.desglose['destacados'];
+  if (d is! Map || d.isEmpty) return '';
+  final e = d.entries.toList()..sort((a, b) => (b.value as num).compareTo(a.value as num));
+  return 'Destacó en ${e.map((x) => '${_nombreDestacado[x.key] ?? x.key} ×${x.value}').join(', ')}';
 }
