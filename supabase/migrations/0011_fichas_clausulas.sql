@@ -187,7 +187,7 @@ end $$;
 
 -- ¿Está la ficha cedida en una cesión en curso? (0012 la redefine; aquí aún no hay cesiones)
 create or replace function ficha_cedida(p_ficha uuid) returns boolean
-language sql stable as $$ select false $$;
+language sql stable set search_path = public as $$ select false $$;
 
 -- Antes de que una ficha cambie de dueño o quede libre: limpia lo que dependía del dueño anterior
 -- (0012 añade la cancelación de ofertas y cesiones)

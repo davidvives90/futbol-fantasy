@@ -79,3 +79,17 @@ pg_ctl -D /tmp/pgd stop
 
 Proyecto Supabase `wyybdsxnmxgfntyrzjmq` (PostgreSQL 17). Aplicadas, en este orden: 0001–0009 (copia exacta en `desplegado_v01/`), `0100_supabase_plataforma` (bucket `facturas`, Realtime en convocatorias/partidos/encuentros/disputas, endurecimiento de permisos, pg_cron: `ff_cerrar_ventanas` cada 15 min y `ff_congelar_alineaciones` cada 5 min) y `0101_endurecer_funciones`. Verificado: 26 tablas, 16 vistas, 67 funciones (igual que en local), todas las tablas con RLS.
 Las siguientes versiones (0010+) deben ser **aditivas**: no modificar los ficheros ya desplegados.
+
+## Ampliación 0.2 (0010–0014, sin desplegar)
+
+Aditivas sobre producción (no tocan `desplegado_v01/`). Orden: `0010_posiciones_flexibles` → `0011_fichas_clausulas` → `0012_ofertas_cesiones` → `0013_roles_alineacion` → `0014_ampliacion_seguridad`.
+
+- **0010 · Posiciones flexibles**: gol = 5 para todos; se borran las reglas por posición (`gol_portero`…, `porteria_cero_*`, `goles_encajados_3`); `puntuar_por_posicion` queda obsoleta (false); aspecto Portería desactivado y todos con `aplica_a = 'todos'`; media de la encuesta única (portero 10 %); reglas `rol_*` y `ligas.bonus_roles`.
+- **0011 · Fichas y cláusulas**: tabla `fichas` (C por jugador, C = max(2, ⌈M·max_plantilla·0,8/P⌉), solo crece); la tabla `plantillas` pasa a ser una vista sobre las fichas con dueño (los datos 0.1 se migran: cada plantilla → una ficha con cláusula = max(precio de compra, valor)). RPC `comprar_ficha`, `vender_ficha`, `fijar_clausula`, `pagar_clausula`; `comprar_jugador`/`vender_jugador` quedan como envoltorios.
+- **0012 · Ofertas y cesiones**: tablas `ofertas`, `cesiones`; RPC `hacer_oferta`, `responder_oferta`, `cancelar_oferta`, `ofrecer_cesion`, `aceptar_cesion`, `cancelar_cesion`.
+- **0013 · Roles y liquidación**: `alineaciones.rol` (POR/DEF/MED/DEL) y `bonus_rol`; `guardar_alineacion(p_partido, p_jugadores, p_roles default null)`; bonus de rol en la liquidación; cesiones que vuelven; protección −1 por jornada; precios con demanda = fichas con dueño / C y sin rendimiento hasta `partidos_min_rendimiento` (3).
+- **0014 · Seguridad**: RLS de fichas/ofertas/cesiones, permisos de vistas y funciones (en Supabase lo nuevo recibe permisos por defecto: aquí se revocan las internas).
+
+Decisiones: dueños y cláusulas de las fichas son visibles para toda la liga (necesario para clausular), así que las plantillas ya no son privadas; las ofertas solo las ven comprador y vendedor. Al cerrar las alineaciones (= cierre del mercado) caducan las ofertas pendientes y se retiran las cesiones sin aceptar. El bonus de rol solo cuenta si el jugador jugó y se multiplica por el ×1,5. "Menos goleado" = menor media de goles encajados por encuentro (empates: todos). Una oferta caducada al responder devuelve `'caducada'` sin error.
+
+`tests/run.sh` reproduce producción: stubs + `desplegado_v01/` + `plataforma/0101` → escenarios 0.1 (dejan datos) → permisos por defecto de Supabase → 0010+ → `escenario_ampliacion.sql` (incluye la migración de los datos 0.1).

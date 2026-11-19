@@ -103,3 +103,38 @@ Pruebas: `tests/run.sh` → 169 comprobaciones en total (90 + 79 de `escenario_m
 | Generador de equipos | `v_rating_balanceo.rating` | select | sustituye a la fórmula basada solo en puntos para el arranque en frío |
 | Ajustes del mercado (admin) | `ligas` (`precio_min, precio_max, max_plantilla, bonus_no_habitual, horas_cierre_alineacion, ingreso_por_punto, comision_venta, k_encuesta, max_variacion`) | update (política `liga_editar`) | `presupuesto_inicial` lo fija `cerrar_encuesta` |
 | Admin, respaldo | `liquidar_jornada(p_partido)`, `recalcular_precios(p_liga, p_partido)` | rpc | idempotentes; normalmente no hace falta llamarlas (trigger al cerrar el partido) |
+
+## Ampliación 0.2 (migraciones 0010–0014) · para la app
+
+Todas las RPC por `supabase.rpc(nombre, params: {...})` con estos nombres de parámetro exactos. Importes en M (numeric, 2 decimales); porcentajes de cesión como fracción 0–1.
+
+| RPC | Parámetros | Devuelve | Notas |
+| --- | --- | --- | --- |
+| `comprar_ficha` | `p_liga uuid, p_jugador uuid` | saldo (numeric) | Error si no quedan fichas libres: "puedes pagar la cláusula… o hacerle una oferta" |
+| `vender_ficha` | `p_ficha uuid` | saldo | Precio − comisión; no si está cedida |
+| `comprar_jugador` / `vender_jugador` | `p_liga, p_jugador` | saldo | Firma 0.1, siguen funcionando |
+| `fijar_clausula` | `p_ficha uuid, p_importe numeric` | cláusula nueva | Subir cuesta `coste_subida_clausula` (10 %) de la subida; bajar gratis; mínimo = valor de mercado |
+| `pagar_clausula` | `p_ficha uuid` | saldo | El dueño no puede negarse; error si la ficha está protegida o cedida |
+| `hacer_oferta` | `p_ficha uuid, p_importe numeric` | id oferta | Una nueva del mismo comprador por la misma ficha cancela la anterior |
+| `responder_oferta` | `p_oferta uuid, p_aceptar boolean` | `'aceptada' \| 'rechazada' \| 'caducada'` | Solo el dueño; al aceptar se revalidan saldo/hueco/no habitual |
+| `cancelar_oferta` | `p_oferta uuid` | — | Solo el comprador |
+| `ofrecer_cesion` | `p_ficha uuid, p_pct numeric` | id cesión | Para el próximo partido con alineación abierta; `cesion_pct_min`–`cesion_pct_max` (0,05–0,30); 1 por jornada |
+| `aceptar_cesion` | `p_cesion uuid` | saldo | Paga `pct × valor` al dueño; recibe 1 por jornada |
+| `cancelar_cesion` | `p_cesion uuid` | — | Solo si nadie la ha aceptado |
+| `guardar_alineacion` | `p_partido uuid, p_jugadores uuid[], p_roles text[]` (opcional) | nº jugadores | Roles `POR/DEF/MED/DEL`, uno por jugador y exactamente 1 `POR`; sin roles: el primero POR y el resto MED. Admite la ficha recibida en cesión |
+
+Vistas y tablas:
+
+| Objeto | Columnas útiles | Visibilidad |
+| --- | --- | --- |
+| `v_mercado` | las de 0.1 + `fichas_totales`, `fichas_libres`, `clausula_minima` (la más barata clausulable, null si ninguna), `mi_ficha_id` | miembros |
+| `v_fichas_jugador` | `ficha_id, liga_id, jugador_id, numero, propietario_id, propietario_nombre, clausula, protegida, cedida, es_mia, precio_compra, adquirida_en` (filtrar por `jugador_id`) | miembros |
+| `v_mi_plantilla` | las de 0.1 + `ficha_id, clausula, protegida, cedida_a_mi, cedida_a_otro, cesion_partido_id, cesion_estado` | propia (+ la recibida en cesión) |
+| `v_mis_ofertas` | `oferta_id, ficha_id, jugador_id, jugador_nombre, direccion ('enviada'/'recibida'), comprador_*, vendedor_*, importe, estado, expira_en, precio_mercado, clausula_actual` | comprador y vendedor |
+| `v_cesiones_disponibles` | `cesion_id, ficha_id, jugador_id, jugador_nombre, propietario_id, propietario_nombre, pct, importe, precio_mercado, no_habitual, partido_id, fecha_hora, cierre, es_mia` | miembros |
+| `alineaciones` | + `rol`, `bonus_rol` | propias; ajenas tras el cierre |
+| `puntos_manager.desglose` | cada elemento: `jugador_id, rol, puntos, bonus_rol, multiplicador, jugo, cedido, total` | miembros |
+| `ligas` | + `bonus_roles, copias_por_jugador, coste_subida_clausula, proteccion_jornadas, cesion_pct_min, cesion_pct_max, horas_caducidad_oferta, partidos_min_rendimiento` | miembros; admins editan |
+| `reglas_puntuacion` | ya no hay `gol_portero`… ni `porteria_cero_*`; nuevas `rol_por_porteria_cero, rol_por_menos_goleado, rol_por_encajados_3, rol_def_menos_goleado, rol_med_asistencia, rol_del_gol` | — |
+
+Cambios que afectan a la app 0.1: `aspectos_valoracion` → todos con `aplica_a = 'todos'` y `porteria` inactivo; `plantillas` es ahora una vista con las fichas de toda la liga (no solo las propias); `transacciones_fantasy.tipo` admite `clausula_pagada, clausula_cobrada, subida_clausula, oferta_pagada, oferta_cobrada, cesion_pagada, cesion_cobrada`. El balanceo de equipos ya no debe penalizar porteros (cambio en la app).

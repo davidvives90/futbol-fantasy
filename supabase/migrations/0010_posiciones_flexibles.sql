@@ -73,7 +73,7 @@ revoke execute on function sembrar_liga_defecto(uuid) from public, anon, authent
 -- Se mantiene la firma (el parámetro de posición se ignora) para no tocar cerrar_encuesta.
 create or replace function media_general(p_pos posicion_campo, cal numeric, vel numeric, res numeric,
                                          def numeric, reg numeric, por numeric) returns numeric
-language sql immutable as $$
+language sql immutable set search_path = public as $$
   select 0.30 * coalesce(cal, 50) + 0.15 * coalesce(vel, 50) + 0.15 * coalesce(res, 50)
        + 0.15 * coalesce(def, 50) + 0.15 * coalesce(reg, 50) + 0.10 * coalesce(por, 50)
 $$;
