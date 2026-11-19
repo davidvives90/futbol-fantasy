@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -70,10 +71,13 @@ class FichaScreen extends ConsumerWidget {
             for (final p in lista)
               ListTile(
                 dense: true,
-                leading: p.esMvp ? const Icon(Icons.star, color: Colors.amber) : const Icon(Icons.sports_soccer),
+                leading: p.esMvp
+                    ? Icon(Icons.star, color: Theme.of(context).colorScheme.tertiary)
+                    : const Icon(Icons.sports_soccer),
                 title: Text(p.fecha == null ? 'Partido' : fechaCorta(p.fecha!)),
                 subtitle: LinearProgressIndicator(value: (p.total.abs() / maximo).clamp(0.0, 1.0).toDouble()),
-                trailing: Text(p.total.toStringAsFixed(p.total % 1 == 0 ? 0 : 1)),
+                trailing: Text(p.total.toStringAsFixed(p.total % 1 == 0 ? 0 : 1),
+                    style: AppTheme.tabular(Theme.of(context).textTheme.titleMedium)),
               ),
           ];
         },

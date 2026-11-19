@@ -3,7 +3,8 @@
 #  1. stubs de Supabase + desplegado_v01/ (0001–0009, copia exacta de producción) + plataforma/0101
 #  2. escenarios de la 0.1 (escenario.sql, escenario_mercado.sql): dejan ligas con plantillas y alineaciones
 #  3. permisos por defecto como en Supabase (tablas nuevas: todo a anon/authenticated; funciones: authenticated)
-#  4. migraciones nuevas migrations/0010…0099 (aditivas) y escenario_ampliacion.sql
+#  4. desplegado_v02/ (0010–0014, copia exacta de producción) y escenario_ampliacion.sql
+#  5. migraciones nuevas migrations/0015+ (aditivas) y escenario_v03.sql
 # Uso: PGHOST=/tmp PGUSER=postgres bash tests/run.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,5 +24,12 @@ alter default privileges in schema public grant all on sequences to anon, authen
 alter default privileges in schema public grant execute on functions to authenticated;
 SQL
 
-for f in migrations/00[1-9][0-9]_*.sql; do aplicar "$f"; done
+for f in desplegado_v02/*.sql; do aplicar "$f"; done
 aplicar tests/escenario_ampliacion.sql
+
+# 5. v0.3: migraciones nuevas (0015+) sobre los datos de todos los escenarios anteriores
+for f in migrations/00*.sql; do
+  n=$(basename "$f" | cut -c1-4)
+  if [ "$n" -ge 15 ] 2>/dev/null; then aplicar "$f"; fi
+done
+aplicar tests/escenario_v03.sql

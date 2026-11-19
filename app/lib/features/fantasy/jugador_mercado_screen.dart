@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
@@ -46,7 +47,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
       } else if (plantilla.length >= p.maxPlantilla) {
         motivoNoCompra = 'Tu plantilla ya tiene ${p.maxPlantilla} jugadores: vende uno antes.';
       } else if (fila.noHabitual && plantilla.any((j) => j.noHabitual)) {
-        motivoNoCompra = 'Solo puedes tener un no habitual en la plantilla.';
+        motivoNoCompra = 'Solo 1 invitado por plantilla.';
       } else if (fila.hayLibres && saldo != null && saldo < fila.precio) {
         motivoNoCompra = 'Saldo insuficiente (${millones(saldo)}).';
       }
@@ -108,6 +109,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
         const SizedBox(height: 24),
         if (enPlantilla != null && enPlantilla.propia)
           OutlinedButton.icon(
+            style: AppButtons.peligro(context),
             icon: const Icon(Icons.sell_outlined),
             label: Text('Vender por ${millones(p.precioVenta(enPlantilla.precio))}'),
             onPressed: !abierto || enPlantilla.cedidaAOtro || enPlantilla.enCesionOfrecida
@@ -120,6 +122,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
                           '${(p.comisionVenta * 100).toStringAsFixed(0)} % de comisión: '
                           'recibes ${millones(p.precioVenta(enPlantilla.precio))}.',
                       accion: 'Vender',
+                      tipo: TipoConfirmacion.peligro,
                     )) {
                       return;
                     }
@@ -140,6 +143,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           if (fila.hayLibres)
             FilledButton.icon(
+              style: AppButtons.premium(context),
               icon: const Icon(Icons.add_shopping_cart),
               label: Text('Comprar por ${millones(fila.precio)}'),
               onPressed: motivoNoCompra != null
@@ -231,7 +235,7 @@ class _DuenosFichas extends ConsumerWidget {
                       style: t.bodySmall,
                     ),
                   Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                    TextButton.icon(
+                    OutlinedButton.icon(
                       icon: const Icon(Icons.handshake_outlined),
                       label: const Text('Hacer oferta'),
                       onPressed: f.cedida
@@ -251,7 +255,8 @@ class _DuenosFichas extends ConsumerWidget {
                             },
                     ),
                     const SizedBox(width: 4),
-                    FilledButton.tonalIcon(
+                    FilledButton.icon(
+                      style: AppButtons.premium(context),
                       icon: const Icon(Icons.gavel),
                       label: const Text('Pagar cláusula'),
                       onPressed: !f.clausulable || bloqueado || (saldo != null && saldo! < (f.clausula ?? 0))
@@ -264,6 +269,7 @@ class _DuenosFichas extends ConsumerWidget {
                                     '$jugadorNombre al instante. No puede negarse. Quedará protegida para ti hasta '
                                     'que se cierre el próximo partido.',
                                 accion: 'Pagar',
+                                tipo: TipoConfirmacion.premium,
                               )) {
                                 return;
                               }

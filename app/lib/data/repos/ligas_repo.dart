@@ -84,6 +84,11 @@ class LigasRepo {
     await sb.rpc('cambiar_rol', params: {'p_miembro': miembroId, 'p_rol': rol.name});
   }
 
+  /// v0.3: fijo / reserva / invitado. Al pasar a fijo, el backend lo inscribe en los partidos futuros abiertos.
+  static Future<void> cambiarRango(String miembroId, RangoMiembro rango) async {
+    await sb.rpc('cambiar_rango', params: {'p_miembro': miembroId, 'p_rango': rango.name});
+  }
+
   static Future<void> expulsar(String miembroId) async {
     await sb.rpc('expulsar', params: {'p_miembro': miembroId});
   }

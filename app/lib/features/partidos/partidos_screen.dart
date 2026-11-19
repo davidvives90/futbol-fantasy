@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -18,7 +19,14 @@ class PartidosScreen extends ConsumerWidget {
     final partidos = ref.watch(partidosProvider(mi.liga.id));
 
     return Scaffold(
-      appBar: const LigaAppBar(),
+      appBar: LigaAppBar(actions: [
+        if (mi.soyAdmin)
+          IconButton(
+            tooltip: 'Programar temporada',
+            icon: const Icon(Icons.event_repeat),
+            onPressed: () => context.push('/temporada'),
+          ),
+      ]),
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/partidos/nuevo'),
@@ -93,7 +101,7 @@ class _ProximoPartido extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(fechaHora(partido.fechaHora), style: t.headlineSmall),
             if (!partido.horaConfirmada)
-              const Text('Hora pendiente de confirmar', style: TextStyle(color: Colors.orange)),
+              Text('Hora pendiente de confirmar', style: TextStyle(color: AppColores.of(context).aviso)),
             const SizedBox(height: 8),
             Text(mi.liga.campoNombre ?? 'Campo sin indicar'),
             const SizedBox(height: 12),
@@ -136,7 +144,7 @@ class _FilaPartido extends StatelessWidget {
   Widget build(BuildContext context) => ListTile(
         leading: const Icon(Icons.event),
         title: Text(fechaHora(p.fechaHora)),
-        subtitle: Text(p.estado.etiqueta),
+        subtitle: Text(p.estado.etiqueta + (!p.horaConfirmada && p.estado.antesDeJugar ? ' · hora por confirmar' : '')),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => context.push('/partidos/${p.id}'),
       );

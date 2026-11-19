@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -38,6 +39,110 @@ class RevisionTab extends ConsumerWidget {
     ref.invalidate(_encuentrosProvider(partido.id));
   }
 
+  /// Equipo de un descuadre a partir del campo `goles_equipo_<n>`.
+  static int? _equipoDescuadre(Disputa d) => int.tryParse((d.campo ?? '').replaceFirst('goles_equipo_', ''));
+
+  /// v0.3: el admin corrige los goles de los jugadores (y, si hace falta, el marcador) hasta que cuadren.
+  Future<void> _corregirDescuadre(BuildContext context, WidgetRef ref, Disputa d) async {
+    final equipo = _equipoDescuadre(d);
+    final conv = ref.read(convocatoriaProvider(partido.id)).valueOrNull ?? const <Inscripcion>[];
+    final List<Encuentro> encuentros;
+    final Map<String, Map<String, dynamic>> acta;
+    try {
+      acta = await PostPartidoRepo.acta(partido.id);
+      encuentros = await PartidosRepo.encuentros(partido.id);
+    } catch (e) {
+      if (context.mounted) mostrarError(context, e);
+      return;
+    }
+    if (!context.mounted) return;
+    final miembros = ref.read(miembrosPorIdProvider(mi.liga.id));
+
+    final jugadores = conv
+        .where((i) => i.estado == EstadoInscripcion.confirmado && i.equipo != null && (equipo == null || i.equipo == equipo))
+        .toList();
+    final goles = {for (final j in jugadores) j.miembroId: toInt(acta[j.miembroId]?['goles'])};
+    final originalGoles = Map<String, int>.from(goles);
+    // Marcadores editables de los encuentros de ese equipo.
+    final marcador = <(int, String), int>{
+      for (final e in encuentros)
+        if (equipo == null || e.equipoLocal == equipo || e.equipoVisitante == equipo) ...{
+          (e.n, 'goles_local'): e.golesLocal,
+          (e.n, 'goles_visitante'): e.golesVisitante,
+        },
+    };
+    final originalMarcador = Map<(int, String), int>.from(marcador);
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setD) {
+          Widget contador(int valor, ValueChanged<int> set) => Row(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: valor > 0 ? () => setD(() => set(valor - 1)) : null,
+                  icon: const Icon(Icons.remove_circle_outline),
+                ),
+                SizedBox(width: 22, child: Text('$valor', textAlign: TextAlign.center)),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => setD(() => set(valor + 1)),
+                  icon: const Icon(Icons.add_circle_outline),
+                ),
+              ]);
+          final suma = goles.values.fold<int>(0, (a, g) => a + g);
+          return AlertDialog(
+            title: Text(equipo == null ? 'Corregir goles' : 'Corregir goles del equipo $equipo'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(shrinkWrap: true, children: [
+                Text('Suma de goles de los jugadores: $suma'),
+                const SizedBox(height: 8),
+                for (final e in encuentros.where((e) => marcador.containsKey((e.n, 'goles_local'))))
+                  Row(children: [
+                    Expanded(child: Text('E${e.equipoLocal} – E${e.equipoVisitante}')),
+                    contador(marcador[(e.n, 'goles_local')]!, (v) => marcador[(e.n, 'goles_local')] = v),
+                    const Text('-'),
+                    contador(marcador[(e.n, 'goles_visitante')]!, (v) => marcador[(e.n, 'goles_visitante')] = v),
+                  ]),
+                const Divider(),
+                for (final j in jugadores)
+                  Row(children: [
+                    Expanded(child: Text(miembros[j.miembroId]?.nombre ?? '…', overflow: TextOverflow.ellipsis)),
+                    contador(goles[j.miembroId]!, (v) => goles[j.miembroId] = v),
+                  ]),
+                const SizedBox(height: 8),
+                const Text('Los autogoles del rival también cuentan para este equipo.', style: TextStyle(fontSize: 12)),
+              ]),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+              FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Guardar')),
+            ],
+          );
+        },
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+
+    final ejecutado = await ejecutar(context, () async {
+      for (final e in marcador.entries) {
+        if (originalMarcador[e.key] != e.value) {
+          await PostPartidoRepo.fijarDato(partidoId: partido.id, n: e.key.$1, campo: e.key.$2, valor: e.value);
+        }
+      }
+      for (final g in goles.entries) {
+        if (originalGoles[g.key] != g.value) {
+          await PostPartidoRepo.fijarDato(partidoId: partido.id, sujetoId: g.key, campo: 'goles', valor: g.value);
+        }
+      }
+    }, ok: 'Datos corregidos');
+    if (ejecutado) {
+      _refrescar(ref);
+      ref.invalidate(rendimientoProvider(mi.liga.id));
+    }
+  }
+
   /// Los valores llegan como texto ('2', '3'); resolver_disputa espera un smallint.
   int _aNumero(String v) => int.tryParse(v) ?? num.tryParse(v)?.round() ?? 0;
 
@@ -46,6 +151,8 @@ class RevisionTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final disputas = ref.watch(_disputasProvider(partido.id));
+    // Mantiene viva la convocatoria (equipos) para poder corregir descuadres.
+    ref.watch(convocatoriaProvider(partido.id));
     final encuentros = ref.watch(_encuentrosProvider(partido.id)).valueOrNull ?? const <Encuentro>[];
     final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
 
@@ -81,7 +188,9 @@ class RevisionTab extends ConsumerWidget {
                   dense: true,
                   title: Text('E${e.equipoLocal} ${e.golesLocal} - ${e.golesVisitante} E${e.equipoVisitante}'),
                   subtitle: e.confianza == null ? null : Text('Coincidencia ${e.confianza!.round()} %'),
-                  trailing: e.enDisputa ? const Icon(Icons.warning_amber, color: Colors.orange) : const Icon(Icons.check, color: Colors.green),
+                  trailing: e.enDisputa
+                      ? Icon(Icons.warning_amber, color: AppColores.of(context).aviso)
+                      : Icon(Icons.check, color: AppColores.of(context).exito),
                 ),
             ],
             const SizedBox(height: 16),
@@ -91,7 +200,31 @@ class RevisionTab extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text('No hay disputas: los datos cuadran.'),
               ),
-            for (final d in pendientes)
+            for (final d in pendientes.where((d) => d.tipo == 'descuadre'))
+              Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(
+                      _equipoDescuadre(d) == null
+                          ? 'Los goles no cuadran con el resultado'
+                          : 'Equipo ${_equipoDescuadre(d)}: los goles no cuadran con el resultado',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Resultado: ${d.valores['resultado'] ?? '?'} · '
+                        'suma de goles de los jugadores: ${d.valores['suma_jugadores'] ?? '?'}'),
+                    const SizedBox(height: 8),
+                    FilledButton.tonalIcon(
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Corregir datos'),
+                      onPressed: () => _corregirDescuadre(context, ref, d),
+                    ),
+                  ]),
+                ),
+              ),
+            for (final d in pendientes.where((d) => d.tipo != 'descuadre'))
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -126,7 +259,7 @@ class RevisionTab extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: 24),
-            FilledButton.icon(
+            FilledButton.tonalIcon(
               icon: const Icon(Icons.emoji_events),
               label: const Text('Cerrar partido y calcular puntos'),
               // Respaldo: al resolver la última disputa los puntos ya se calculan solos.

@@ -57,11 +57,58 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     ];
     for (final a in asistentes) {
       _jugadores[a.miembroId] = ReporteJugador(a.miembroId);
+      if (a.equipo != null) _equipoDe[a.miembroId] = a.equipo!;
       if (a.miembroId != widget.mi.yo.id) {
         final portero = miembros[a.miembroId]?.esPortero ?? false;
         _notas[a.miembroId] = {for (final asp in _aspectosPara(aspectos, portero)) asp.clave: 6};
       }
     }
+  }
+
+  /// Equipo de cada asistente (miembroId → 1..4), para cotejar goles con el resultado.
+  final _equipoDe = <String, int>{};
+
+  /// Cotejo (v0.3, igual que `enviar_parte` en el servidor): goles a favor de un equipo =
+  /// goles de sus jugadores + autogoles de los rivales. No puede superar el resultado indicado;
+  /// si no hay ningún "No sé" en ese equipo, debe ser igual. Con 3–4 equipos se coteja el total del partido.
+  ({List<String> lineas, List<String> errores}) _cotejo() {
+    final lineas = <String>[];
+    final errores = <String>[];
+    final enc = _encuentros ?? const <ReporteEncuentro>[];
+    if (enc.isEmpty) return (lineas: lineas, errores: errores);
+
+    if (enc.length == 1) {
+      final e = enc.first;
+      for (final (eq, rival, resultado) in [
+        (e.equipoLocal, e.equipoVisitante, e.golesLocal),
+        (e.equipoVisitante, e.equipoLocal, e.golesVisitante),
+      ]) {
+        final propios = _jugadores.values.where((j) => _equipoDe[j.sujetoId] == eq).toList();
+        final rivales = _jugadores.values.where((j) => _equipoDe[j.sujetoId] == rival).toList();
+        final suma = propios.where((j) => !j.noSe).fold<int>(0, (a, j) => a + j.goles) +
+            rivales.where((j) => !j.noSe).fold<int>(0, (a, j) => a + j.autogoles);
+        final todosConocidos = propios.isNotEmpty && propios.every((j) => !j.noSe);
+        lineas.add('Equipo $eq: goles de jugadores $suma · resultado $resultado');
+        if (suma > resultado) {
+          errores.add('Has puesto $suma goles al equipo $eq pero el resultado que indicas es '
+              '${e.golesLocal}-${e.golesVisitante}.');
+        } else if (todosConocidos && suma != resultado) {
+          errores.add('Los goles del equipo $eq suman $suma y el resultado dice $resultado. '
+              'Corrige los goles o marca "No sé" en quien no recuerdes.');
+        }
+      }
+    } else {
+      final resultado = enc.fold<int>(0, (a, e) => a + e.golesLocal + e.golesVisitante);
+      final suma = _jugadores.values.where((j) => !j.noSe).fold<int>(0, (a, j) => a + j.goles + j.autogoles);
+      final todosConocidos = _jugadores.values.every((j) => !j.noSe);
+      lineas.add('Total del partido: goles de jugadores $suma · resultados $resultado');
+      if (suma > resultado) {
+        errores.add('Has puesto $suma goles en total pero los marcadores suman $resultado.');
+      } else if (todosConocidos && suma != resultado) {
+        errores.add('Los goles de los jugadores suman $suma y los marcadores $resultado.');
+      }
+    }
+    return (lineas: lineas, errores: errores);
   }
 
   /// Según `aspectos_valoracion.aplica_a`. Desde 0.2 todos los aspectos son 'todos' (no hay posiciones fijas);
@@ -128,7 +175,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     }
     if ((yaEnviado.valueOrNull ?? false) && !_editando) {
       return ListView(padding: const EdgeInsets.all(24), children: [
-        const Icon(Icons.check_circle, size: 64, color: Colors.green),
+        Icon(Icons.check_circle, size: 64, color: AppColores.of(context).exito),
         const SizedBox(height: 12),
         const Text('Has enviado tu parte del partido.', textAlign: TextAlign.center),
         if (numReportes != null)
@@ -142,14 +189,20 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
 
     final listaAspectos = aspectos.valueOrNull ?? const <Aspecto>[];
     _inicializar(definidos.valueOrNull ?? const <Encuentro>[], asistentes, listaAspectos, miembros);
+    final cotejo = _cotejo();
+    final cuadra = cotejo.errores.isEmpty;
 
     return Stepper(
       currentStep: _paso,
       onStepTapped: (i) => setState(() => _paso = i),
       onStepCancel: _paso == 0 ? null : () => setState(() => _paso--),
-      onStepContinue: _enviando
+      onStepContinue: _enviando || (_paso == 2 && !cuadra)
           ? null
           : () {
+              if (_paso == 1 && !cuadra) {
+                mostrarError(context, cotejo.errores.first);
+                return;
+              }
               if (_paso < 2) {
                 setState(() => _paso++);
               } else {
@@ -176,6 +229,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           subtitle: const Text('Marca "No sé" si no te fijaste'),
           isActive: _paso >= 1,
           content: Column(children: [
+            _AvisoCotejo(lineas: cotejo.lineas, errores: cotejo.errores),
             for (final a in asistentes)
               _FilaEstadisticas(
                 reporte: _jugadores[a.miembroId]!,
@@ -191,6 +245,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           subtitle: const Text('Del 1 al 10, anónimo'),
           isActive: _paso >= 2,
           content: Column(children: [
+            if (!cuadra) _AvisoCotejo(lineas: cotejo.lineas, errores: cotejo.errores),
             for (final a in asistentes.where((a) => a.miembroId != widget.mi.yo.id))
               _TarjetaValoracion(
                 nombre: miembros[a.miembroId]?.nombre ?? '…',
@@ -208,6 +263,44 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
 }
 
 // ---------------------------------------------------------------------------
+
+/// Resumen en vivo "goles de jugadores vs resultado" por equipo, en rojo si no cuadra.
+class _AvisoCotejo extends StatelessWidget {
+  const _AvisoCotejo({required this.lineas, required this.errores});
+  final List<String> lineas, errores;
+
+  @override
+  Widget build(BuildContext context) {
+    if (lineas.isEmpty) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    final ok = errores.isEmpty;
+    return Card(
+      color: ok ? cs.secondaryContainer : cs.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(ok ? Icons.check_circle_outline : Icons.error_outline,
+                color: ok ? cs.onSecondaryContainer : cs.onErrorContainer),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(ok ? 'Los goles cuadran con el resultado' : 'Los goles no cuadran con el resultado',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: ok ? cs.onSecondaryContainer : cs.onErrorContainer)),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          for (final l in lineas) Text(l),
+          for (final e in errores) Padding(padding: const EdgeInsets.only(top: 4), child: Text(e)),
+          if (ok)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text('Los autogoles cuentan para el equipo rival.', style: TextStyle(fontSize: 12)),
+            ),
+        ]),
+      ),
+    );
+  }
+}
 
 class _Contador extends StatelessWidget {
   const _Contador({required this.valor, required this.onCambio, this.etiqueta, this.habilitado = true});

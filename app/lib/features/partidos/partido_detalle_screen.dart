@@ -82,8 +82,22 @@ class _MenuAdmin extends ConsumerWidget {
       onSelected: (accion) async {
         switch (accion) {
           case 'hora':
-            await ejecutar(context, () => PartidosRepo.actualizar(partido.id, {'hora_confirmada': true}),
+            await ejecutar(context, () => PartidosRepo.cambiarHora(partido.id, partido.fechaHora),
                 ok: 'Hora confirmada');
+          case 'cambiar_hora':
+            final local = partido.fechaHora.toLocal();
+            final dia = await showDatePicker(
+              context: context,
+              initialDate: local,
+              firstDate: DateTime(local.year - 1),
+              lastDate: DateTime(local.year + 2),
+            );
+            if (dia == null || !context.mounted) return;
+            final hora = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(local));
+            if (hora == null || !context.mounted) return;
+            final nueva = DateTime(dia.year, dia.month, dia.day, hora.hour, hora.minute);
+            await ejecutar(context, () => PartidosRepo.cambiarHora(partido.id, nueva),
+                ok: 'Hora cambiada y confirmada');
           case 'jugado':
             // marcar_jugado: genera los cargos (facturas del partido o coste total) y abre la
             // ventana post-partido (ligas.horas_post_partido, 48 h por defecto).
@@ -100,7 +114,7 @@ class _MenuAdmin extends ConsumerWidget {
                   ok: 'Partes cruzados: revisa el acta y las disputas');
             }
           case 'cancelar':
-            if (await confirmar(context, 'Cancelar partido', '¿Seguro? Se avisará a los inscritos.', accion: 'Cancelar partido')) {
+            if (await confirmar(context, 'Cancelar partido', '¿Seguro? Se avisará a los inscritos.', accion: 'Cancelar partido', tipo: TipoConfirmacion.peligro)) {
               if (context.mounted) {
                 await ejecutar(context, () => PartidosRepo.actualizar(partido.id, {'estado': EstadoPartido.cancelado.name}));
               }
@@ -111,6 +125,7 @@ class _MenuAdmin extends ConsumerWidget {
       },
       itemBuilder: (_) => [
         if (!partido.horaConfirmada && e.antesDeJugar) const PopupMenuItem(value: 'hora', child: Text('Confirmar hora')),
+        if (e.antesDeJugar) const PopupMenuItem(value: 'cambiar_hora', child: Text('Cambiar fecha u hora')),
         if (e == EstadoPartido.equipos_hechos)
           const PopupMenuItem(value: 'jugado', child: Text('Partido jugado: cobrar y abrir post-partido')),
         if (e == EstadoPartido.post_partido)

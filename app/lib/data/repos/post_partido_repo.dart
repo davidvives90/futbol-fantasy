@@ -36,7 +36,9 @@ class PostPartidoRepo {
     return r.isNotEmpty;
   }
 
-  /// Envía el parte completo: resultados, estadísticas y valoraciones.
+  /// Envía el parte completo. Resultados + estadísticas van en UNA llamada a `enviar_parte` (v0.3),
+  /// que valida en el servidor que los goles de los jugadores cuadren con el resultado indicado;
+  /// después se guardan las valoraciones (anónimas).
   /// [valoraciones]: votadoId → aspecto → nota (1..10).
   static Future<void> enviar({
     required String partidoId,
@@ -45,32 +47,26 @@ class PostPartidoRepo {
     required List<ReporteJugador> jugadores,
     required Map<String, Map<String, int>> valoraciones,
   }) async {
-    await sb.from('reportes_encuentro').upsert([
-      for (final e in encuentros)
-        {
-          'partido_id': partidoId,
-          'reportero_id': reporteroId,
-          'n': e.n, // los equipos de cada encuentro los fija el admin; aquí solo el marcador
-          'goles_local': e.golesLocal,
-          'goles_visitante': e.golesVisitante,
-        }
-    ]);
-
-    final filas = [
-      for (final j in jugadores.where((j) => !j.noSe))
-        {
-          'partido_id': partidoId,
-          'reportero_id': reporteroId,
-          'sujeto_id': j.sujetoId,
-          'goles': j.goles,
-          'asistencias': j.asistencias,
-          'autogoles': j.autogoles,
-          'paradas_clave': j.paradasClave,
-          'penaltis_parados': j.penaltisParados,
-          'penaltis_fallados': j.penaltisFallados,
-        }
-    ];
-    if (filas.isNotEmpty) await sb.from('reportes_jugador').upsert(filas);
+    await sb.rpc('enviar_parte', params: {
+      'p_partido': partidoId,
+      // Los equipos de cada encuentro los fija el admin; aquí solo el marcador.
+      'p_resultados': [
+        for (final e in encuentros) {'n': e.n, 'goles_local': e.golesLocal, 'goles_visitante': e.golesVisitante},
+      ],
+      // "No sé" = no se envía la fila (no cuenta para el consenso).
+      'p_jugadores': [
+        for (final j in jugadores.where((j) => !j.noSe))
+          {
+            'sujeto_id': j.sujetoId,
+            'goles': j.goles,
+            'asistencias': j.asistencias,
+            'autogoles': j.autogoles,
+            'paradas_clave': j.paradasClave,
+            'penaltis_parados': j.penaltisParados,
+            'penaltis_fallados': j.penaltisFallados,
+          }
+      ],
+    });
 
     final notas = [
       for (final v in valoraciones.entries)
@@ -104,6 +100,25 @@ class PostPartidoRepo {
   /// Devuelve el nuevo estado del partido (`cerrado` si era la última disputa).
   static Future<String> resolverDisputa(String disputaId, int valor) async =>
       (await sb.rpc('resolver_disputa', params: {'p_disputa': disputaId, 'p_valor': valor})).toString();
+
+  /// v0.3, admin: fija el valor de un dato del acta (goles de un jugador [sujetoId], o el marcador de un
+  /// encuentro [n] con campo goles_local / goles_visitante). Después el backend vuelve a comprobar los
+  /// descuadres; uno se cierra solo cuando la suma de goles cuadra con el resultado.
+  static Future<void> fijarDato({
+    required String partidoId,
+    String? sujetoId,
+    int? n,
+    required String campo,
+    required int valor,
+  }) async {
+    await sb.rpc('fijar_dato', params: {
+      'p_partido': partidoId,
+      'p_sujeto': sujetoId,
+      'p_n': n,
+      'p_campo': campo,
+      'p_valor': valor,
+    });
+  }
 
   static Future<List<PuntosFantasy>> puntos(String partidoId) async {
     final rows = await sb.from('puntos_fantasy').select().eq('partido_id', partidoId).order('total', ascending: false);

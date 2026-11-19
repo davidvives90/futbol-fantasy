@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
@@ -57,7 +58,7 @@ class MiEquipoTab extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-              _Cifra('Saldo', millones(m.saldo)),
+              _Cifra('Saldo', millones(m.saldo), premium: true),
               _Cifra('Valor plantilla', millones(valor)),
               _Cifra('Puntos', m.puntosTotales.toStringAsFixed(m.puntosTotales % 1 == 0 ? 0 : 1)),
             ]),
@@ -184,6 +185,7 @@ class MiEquipoTab extends ConsumerWidget {
               '${(p.comisionVenta * 100).toStringAsFixed(0)} % de comisión: recibes ${millones(recibes)}'
               '${j.precioCompra != null ? ' (lo compraste a ${millones(j.precioCompra)})' : ''}.',
           accion: 'Vender',
+          tipo: TipoConfirmacion.peligro,
         )) {
           return;
         }
@@ -211,11 +213,14 @@ class MiEquipoTab extends ConsumerWidget {
 }
 
 class _Cifra extends StatelessWidget {
-  const _Cifra(this.etiqueta, this.valor);
+  const _Cifra(this.etiqueta, this.valor, {this.premium = false});
   final String etiqueta, valor;
+  final bool premium;
   @override
   Widget build(BuildContext context) => Column(children: [
-        Text(valor, style: Theme.of(context).textTheme.titleLarge),
+        Text(valor,
+            style: AppTheme.numero(context,
+                size: 22, color: premium ? Theme.of(context).colorScheme.tertiary : null)),
         Text(etiqueta, style: Theme.of(context).textTheme.bodySmall),
       ]);
 }

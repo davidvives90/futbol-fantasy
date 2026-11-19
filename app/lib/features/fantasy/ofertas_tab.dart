@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
@@ -102,6 +103,7 @@ class OfertasTab extends ConsumerWidget {
                     onTap: () => context.push('/fantasy/jugador/${c.jugadorId}'),
                     trailing: c.esMia
                         ? TextButton(
+                            style: AppButtons.peligroTexto(context),
                             onPressed: () async {
                               final ok = await ejecutar(context, () => FantasyRepo.cancelarCesion(c.id),
                                   ok: 'Cesión retirada');
@@ -110,6 +112,7 @@ class OfertasTab extends ConsumerWidget {
                             child: const Text('Retirar'),
                           )
                         : FilledButton(
+                            style: AppButtons.premium(context),
                             onPressed: yaRecibida || (saldo != null && saldo < c.importe)
                                 ? null
                                 : () async {
@@ -119,6 +122,7 @@ class OfertasTab extends ConsumerWidget {
                                       'Pagas ${millones(c.importe)} a ${c.propietarioNombre ?? 'su dueño'} y podrás alinear a '
                                           '${c.jugadorNombre ?? 'este jugador'} en el próximo partido. Después vuelve a su dueño.',
                                       accion: 'Aceptar',
+                                      tipo: TipoConfirmacion.premium,
                                     )) {
                                       return;
                                     }
@@ -195,11 +199,13 @@ class _TarjetaOferta extends ConsumerWidget {
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
               if (o.recibida) ...[
                 TextButton(
+                  style: AppButtons.peligroTexto(context),
                   onPressed: () => _responder(context, ref, k, false),
                   child: const Text('Rechazar'),
                 ),
                 const SizedBox(width: 4),
                 FilledButton(
+                  style: AppButtons.premium(context),
                   onPressed: () => _responder(context, ref, k, true),
                   child: const Text('Aceptar'),
                 ),
@@ -226,6 +232,7 @@ class _TarjetaOferta extends ConsumerWidget {
           'Vendes tu ficha de ${o.jugadorNombre ?? 'este jugador'} a ${o.compradorNombre ?? 'este mánager'} '
               'por ${millones(o.importe)}.',
           accion: 'Aceptar',
+          tipo: TipoConfirmacion.premium,
         )) {
       return;
     }

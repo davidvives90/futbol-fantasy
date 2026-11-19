@@ -102,3 +102,14 @@ Requiere las migraciones `0010`–`0014` en Supabase (ver `../supabase/README.md
 - **Alineación con roles** dibujada sobre un campo: exactamente 1 portero y el resto defensa/medio/delantero. Con `bonus_roles` activo se muestra la leyenda de bonus de cada rol (claves `rol_*`).
 - **Posiciones flexibles**: los puntos del partido real ya no dependen de la posición (la del perfil es solo "preferida"); paradas y penaltis se pueden reportar para cualquiera; el balanceo de equipos ya no penaliza porteros y, si hay encuesta, iguala con poco peso la habilidad media bajo palos.
 - **Ajustes Fantasy** (admin): coste de subir cláusula, protección, % de cesión, caducidad de ofertas, partidos antes de que cuente el rendimiento y el interruptor de bonus por rol.
+
+## Versión 0.3: rangos, temporada, factura mensual y cotejo de goles
+
+Especificación: `../docs/v03_liga.md` · contrato: `../docs/contrato_app_backend.md` (sección v0.3).
+
+- **Rangos** (Liga → Jugadores): cada jugador es Fijo, Reserva o Invitado; el admin lo cambia desde el menú. Aviso si hay más fijos que plazas. En convocatorias aparece la inicial (F/R/I).
+- **Convocatoria y cobro** (Liga → Convocatoria y cobro, admin): orden de la lista de espera (por prioridad: fijos que vuelven, reservas, invitados; o por orden de apuntarse), modo de cobro (por partido o factura mensual) y precio fijo o variable para reservas e invitados.
+- **Programar temporada** (Partidos → icono de calendario, admin): partidos recurrentes entre dos fechas, días de la semana, hora fija o variable, coste y fechas excluidas, con vista previa. Cancelar los partidos futuros de una temporada. En cada partido: «Confirmar hora» y «Cambiar fecha u hora».
+- **Factura mensual** (Caja → Facturas): al subirla se indica el periodo (por defecto el mes anterior); «Liquidar» muestra el reparto (importe − pagado por reservas/invitados, cuota por partido de fijo, cargo por fijo) y lo aplica.
+- **Cotejo de goles** (Post-partido): la suma de goles de los jugadores (+ autogoles del rival) no puede superar el resultado y, si nadie está en «No sé», debe coincidir; el parte se envía con `enviar_parte`. En Revisión, los descuadres se corrigen con «Corregir datos».
+- **Fantasy**: el ×1,5 es para el rango Invitado («Invitado ×1,5», máximo 1 por plantilla).

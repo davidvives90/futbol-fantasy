@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
 
@@ -21,7 +22,7 @@ class AvatarMiembro extends StatelessWidget {
   }
 }
 
-/// Insignia "No habitual ×1,5".
+/// Insignia "Invitado ×1,5" (rango Invitado en la liga, v0.3).
 class InsigniaNoHabitual extends StatelessWidget {
   const InsigniaNoHabitual({super.key, required this.bonus, this.corta = false});
   final double bonus;
@@ -33,9 +34,14 @@ class InsigniaNoHabitual extends StatelessWidget {
     final x = '×${bonus.toStringAsFixed(1).replaceAll('.', ',')}';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: cs.secondaryContainer, borderRadius: BorderRadius.circular(8)),
-      child: Text(corta ? x : 'No habitual $x',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSecondaryContainer)),
+      // Premium: dorado (tertiaryContainer + texto onTertiary)
+      decoration: BoxDecoration(
+        color: cs.tertiaryContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cs.tertiary.withValues(alpha: 0.5)),
+      ),
+      child: Text(corta ? x : 'Invitado $x',
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: cs.onTertiary)),
     );
   }
 }
@@ -49,13 +55,13 @@ class VariacionTexto extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = variacion ?? 0;
     final color = v > 0
-        ? Colors.green.shade700
+        ? AppColores.of(context).exito
         : v < 0
             ? Theme.of(context).colorScheme.error
             : Theme.of(context).colorScheme.outline;
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(v > 0 ? Icons.arrow_drop_up : (v < 0 ? Icons.arrow_drop_down : Icons.remove), size: 18, color: color),
-      Text(variacionM(v), style: TextStyle(fontSize: 12, color: color)),
+      Text(variacionM(v), style: AppTheme.tabular(TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600))),
     ]);
   }
 }
@@ -69,8 +75,8 @@ class IconoConvocatoria extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final (icono, color, tip) = switch (estado) {
-      EstadoInscripcion.confirmado => (Icons.check_circle, Colors.green.shade700, 'Confirmado'),
-      EstadoInscripcion.duda => (Icons.help, Colors.orange.shade700, 'En duda'),
+      EstadoInscripcion.confirmado => (Icons.check_circle, AppColores.of(context).exito, 'Confirmado'),
+      EstadoInscripcion.duda => (Icons.help, AppColores.of(context).aviso, 'En duda'),
       EstadoInscripcion.baja => (Icons.cancel, cs.error, 'Baja'),
       EstadoInscripcion.espera => (Icons.hourglass_bottom, cs.outline, 'En espera'),
       null => (Icons.radio_button_unchecked, cs.outline, 'Sin apuntar'),
@@ -185,11 +191,13 @@ class InsigniaRol extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Roles con la paleta de equipos (sobria) y el portero en dorado
+    final colores = AppColores.of(context);
     final color = switch (rol) {
-      RolAlineacion.POR => Colors.orange.shade700,
-      RolAlineacion.DEF => Colors.blue.shade700,
-      RolAlineacion.MED => Colors.green.shade700,
-      RolAlineacion.DEL => Colors.red.shade700,
+      RolAlineacion.POR => Theme.of(context).colorScheme.tertiary,
+      RolAlineacion.DEF => colores.equipo1,
+      RolAlineacion.MED => Theme.of(context).colorScheme.primary,
+      RolAlineacion.DEL => colores.equipo2,
     };
     return Container(
       width: 34,
@@ -197,7 +205,10 @@ class InsigniaRol extends StatelessWidget {
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
       child: Text(rol.name,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+          style: TextStyle(
+              color: rol == RolAlineacion.POR ? Theme.of(context).colorScheme.onTertiary : Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700)),
     );
   }
 }
@@ -231,7 +242,7 @@ class DesgloseManager extends StatelessWidget {
                       : [
                           '${fmt(l.puntos)} pts',
                           if (l.bonusRol != 0) '${l.bonusRol > 0 ? '+' : ''}${fmt(l.bonusRol)} rol',
-                          if (l.multiplicador != 1) '×${fmt(l.multiplicador)} no habitual',
+                          if (l.multiplicador != 1) '×${fmt(l.multiplicador)} invitado',
                           if (l.cedido) 'cedido',
                         ].join(' · '),
                   style: t.bodySmall,

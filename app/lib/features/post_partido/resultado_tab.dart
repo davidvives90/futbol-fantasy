@@ -69,18 +69,20 @@ class ResultadoTab extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  Text('Equipo ${e.equipoLocal}', style: TextStyle(color: AppTheme.colorEquipo(e.equipoLocal))),
-                  Text('${e.golesLocal} - ${e.golesVisitante}', style: Theme.of(context).textTheme.headlineMedium),
-                  Text('Equipo ${e.equipoVisitante}', style: TextStyle(color: AppTheme.colorEquipo(e.equipoVisitante))),
+                  Text('Equipo ${e.equipoLocal}',
+                      style: TextStyle(color: AppTheme.colorEquipo(e.equipoLocal), fontWeight: FontWeight.w600)),
+                  Text('${e.golesLocal} - ${e.golesVisitante}', style: AppTheme.numero(context)),
+                  Text('Equipo ${e.equipoVisitante}',
+                      style: TextStyle(color: AppTheme.colorEquipo(e.equipoVisitante), fontWeight: FontWeight.w600)),
                 ]),
               ),
             ),
           for (final m in mvps)
             Card(
-              color: Theme.of(context).colorScheme.primaryContainer,
+              color: Theme.of(context).colorScheme.tertiaryContainer,
               child: ListTile(
-                leading: const Icon(Icons.star, color: Colors.amber, size: 36),
-                title: Text('MVP: ${miembros[m.miembroId]?.nombre ?? '…'}'),
+                leading: Icon(Icons.star, color: Theme.of(context).colorScheme.tertiary, size: 36),
+                title: Text('${mvps.length > 1 ? 'MVP compartido' : 'MVP'}: ${miembros[m.miembroId]?.nombre ?? '…'}'),
                 subtitle: Text('Valoración media ${m.notaMedia?.toStringAsFixed(1) ?? '—'}'),
               ),
             ),
@@ -97,13 +99,14 @@ class ResultadoTab extends ConsumerWidget {
                 if (p.notaMedia != null) 'nota ${p.notaMedia!.toStringAsFixed(1)}',
               ].join('  ')),
               trailing: Text(p.total.toStringAsFixed(p.total % 1 == 0 ? 0 : 1),
-                  style: Theme.of(context).textTheme.titleLarge),
+                  style: AppTheme.numero(context, size: 22)),
               children: [
                 for (final e in p.desglose.entries.where((e) => (e.value is num) && e.value != 0))
                   ListTile(
                     dense: true,
                     title: Text(_etiqueta(e.key)),
-                    trailing: Text('${(e.value as num) > 0 ? '+' : ''}${e.value}'),
+                    trailing: Text('${(e.value as num) > 0 ? '+' : ''}${e.value}',
+                        style: AppTheme.tabular(Theme.of(context).textTheme.bodyMedium)),
                   ),
               ],
             ),
@@ -128,7 +131,7 @@ final _managerProvider =
   return _DatosManager(r[0] as List<Alineado>, r[1] as PuntosManager?);
 });
 
-/// "Tus puntos de mánager": puntos de cada alineado (×1,5 si era no habitual) e ingreso de la jornada.
+/// "Tus puntos de mánager": puntos de cada alineado (×1,5 si era invitado) e ingreso de la jornada.
 class _PuntosManagerSeccion extends ConsumerWidget {
   const _PuntosManagerSeccion({required this.partido, required this.mi, required this.puntos});
   final Partido partido;

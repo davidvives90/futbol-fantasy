@@ -28,7 +28,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     ('precio_min', 'Precio mínimo (M)', null),
     ('precio_max', 'Precio máximo (M)', null),
     ('max_plantilla', 'Jugadores por plantilla', null),
-    ('bonus_no_habitual', 'Multiplicador no habitual', 'Ej.: 1,5'),
+    ('bonus_no_habitual', 'Multiplicador de invitados', 'Ej.: 1,5'),
     ('horas_cierre_alineacion', 'Cierre de alineación (horas antes)', null),
     ('ingreso_por_punto', 'Ingreso por punto (M)', null),
     ('comision_venta', 'Comisión de venta (%)', 'Ej.: 5'),
@@ -276,7 +276,8 @@ class _FilaEncuestaState extends ConsumerState<_FilaEncuesta> {
           ] else if (_sinDato)
             const Text('Progreso no disponible'),
         ]),
-        trailing: TextButton(
+        trailing: FilledButton.tonal(
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
           onPressed: () async {
             final aviso = pct != null && pct < 0.6 ? ' Solo ha respondido el ${(pct * 100).round()} %.' : '';
             if (!await confirmar(context, 'Cerrar encuesta',

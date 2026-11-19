@@ -67,7 +67,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
               child: ChoiceChip(label: Text(o.etiqueta), selected: _orden == o, onSelected: (_) => setState(() => _orden = o)),
             ),
           FilterChip(
-            label: const Text('No habituales'),
+            label: const Text('Invitados ×1,5'),
             selected: _soloNoHabituales,
             onSelected: (v) => setState(() => _soloNoHabituales = v),
           ),

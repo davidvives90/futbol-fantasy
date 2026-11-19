@@ -1,4 +1,5 @@
 import '../../core/supabase.dart';
+import '../../core/utils.dart';
 import '../models.dart';
 
 /// Partidos, convocatorias, equipos y operaciones del admin sobre el partido.
@@ -35,6 +36,56 @@ class PartidosRepo {
         'p_campo_maps_url': campoMapsUrl,
         'p_hora_confirmada': horaConfirmada,
       })) as String;
+
+  // ---- Temporada (v0.3) ------------------------------------------------------
+
+  /// Crea los partidos recurrentes entre [desde] y [hasta]. Devuelve el nº de partidos creados.
+  /// [hora] en hora local de España ('HH:MM'); el backend la interpreta en Europe/Madrid.
+  static Future<int> programarTemporada(
+    String ligaId, {
+    required DateTime desde,
+    required DateTime hasta,
+    required List<int> diasSemana,
+    required String hora,
+    required bool horaFija,
+    double coste = 0,
+    List<DateTime> excluir = const [],
+    String? nombre,
+  }) async {
+    final r = await sb.rpc('programar_temporada', params: {
+      'p_liga': ligaId,
+      'p_desde': fechaSql(desde),
+      'p_hasta': fechaSql(hasta),
+      'p_dias_semana': diasSemana,
+      'p_hora': hora,
+      'p_hora_fija': horaFija,
+      'p_coste': coste,
+      'p_excluir': excluir.isEmpty ? null : [for (final d in excluir) fechaSql(d)],
+      'p_nombre': nombre,
+    });
+    return (r as num?)?.toInt() ?? 0;
+  }
+
+  static Future<List<Temporada>> temporadas(String ligaId) async {
+    final rows = await sb.from('temporadas').select().eq('liga_id', ligaId).order('desde', ascending: false);
+    return [for (final r in rows) Temporada.fromMap(r)];
+  }
+
+  /// Cancela los partidos aún no jugados de la temporada a partir de [desde] (hoy por defecto).
+  static Future<void> cancelarTemporada(String temporadaId, {DateTime? desde}) async {
+    await sb.rpc('cancelar_temporada', params: {
+      'p_temporada': temporadaId,
+      if (desde != null) 'p_desde': fechaSql(desde),
+    });
+  }
+
+  static Future<void> cambiarHora(String partidoId, DateTime fechaHora, {bool confirmada = true}) async {
+    await sb.rpc('cambiar_hora_partido', params: {
+      'p_partido': partidoId,
+      'p_fecha_hora': fechaHora.toUtc().toIso8601String(),
+      'p_confirmada': confirmada,
+    });
+  }
 
   static Future<void> actualizar(String partidoId, Map<String, dynamic> datos) async {
     await sb.from('partidos').update(datos).eq('id', partidoId);

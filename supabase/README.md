@@ -95,3 +95,17 @@ Decisiones: dueños y cláusulas de las fichas son visibles para toda la liga (n
 `tests/run.sh` reproduce producción: stubs + `desplegado_v01/` + `plataforma/0101` → escenarios 0.1 (dejan datos) → permisos por defecto de Supabase → 0010+ → `escenario_ampliacion.sql` (incluye la migración de los datos 0.1).
 
 Versión 0.2 desplegada el 19-11-2026: 0010–0014 (copia exacta en `desplegado_v02/`). Verificado: 28 tablas, 20 vistas, 92 funciones, todas las tablas con RLS, ninguna función ejecutable por anon.
+
+## v0.3 (0015–0019, sin desplegar)
+
+Contrato: `docs/v03_liga.md` (y la sección v0.3 de `docs/contrato_app_backend.md`). Aditivas sobre producción (0001–0014): no tocan `desplegado_v01/` ni `desplegado_v02/`. Orden: `0015_rangos_espera` → `0016_temporadas` → `0017_factura_mensual` → `0018_verificacion_goles` → `0019_v03_seguridad`.
+
+- **0015 · Rangos y espera**: `miembros.rango` (fijo/reserva/invitado; existentes → fijo, altas → reserva, creador → fijo), `cambiar_rango`, `ligas.orden_espera` (prioridad/anotación), `convocatorias.rango`; los fijos se inscriben solos al crear cualquier partido (trigger); la espera ordena fijos → reservas → invitados (en «anotación», reservas e invitados juntos por hora); invitado del Fantasy (×1,5) = rango invitado; `precrear_jugadores(..., p_rango)`.
+- **0016 · Temporadas**: tabla `temporadas`, `partidos.temporada_id`, `programar_temporada` (hora de Madrid con horario de verano, solo fechas futuras, sin duplicar días, máx. 120), `cancelar_temporada`, `cambiar_hora_partido`.
+- **0017 · Factura mensual**: `ligas.modo_cobro`, `ligas.precio_invitado` (null = variable), periodo y liquidación en `facturas`; al jugar, reservas/invitados pagan el precio fijo; `simular_factura` / `liquidar_factura` reparten el resto entre fijos según partidos jugados (céntimos al más antiguo).
+- **0018 · Verificación de goles**: `enviar_parte` (rechaza partes donde los goles superan el resultado propio, o no lo igualan si están todos indicados); en el acta consolidada, disputas `descuadre` que bloquean los puntos y se cierran solas al corregir con `fijar_dato` (o `revisar_descuadres`); `resolver_disputa` no admite descuadres; vista `v_mvps`.
+- **0019 · Seguridad**: RLS de `temporadas`, `grant select (rango)` en `miembros`, internas revocadas y RPC concedidas.
+
+MVP y estadísticas revisados (sin cambios de regla, sin errores encontrados): mayor nota con ≥ 3 votantes, desempate goles + asistencias, empate persistente compartido, sin MVP con < 3 votantes, sin duplicar al recalcular; `v_rendimiento`, `v_clasificacion`, `v_pichichi` correctos con varios partidos.
+
+`tests/escenario_v03.sql` (116 comprobaciones) se ejecuta tras aplicar 0015+ sobre los datos de todos los escenarios anteriores. Termina con `ESCENARIO V0.3 COMPLETADO SIN ERRORES`.

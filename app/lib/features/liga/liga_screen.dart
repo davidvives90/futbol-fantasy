@@ -6,11 +6,13 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/liga_activa.dart';
 import '../../core/supabase.dart';
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
 import '../shell/home_shell.dart';
+import 'chip_rango.dart';
 
 String _enlacePersonal(String token) => '${Env.webInvitacion}/$token';
 
@@ -49,6 +51,14 @@ class LigaScreen extends ConsumerWidget {
           ),
           if (mi.soyAdmin)
             ListTile(
+              leading: const Icon(Icons.event_repeat),
+              title: const Text('Convocatoria y cobro'),
+              subtitle: const Text('Lista de espera, factura mensual y precio de reservas'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/liga/convocatoria'),
+            ),
+          if (mi.soyAdmin)
+            ListTile(
               leading: const Icon(Icons.rule),
               title: const Text('Reglas de puntuación y aspectos'),
               trailing: const Icon(Icons.chevron_right),
@@ -67,7 +77,7 @@ class LigaScreen extends ConsumerWidget {
             title: Text('Abandonar la liga', style: TextStyle(color: Theme.of(context).colorScheme.error)),
             onTap: () async {
               if (!await confirmar(context, 'Abandonar ${liga.nombre}',
-                  'Dejarás de ver sus partidos. Tu historial y tus deudas se conservan.', accion: 'Abandonar')) {
+                  'Dejarás de ver sus partidos. Tu historial y tus deudas se conservan.', accion: 'Abandonar', tipo: TipoConfirmacion.peligro)) {
                 return;
               }
               if (!context.mounted) return;
@@ -222,8 +232,12 @@ class _Invitar extends ConsumerWidget {
         if (mi.soyAdmin)
           OverflowBar(alignment: MainAxisAlignment.end, children: [
             TextButton(
+              style: AppButtons.peligroTexto(context),
               onPressed: () async {
-                if (!await confirmar(context, 'Regenerar código', 'El código actual dejará de funcionar.')) return;
+                if (!await confirmar(context, 'Regenerar código', 'El código actual dejará de funcionar.',
+                    accion: 'Regenerar', tipo: TipoConfirmacion.peligro)) {
+                  return;
+                }
                 if (!context.mounted) return;
                 await ejecutar(context, () => LigasRepo.regenerarCodigo(mi.liga.id), ok: 'Código regenerado');
                 refrescarLigas(ref);
@@ -263,11 +277,17 @@ class _Miembros extends ConsumerWidget {
           'Perderá el acceso a la liga y no podrá volver con el código. '
               'Sus inscripciones a próximos partidos se cancelarán. Su historial y sus deudas se conservan.',
           accion: 'Expulsar',
+          tipo: TipoConfirmacion.peligro,
         )) {
           return;
         }
         op = () => LigasRepo.expulsar(m.id);
         ok = '${m.nombre} expulsado';
+      case 'rango_fijo' || 'rango_reserva' || 'rango_invitado':
+        final rango = RangoMiembro.values.firstWhere((r) => 'rango_${r.name}' == accion);
+        if (rango == m.rango) return;
+        op = () => LigasRepo.cambiarRango(m.id, rango);
+        ok = '${m.nombre} ahora es ${rango.etiqueta.toLowerCase()}';
       case 'invitar':
         // El token no es legible por columna: solo los admins lo obtienen con enlaces_invitacion().
         try {
@@ -300,6 +320,8 @@ class _Miembros extends ConsumerWidget {
       });
     final expulsados = miembros.where((m) => m.estado == EstadoMiembro.expulsado).toList();
     final t = Theme.of(context).textTheme;
+    final numFijos = activos.where((m) => m.rango == RangoMiembro.fijo).length;
+    final plazasFijas = mi.liga.plazasFijas ?? mi.liga.plazas;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (mi.soyAdmin && solicitudes.isNotEmpty) ...[
@@ -329,23 +351,52 @@ class _Miembros extends ConsumerWidget {
             ]),
           ),
       ],
-      Padding(padding: const EdgeInsets.fromLTRB(16, 24, 16, 4), child: Text('Jugadores (${activos.length})', style: t.titleSmall)),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+        child: Text(
+          'Jugadores (${activos.length}) · $numFijos fijos · '
+          '${activos.where((m) => m.rango == RangoMiembro.reserva).length} reservas · '
+          '${activos.where((m) => m.rango == RangoMiembro.invitado).length} invitados',
+          style: t.titleSmall,
+        ),
+      ),
+      if (numFijos > plazasFijas)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            color: Theme.of(context).colorScheme.errorContainer,
+            child: ListTile(
+              leading: const Icon(Icons.warning_amber),
+              title: Text('Hay $numFijos fijos y $plazasFijas plazas'),
+              subtitle: const Text('Los que no quepan quedarán en la lista de espera de cada partido.'),
+            ),
+          ),
+        ),
       for (final m in activos)
         ListTile(
           leading: CircleAvatar(child: Text(m.inicial)),
-          title: Text(m.nombre + (m.id == mi.yo.id ? ' (tú)' : '')),
+          title: Row(children: [
+            Flexible(child: Text(m.nombre + (m.id == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: 8),
+            ChipRango(m.rango),
+          ]),
           subtitle: Text([
             if (m.esAdmin) 'Administrador',
             if (!m.registrado) 'Pendiente de registro' else etiquetaPosicion(m.posicion),
           ].join(' · ')),
-          trailing: mi.soyAdmin && m.id != mi.yo.id
+          trailing: mi.soyAdmin
               ? PopupMenuButton<String>(
                   onSelected: (a) => _accion(context, ref, m, a),
                   itemBuilder: (_) => [
-                    if (!m.registrado) const PopupMenuItem(value: 'invitar', child: Text('Reenviar enlace')),
-                    if (m.registrado && !m.esAdmin) const PopupMenuItem(value: 'admin', child: Text('Nombrar administrador')),
-                    if (m.esAdmin) const PopupMenuItem(value: 'quitar_admin', child: Text('Quitar administrador')),
-                    const PopupMenuItem(value: 'expulsar', child: Text('Expulsar')),
+                    for (final r in RangoMiembro.values)
+                      CheckedPopupMenuItem(value: 'rango_${r.name}', checked: m.rango == r, child: Text(r.etiqueta)),
+                    if (m.id != mi.yo.id) ...[
+                      const PopupMenuDivider(),
+                      if (!m.registrado) const PopupMenuItem(value: 'invitar', child: Text('Reenviar enlace')),
+                      if (m.registrado && !m.esAdmin) const PopupMenuItem(value: 'admin', child: Text('Nombrar administrador')),
+                      if (m.esAdmin) const PopupMenuItem(value: 'quitar_admin', child: Text('Quitar administrador')),
+                      const PopupMenuItem(value: 'expulsar', child: Text('Expulsar')),
+                    ],
                   ],
                 )
               : null,
@@ -358,3 +409,4 @@ class _Miembros extends ConsumerWidget {
     ]);
   }
 }
+

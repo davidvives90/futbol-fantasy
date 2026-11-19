@@ -11,6 +11,7 @@ import '../features/fantasy/ajustes_fantasy_screen.dart';
 import '../features/fantasy/encuesta_screen.dart';
 import '../features/fantasy/fantasy_screen.dart';
 import '../features/fantasy/jugador_mercado_screen.dart';
+import '../features/liga/convocatoria_cobro_screen.dart';
 import '../features/liga/liga_screen.dart';
 import '../features/liga/reglas_screen.dart';
 import '../features/onboarding/buscar_ligas_screen.dart';
@@ -20,6 +21,7 @@ import '../features/onboarding/unirse_screen.dart';
 import '../features/partidos/crear_partido_screen.dart';
 import '../features/partidos/partido_detalle_screen.dart';
 import '../features/partidos/partidos_screen.dart';
+import '../features/partidos/temporada_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/shell/home_shell.dart';
 import '../features/stats/clasificacion_screen.dart';
@@ -61,6 +63,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/crear-liga', builder: (_, __) => const CrearLigaScreen()),
       GoRoute(path: '/liga/editar', builder: (_, __) => const CrearLigaScreen(editar: true)),
       GoRoute(path: '/liga/reglas', builder: (_, __) => const ReglasScreen()),
+      GoRoute(path: '/liga/convocatoria', builder: (_, __) => const ConvocatoriaCobroScreen()),
+      GoRoute(path: '/temporada', builder: (_, __) => const TemporadaScreen()),
       GoRoute(
         path: '/unirse',
         builder: (_, state) => UnirseScreen(codigoInicial: state.uri.queryParameters['codigo']),

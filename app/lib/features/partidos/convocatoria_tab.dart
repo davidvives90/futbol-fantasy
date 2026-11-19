@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
+import '../liga/chip_rango.dart';
 
 /// Lista de inscritos en tiempo real + botones Voy / Duda / No voy.
 class ConvocatoriaTab extends ConsumerWidget {
@@ -24,12 +26,17 @@ class ConvocatoriaTab extends ConsumerWidget {
         List<Inscripcion> de(EstadoInscripcion e) => lista.where((i) => i.estado == e).toList();
         final conf = de(EstadoInscripcion.confirmado);
         final duda = de(EstadoInscripcion.duda);
-        final espera = de(EstadoInscripcion.espera);
+        // Orden real de entrada según la regla de la liga (como `promover_espera` en el servidor).
+        final espera = ordenarEspera(de(EstadoInscripcion.espera), miembros, porPrioridad: mi.liga.esperaPorPrioridad);
         final baja = de(EstadoInscripcion.baja);
         final mia = lista.where((i) => i.miembroId == mi.yo.id).firstOrNull;
         final importe = conf.isEmpty ? partido.costeTotal : partido.costeTotal / conf.length;
         final abierta = partido.estado.antesDeJugar;
         String nombre(String id) => miembros[id]?.nombre ?? '…';
+        RangoMiembro rangoDeIns(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
+        final soyFijo = mi.yo.rango == RangoMiembro.fijo;
+        final liga = mi.liga;
+        final precioNoFijo = liga.precioInvitado;
 
         return ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           ListTile(
@@ -40,20 +47,38 @@ class ConvocatoriaTab extends ConsumerWidget {
                 value: partido.plazas == 0 ? 0 : (conf.length / partido.plazas).clamp(0.0, 1.0).toDouble(),
               ),
             ),
-            trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(euros(importe), style: Theme.of(context).textTheme.titleMedium),
-              const Text('por jugador'),
-            ]),
+            trailing: liga.facturaMensual
+                ? Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text(precioNoFijo == null ? 'Cuota' : euros(precioNoFijo), style: Theme.of(context).textTheme.titleMedium),
+                    Text(precioNoFijo == null ? 'reservas: variable' : 'reservas e invitados'),
+                  ])
+                : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text(euros(importe), style: AppTheme.numero(context, size: 22)),
+                    const Text('por jugador'),
+                  ]),
           ),
           if (!partido.horaConfirmada)
-            const ListTile(
-              leading: Icon(Icons.schedule, color: Colors.orange),
-              title: Text('Hora pendiente de confirmar'),
+            ListTile(
+              leading: Icon(Icons.schedule, color: AppColores.of(context).aviso),
+              title: const Text('Hora pendiente de confirmar'),
+            ),
+          if (abierta)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Text(
+                soyFijo
+                    ? 'Eres fijo: ya estás dentro. Si no puedes ir, marca "No voy" y entrará el primero de la lista de espera.'
+                    : 'Los fijos ya están dentro. Si quieres jugar, pulsa "Voy": entrarás en la lista de espera '
+                        'y pasarás a la convocatoria en cuanto un fijo se dé de baja.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
           if (abierta)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: SegmentedButton<EstadoInscripcion>(
+                // Voy = verde éxito · Duda = ámbar · No voy = gris neutro (no es destructivo)
+                style: AppButtons.segmentoEstado(context, mia?.estado.name),
                 emptySelectionAllowed: true,
                 segments: const [
                   ButtonSegment(value: EstadoInscripcion.confirmado, label: Text('Voy'), icon: Icon(Icons.check)),
@@ -82,10 +107,18 @@ class ConvocatoriaTab extends ConsumerWidget {
                 ),
               ),
             ),
-          _Seccion('Confirmados', conf, nombre, numerar: true, mi: mi, partido: partido),
-          _Seccion('En duda', duda, nombre, mi: mi, partido: partido),
-          _Seccion('Lista de espera', espera, nombre, numerar: true, mi: mi, partido: partido),
-          _Seccion('No van', baja, nombre, mi: mi, partido: partido),
+          _Seccion('Confirmados', conf, nombre, rangoDeIns, numerar: true, mi: mi, partido: partido),
+          _Seccion('En duda', duda, nombre, rangoDeIns, mi: mi, partido: partido),
+          _Seccion(
+            liga.esperaPorPrioridad ? 'Lista de espera · por prioridad' : 'Lista de espera · por orden de apuntarse',
+            espera,
+            nombre,
+            rangoDeIns,
+            numerar: true,
+            mi: mi,
+            partido: partido,
+          ),
+          _Seccion('No van', baja, nombre, rangoDeIns, mi: mi, partido: partido),
           if (mi.soyAdmin && abierta) _AnadirJugador(partido: partido, mi: mi, yaInscritos: lista.map((i) => i.miembroId).toSet()),
         ]);
       },
@@ -94,10 +127,12 @@ class ConvocatoriaTab extends ConsumerWidget {
 }
 
 class _Seccion extends StatelessWidget {
-  const _Seccion(this.titulo, this.lista, this.nombre, {this.numerar = false, required this.mi, required this.partido});
+  const _Seccion(this.titulo, this.lista, this.nombre, this.rango,
+      {this.numerar = false, required this.mi, required this.partido});
   final String titulo;
   final List<Inscripcion> lista;
   final String Function(String) nombre;
+  final RangoMiembro Function(Inscripcion) rango;
   final bool numerar;
   final MiLiga mi;
   final Partido partido;
@@ -114,7 +149,13 @@ class _Seccion extends StatelessWidget {
         ListTile(
           dense: true,
           leading: numerar ? CircleAvatar(radius: 14, child: Text('${i + 1}')) : const SizedBox(width: 28),
-          title: Text(nombre(ins.miembroId) + (ins.miembroId == mi.yo.id ? ' (tú)' : '')),
+          title: Row(children: [
+            Flexible(
+              child: Text(nombre(ins.miembroId) + (ins.miembroId == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 6),
+            ChipRango(rango(ins), corto: true),
+          ]),
           // El admin puede dar de baja a otro (p. ej. avisó por WhatsApp).
           trailing: mi.soyAdmin && partido.estado.antesDeJugar && ins.estado != EstadoInscripcion.baja
               ? IconButton(

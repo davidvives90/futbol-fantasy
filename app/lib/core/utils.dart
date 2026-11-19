@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'theme.dart';
+
 final _euro = NumberFormat.currency(locale: 'es_ES', symbol: '€');
 final _fecha = DateFormat("EEE d MMM · HH:mm", 'es');
 final _fechaCorta = DateFormat('d/M/yy', 'es');
@@ -64,7 +66,11 @@ Future<bool> ejecutar(BuildContext context, Future<void> Function() accion, {Str
   }
 }
 
-Future<bool> confirmar(BuildContext context, String titulo, String texto, {String accion = 'Aceptar'}) async {
+/// Tipo de acción que confirma el diálogo: decide el color del botón final.
+enum TipoConfirmacion { normal, peligro, premium }
+
+Future<bool> confirmar(BuildContext context, String titulo, String texto,
+    {String accion = 'Aceptar', TipoConfirmacion tipo = TipoConfirmacion.normal}) async {
   final r = await showDialog<bool>(
     context: context,
     builder: (c) => AlertDialog(
@@ -72,7 +78,15 @@ Future<bool> confirmar(BuildContext context, String titulo, String texto, {Strin
       content: Text(texto),
       actions: [
         TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-        FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(accion)),
+        FilledButton(
+          style: switch (tipo) {
+            TipoConfirmacion.peligro => AppButtons.peligroRelleno(c),
+            TipoConfirmacion.premium => AppButtons.premium(c),
+            TipoConfirmacion.normal => null,
+          },
+          onPressed: () => Navigator.pop(c, true),
+          child: Text(accion),
+        ),
       ],
     ),
   );
@@ -124,3 +138,7 @@ class Vacio extends StatelessWidget {
         ),
       );
 }
+
+/// Fecha en formato SQL `date` (AAAA-MM-DD), sin hora ni zona.
+String fechaSql(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';

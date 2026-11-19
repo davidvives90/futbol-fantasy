@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -98,17 +99,19 @@ class _Lista extends StatelessWidget {
         return ListTile(
           selected: esYo,
           leading: CircleAvatar(
+            // Podio: oro (premium), plata y bronce sobrios
             backgroundColor: switch (pos) {
-              1 => Colors.amber,
-              2 => Colors.blueGrey.shade200,
-              3 => Colors.brown.shade300,
-              _ => null,
+              1 => Theme.of(context).colorScheme.tertiary,
+              2 => const Color(0xFFC9CCCB),
+              3 => const Color(0xFFC79A74),
+              _ => Theme.of(context).colorScheme.surfaceContainer,
             },
-            child: Text('$pos'),
+            foregroundColor: pos == 1 ? Theme.of(context).colorScheme.onTertiary : Theme.of(context).colorScheme.onSurface,
+            child: Text('$pos', style: AppTheme.tabular(Theme.of(context).textTheme.labelLarge)),
           ),
           title: Text(m?.nombre ?? '…'),
           subtitle: Text('${r.partidos} partidos · media ${r.puntosMedia.toStringAsFixed(1)} pts'),
-          trailing: Text(ranking.texto(r), style: Theme.of(context).textTheme.titleMedium),
+          trailing: Text(ranking.texto(r), style: AppTheme.numero(context, size: 20)),
           onTap: () => context.push('/clasificacion/jugador/${r.miembroId}'),
         );
       },

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/supabase.dart';
+import '../../core/utils.dart';
 import '../models.dart';
 
 /// Saldos, pagos y facturas.
@@ -50,6 +51,8 @@ class CajaRepo {
     double? importe,
     String? notas,
     String? partidoId,
+    DateTime? periodoDesde,
+    DateTime? periodoHasta,
     required String subidaPor,
   }) async {
     final id = const Uuid().v4();
@@ -69,7 +72,21 @@ class CajaRepo {
       'importe': importe,
       'notas': notas,
       'subida_por': subidaPor,
+      if (periodoDesde != null) 'periodo_desde': fechaSql(periodoDesde),
+      if (periodoHasta != null) 'periodo_hasta': fechaSql(periodoHasta),
     });
+  }
+
+  /// v0.3, modo factura mensual: cálculo sin escribir nada (para mostrar antes de confirmar).
+  static Future<LiquidacionFactura> simularFactura(String facturaId) async {
+    final r = await sb.rpc('simular_factura', params: {'p_factura': facturaId});
+    return LiquidacionFactura.fromMap(Map<String, dynamic>.from(r as Map));
+  }
+
+  /// Genera los cargos a los fijos. Falla si la factura ya está liquidada.
+  static Future<LiquidacionFactura> liquidarFactura(String facturaId) async {
+    final r = await sb.rpc('liquidar_factura', params: {'p_factura': facturaId});
+    return LiquidacionFactura.fromMap(Map<String, dynamic>.from(r as Map));
   }
 
   /// URL temporal (1 h) para ver una factura del bucket privado.

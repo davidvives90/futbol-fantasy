@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
 
@@ -97,6 +98,7 @@ class _DialogoClausulaState extends State<_DialogoClausula> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(
+          style: AppButtons.premium(context),
           onPressed: error != null || nueva == null || nueva == widget.actual ? null : () => Navigator.pop(context, nueva),
           child: const Text('Guardar'),
         ),
@@ -187,6 +189,7 @@ class _DialogoOfertaState extends State<_DialogoOferta> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(
+          style: AppButtons.premium(context),
           onPressed: v == null || v <= 0 ? null : () => Navigator.pop(context, v),
           child: const Text('Enviar oferta'),
         ),
@@ -250,6 +253,7 @@ class _DialogoCesionState extends State<_DialogoCesion> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(
+          style: AppButtons.premium(context),
           onPressed: () => Navigator.pop(context, (_pct * 1000).round() / 1000),
           child: const Text('Ofrecer en cesión'),
         ),

@@ -15,6 +15,30 @@ enum RolLiga { admin, jugador }
 
 enum EstadoMiembro { pendiente_registro, solicitud, activo, expulsado, abandonado, rechazado }
 
+/// Rango del jugador en la liga (v0.3). Los fijos entran solos en cada partido;
+/// reservas e invitados se apuntan a la lista de espera. En el Fantasy, el invitado puntúa ×1,5.
+enum RangoMiembro { fijo, reserva, invitado }
+
+extension RangoMiembroX on RangoMiembro {
+  String get etiqueta => switch (this) {
+        RangoMiembro.fijo => 'Fijo',
+        RangoMiembro.reserva => 'Reserva',
+        RangoMiembro.invitado => 'Invitado',
+      };
+
+  /// Inicial para mostrar junto al nombre (F / R / I).
+  String get letra => switch (this) {
+        RangoMiembro.fijo => 'F',
+        RangoMiembro.reserva => 'R',
+        RangoMiembro.invitado => 'I',
+      };
+
+  /// Prioridad en la lista de espera con `orden_espera = prioridad` (menor = antes).
+  int get prioridad => index;
+}
+
+RangoMiembro? rangoDe(dynamic texto) => RangoMiembro.values.where((r) => r.name == texto).firstOrNull;
+
 T _enum<T extends Enum>(List<T> valores, dynamic texto, T defecto) =>
     valores.where((v) => v.name == texto).firstOrNull ?? defecto;
 
@@ -91,7 +115,25 @@ class Liga {
     required this.puntuarPorPosicion,
     required this.codigoInvitacion,
     this.fantasy = const ParamsFantasy(),
+    this.ordenEspera = 'prioridad',
+    this.modoCobro = 'por_partido',
+    this.precioInvitado,
+    this.plazasFijas,
   });
+
+  // ---- v0.3: convocatoria con fijos y cobro ----
+  /// 'prioridad' (fijos que vuelven, reservas, invitados) | 'anotacion' (por orden de apuntarse).
+  final String ordenEspera;
+
+  /// 'por_partido' | 'factura_mensual'.
+  final String modoCobro;
+
+  /// Precio fijo por partido para reservas e invitados; null = variable (misma cuota que los fijos).
+  final double? precioInvitado;
+  final int? plazasFijas;
+
+  bool get facturaMensual => modoCobro == 'factura_mensual';
+  bool get esperaPorPrioridad => ordenEspera != 'anotacion';
 
   final String id, nombre, codigoInvitacion;
 
@@ -123,6 +165,10 @@ class Liga {
       puntuarPorPosicion: (m['puntuar_por_posicion'] ?? false) as bool,
       codigoInvitacion: (m['codigo_invitacion'] ?? '') as String,
       fantasy: ParamsFantasy.fromMap(m),
+      ordenEspera: (m['orden_espera'] ?? 'prioridad') as String,
+      modoCobro: (m['modo_cobro'] ?? 'por_partido') as String,
+      precioInvitado: toDouble(m['precio_invitado']),
+      plazasFijas: m['plazas_fijas'] == null ? null : toInt(m['plazas_fijas']),
     );
   }
 }
@@ -226,7 +272,11 @@ class Miembro {
     required this.rol,
     required this.estado,
     this.perfil,
+    this.rango = RangoMiembro.reserva,
   });
+
+  /// Rango en la liga (v0.3): fijo, reserva o invitado.
+  final RangoMiembro rango;
 
   final String id, ligaId;
   final String? perfilId, nombreProvisional;
@@ -252,7 +302,7 @@ class Miembro {
 
   /// Select con el perfil embebido (FK miembros.perfil_id → perfiles.id).
   /// Columnas explícitas: `token_invitacion` y `contacto` no son legibles (ver `enlaces_invitacion`).
-  static const select = 'id, liga_id, perfil_id, nombre_provisional, posicion, rol, estado, invitado_por, unido_en, '
+  static const select = 'id, liga_id, perfil_id, nombre_provisional, posicion, rol, estado, rango, invitado_por, unido_en, '
       'perfil:perfiles!miembros_perfil_id_fkey(id, nombre, apodo, avatar_url, posicion, telefono)';
 
   factory Miembro.fromMap(Map<String, dynamic> m) => Miembro(
@@ -264,6 +314,7 @@ class Miembro {
         rol: _enum(RolLiga.values, m['rol'], RolLiga.jugador),
         estado: _enum(EstadoMiembro.values, m['estado'], EstadoMiembro.activo),
         perfil: m['perfil'] == null ? null : Perfil.fromMap(m['perfil'] as Map<String, dynamic>),
+        rango: rangoDe(m['rango']) ?? RangoMiembro.reserva,
       );
 }
 
@@ -287,9 +338,11 @@ class Partido {
     required this.costeTotal,
     required this.estado,
     this.votacionCierra,
+    this.temporadaId,
   });
 
   final String id, ligaId;
+  final String? temporadaId;
   final DateTime fechaHora;
   final bool horaConfirmada;
   final String? campoMapsUrl;
@@ -309,23 +362,88 @@ class Partido {
         costeTotal: toDouble(m['coste_total']) ?? 0,
         estado: _enum(EstadoPartido.values, m['estado'], EstadoPartido.abierto),
         votacionCierra: m['votacion_cierra'] == null ? null : DateTime.parse(m['votacion_cierra'] as String),
+        temporadaId: m['temporada_id'] as String?,
       );
 }
 
 class Inscripcion {
-  Inscripcion({required this.miembroId, required this.estado, required this.inscritoEn, this.equipo});
+  Inscripcion({required this.miembroId, required this.estado, required this.inscritoEn, this.equipo, this.rango});
   final String miembroId;
   final EstadoInscripcion estado;
   final DateTime inscritoEn;
   final int? equipo;
+
+  /// Rango del miembro en el momento de inscribirse/jugar (`convocatorias.rango`, v0.3).
+  /// Nulo en partidos anteriores: usar el rango actual del miembro.
+  final RangoMiembro? rango;
 
   factory Inscripcion.fromMap(Map<String, dynamic> m) => Inscripcion(
         miembroId: m['miembro_id'] as String,
         estado: _enum(EstadoInscripcion.values, m['estado'], EstadoInscripcion.duda),
         inscritoEn: DateTime.parse(m['inscrito_en'] as String),
         equipo: m['equipo'] == null ? null : toInt(m['equipo']),
+        rango: rangoDe(m['rango']),
       );
 }
+
+/// Orden real de la lista de espera según la regla de la liga (v0.3, igual que `promover_espera`):
+/// - prioridad: fijos que vuelven, luego reservas, luego invitados; dentro de cada grupo por `inscrito_en`.
+/// - anotacion: solo por `inscrito_en`.
+List<Inscripcion> ordenarEspera(
+  List<Inscripcion> espera,
+  Map<String, Miembro> miembros, {
+  required bool porPrioridad,
+}) {
+  RangoMiembro rango(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
+  final lista = [...espera];
+  lista.sort((a, b) {
+    if (porPrioridad) {
+      final c = rango(a).prioridad.compareTo(rango(b).prioridad);
+      if (c != 0) return c;
+    }
+    return a.inscritoEn.compareTo(b.inscritoEn);
+  });
+  return lista;
+}
+
+/// Temporada: partidos recurrentes entre dos fechas (v0.3, tabla `temporadas`).
+class Temporada {
+  Temporada({
+    required this.id,
+    this.nombre,
+    required this.desde,
+    required this.hasta,
+    required this.diasSemana,
+    required this.hora,
+    required this.horaFija,
+    this.costePartido = 0,
+  });
+  final String id;
+  final String? nombre;
+  final DateTime desde, hasta;
+
+  /// 1 = lunes … 7 = domingo.
+  final List<int> diasSemana;
+
+  /// 'HH:MM[:SS]'.
+  final String hora;
+  final bool horaFija;
+  final double costePartido;
+
+  factory Temporada.fromMap(Map<String, dynamic> m) => Temporada(
+        id: m['id'] as String,
+        nombre: m['nombre'] as String?,
+        desde: DateTime.parse(m['desde'] as String),
+        hasta: DateTime.parse(m['hasta'] as String),
+        diasSemana: [for (final d in (m['dias_semana'] as List? ?? const [])) toInt(d)],
+        hora: (m['hora'] ?? '') as String,
+        horaFija: (m['hora_fija'] ?? true) as bool,
+        costePartido: toDouble(m['coste_partido']) ?? 0,
+      );
+}
+
+const nombresDiasCortos = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const nombresDias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados', 'domingos'];
 
 class Encuentro {
   Encuentro({
@@ -499,11 +617,28 @@ class Movimiento {
 }
 
 class Factura {
-  Factura({required this.id, required this.archivoPath, this.nombreArchivo, this.importe, required this.fecha, this.notas, this.partidoId});
+  Factura({
+    required this.id,
+    required this.archivoPath,
+    this.nombreArchivo,
+    this.importe,
+    required this.fecha,
+    this.notas,
+    this.partidoId,
+    this.periodoDesde,
+    this.periodoHasta,
+    this.liquidada = false,
+  });
   final String id, archivoPath;
   final String? nombreArchivo, notas, partidoId;
   final double? importe;
   final DateTime fecha;
+
+  /// Periodo que cubre una factura mensual (v0.3). Nulo = factura de un partido o sin periodo.
+  final DateTime? periodoDesde, periodoHasta;
+  final bool liquidada;
+
+  bool get esMensual => periodoDesde != null && periodoHasta != null;
 
   factory Factura.fromMap(Map<String, dynamic> m) => Factura(
         id: m['id'] as String,
@@ -513,6 +648,44 @@ class Factura {
         fecha: DateTime.parse(m['fecha'] as String),
         notas: m['notas'] as String?,
         partidoId: m['partido_id'] as String?,
+        periodoDesde: m['periodo_desde'] == null ? null : DateTime.parse(m['periodo_desde'] as String),
+        periodoHasta: m['periodo_hasta'] == null ? null : DateTime.parse(m['periodo_hasta'] as String),
+        liquidada: (m['liquidada'] ?? false) as bool,
+      );
+}
+
+/// Desglose de `simular_factura` / `liquidar_factura` (v0.3).
+class LiquidacionFactura {
+  LiquidacionFactura({
+    required this.importe,
+    required this.pagadoInvitados,
+    required this.resto,
+    required this.partidos,
+    required this.cuota,
+    required this.cargos,
+  });
+  final double importe, pagadoInvitados, resto, cuota;
+
+  /// Nº total de asistencias que se reparten la factura (fijos; + no fijos si el precio es variable).
+  final int partidos;
+
+  /// Filas {miembro_id, partidos, importe}.
+  final List<({String miembroId, int partidos, double importe})> cargos;
+
+  factory LiquidacionFactura.fromMap(Map<String, dynamic> m) => LiquidacionFactura(
+        importe: toDouble(m['importe']) ?? 0,
+        pagadoInvitados: toDouble(m['pagado_invitados']) ?? 0,
+        resto: toDouble(m['resto']) ?? 0,
+        partidos: toInt(m['partidos']),
+        cuota: toDouble(m['cuota']) ?? 0,
+        cargos: [
+          for (final c in (m['cargos'] as List? ?? const []))
+            (
+              miembroId: (c as Map)['miembro_id'] as String,
+              partidos: toInt(c['partidos']),
+              importe: toDouble(c['importe']) ?? 0,
+            ),
+        ],
       );
 }
 

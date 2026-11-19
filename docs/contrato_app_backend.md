@@ -140,3 +140,27 @@ Vistas y tablas:
 Cambios que afectan a la app 0.1: `aspectos_valoracion` → todos con `aplica_a = 'todos'` y `porteria` inactivo; `plantillas` es ahora una vista con las fichas de toda la liga (no solo las propias); `transacciones_fantasy.tipo` admite `clausula_pagada, clausula_cobrada, subida_clausula, oferta_pagada, oferta_cobrada, cesion_pagada, cesion_cobrada`. El balanceo de equipos ya no debe penalizar porteros (cambio en la app).
 
 Además (app 0.2): la vista `plantillas` (ahora pública en la liga) se usa en Mánagers → detalle para ver la plantilla de un rival con su cláusula (`FantasyRepo.plantillaDe`) · OK. `valoracion_jugador.portero` alimenta el balanceo de equipos (habilidad bajo palos, peso 0,15) en lugar de la antigua penalización por porteros · OK.
+
+## v0.3 (rangos, temporada, factura mensual, verificación de goles) · uso en la app
+
+Contrato: `docs/v03_liga.md`. Cotejado con las migraciones 0015–0019 y probado en `tests/escenario_v03.sql` (19-11-2026): todas las filas cuadran con el backend.
+
+| RPC / objeto | Parámetros / columnas que usa la app | Dónde | Estado |
+| --- | --- | --- | --- |
+| `miembros.rango` | `'fijo' \| 'reserva' \| 'invitado'` en `Miembro.select`. **Ojo:** `miembros` tiene SELECT por columnas (0006): hay que `grant select (rango) on miembros to authenticated`, o la lista de miembros y `misLigas` fallarán | Liga → Jugadores (chip), convocatoria (F/R/I), orden de la espera | OK |
+| `cambiar_rango` | `p_miembro uuid, p_rango text` | Liga → Jugadores → menú (admin; también sobre sí mismo) | OK |
+| `ligas.orden_espera, modo_cobro, precio_invitado, plazas_fijas` | lectura con `ligas(*)`; escritura directa `update ligas` (admin, política `liga_editar`) de `orden_espera`, `modo_cobro`, `precio_invitado` (null = variable) | Liga → Convocatoria y cobro (`/liga/convocatoria`); aviso de más fijos que plazas | OK |
+| `convocatorias.rango` | existe (0015): rango con el que se inscribió, refrescado al jugar; la espera del servidor ordena por el rango ACTUAL del miembro | Convocatoria: chip y orden de la espera (`ordenarEspera`) | OK |
+| `programar_temporada` | `p_liga uuid, p_desde date ('AAAA-MM-DD'), p_hasta date, p_dias_semana smallint[] (1=lunes…7), p_hora time ('HH:MM'), p_hora_fija boolean, p_coste numeric, p_excluir date[] (null si vacío), p_nombre text` → int | Partidos → icono «Programar temporada» (`/temporada`), con vista previa local de las fechas | OK |
+| `temporadas` | `id, liga_id, nombre, desde, hasta, dias_semana, hora, hora_fija, coste_partido` (select por `liga_id`; necesita política de lectura para miembros) | Programar temporada → lista | OK |
+| `cancelar_temporada` | `p_temporada uuid` (+ `p_desde date` opcional, la app no lo envía = hoy) | Programar temporada → «Cancelar futuros» | OK |
+| `cambiar_hora_partido` | `p_partido uuid, p_fecha_hora timestamptz (ISO UTC), p_confirmada boolean` | Detalle de partido → menú admin «Confirmar hora» (misma fecha) y «Cambiar fecha u hora». Sustituye al `update partidos set hora_confirmada` directo | OK |
+| `partidos.temporada_id` | lectura | modelo `Partido` | OK |
+| `facturas.periodo_desde, periodo_hasta, liquidada` | insert de `periodo_desde/hasta` (`AAAA-MM-DD`) al subir; lectura de `liquidada` | Caja → Facturas: periodo (por defecto el mes anterior), «Liquidar», marca de liquidada | OK |
+| `simular_factura` / `liquidar_factura` | `p_factura uuid` → jsonb `{importe, pagado_invitados, resto, partidos, cuota, cargos: [{miembro_id, partidos, importe}]}` | Caja → Facturas → Liquidar: muestra el desglose de `simular_factura` y confirma con `liquidar_factura` | OK |
+| `enviar_parte` | `p_partido uuid, p_resultados jsonb = [{n, goles_local, goles_visitante}], p_jugadores jsonb = [{sujeto_id, goles, asistencias, autogoles, paradas_clave, penaltis_parados, penaltis_fallados}]` (sin las filas «No sé»). Las valoraciones siguen con upsert a `valoraciones` | Post-partido → Enviar parte. La app valida antes lo mismo que el servidor (aviso por equipo y botón bloqueado) | OK (0018: mismo JSON; null = «no sé»; rechaza partes incoherentes) |
+| `disputas` tipo `descuadre` | `n` = nº de equipo, `campo = 'goles_equipo_<n>'` (con 3–4 equipos: `n` null y `campo = 'goles_total'`), `valores = {"resultado": X, "suma_jugadores": Y}` | Revisión: tarjeta roja «los goles no cuadran» + «Corregir datos» | OK |
+| `fijar_dato` | `p_partido uuid, p_sujeto uuid (null), p_n smallint (null), p_campo text, p_valor smallint` | Revisión → Corregir datos: `goles` por jugador y `goles_local/goles_visitante` por encuentro (solo lo que cambia) | OK |
+| `mercado_jugador.no_habitual` | ahora = rango Invitado; la app lo rotula «Invitado ×1,5» | Mercado, Mi equipo, alineación, resultado | OK (sin cambios de contrato) |
+| `v_rendimiento` | `partidos, puntos_total, puntos_media, goles, goles_partido, asistencias, nota_media, mvps, pct_victorias` | Clasificación (Fantasy, Pichichi, Asistencias, MVPs, % victorias con mínimo 3 partidos), ficha | OK (revisado) |
+| `puntos_fantasy.es_mvp` | varios a la vez = MVP compartido | Resultado: «MVP compartido» si hay más de uno | OK |

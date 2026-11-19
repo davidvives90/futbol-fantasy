@@ -139,7 +139,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     return ListView(padding: const EdgeInsets.all(16), children: [
       if (editable)
         Wrap(spacing: 8, runSpacing: 8, children: [
-          FilledButton.icon(
+          FilledButton.tonalIcon(
             onPressed: () => _generar(js),
             icon: const Icon(Icons.auto_awesome),
             label: Text(mostrar == null ? 'Generar equipos' : 'Volver a generar'),
@@ -204,7 +204,12 @@ class _BarraEquilibrio extends StatelessWidget {
       Text(
         '${[for (var i = 0; i < sumas.length; i++) 'E${i + 1} ${sumas[i].toStringAsFixed(0)}'].join(' · ')}'
         '  —  diferencia ${dif.toStringAsFixed(1)} %',
-        style: TextStyle(color: dif < 5 ? Colors.green : (dif < 10 ? Colors.orange : Colors.red)),
+        style: AppTheme.tabular(Theme.of(context).textTheme.bodyMedium)?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: dif < 5
+              ? AppColores.of(context).exito
+              : (dif < 10 ? AppColores.of(context).aviso : Theme.of(context).colorScheme.error),
+        ),
       ),
     ]);
   }
