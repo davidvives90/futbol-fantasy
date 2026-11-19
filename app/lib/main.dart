@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/liga_activa.dart';
+import 'core/push.dart';
 import 'core/router.dart';
 import 'core/supabase.dart';
 import 'core/tema.dart';
@@ -19,6 +20,7 @@ Future<void> main() async {
   await initializeDateFormatting('es');
   await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
   final prefs = await SharedPreferences.getInstance();
+  await Push.iniciar();
   runApp(ProviderScope(
     overrides: [prefsProvider.overrideWithValue(prefs)],
     child: const FutbolFantasyApp(),
@@ -34,10 +36,26 @@ class FutbolFantasyApp extends ConsumerStatefulWidget {
 
 class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
   StreamSubscription<Uri>? _links;
+  StreamSubscription<AuthState>? _auth;
+  final _mensajes = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
+    // Push: al haber sesión, registra este móvil y atiende los avisos.
+    void activarPush() => Push.activar(
+          alAbrir: (ruta) => ref.read(routerProvider).go(ruta),
+          enPrimerPlano: (titulo, cuerpo, ruta) => _mensajes.currentState?.showSnackBar(SnackBar(
+            content: Text(cuerpo.isEmpty ? titulo : '$titulo\n$cuerpo'),
+            action: (ruta == null || ruta.isEmpty)
+                ? null
+                : SnackBarAction(label: 'Ver', onPressed: () => ref.read(routerProvider).go(ruta)),
+          )),
+        );
+    if (sb.auth.currentSession != null) activarPush();
+    _auth = sb.auth.onAuthStateChange.listen((e) {
+      if (e.event == AuthChangeEvent.signedIn) activarPush();
+    });
     // uriLinkStream también emite el enlace con el que se abrió la app.
     _links = AppLinks().uriLinkStream.listen(_alRecibirEnlace);
   }
@@ -63,6 +81,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
   @override
   void dispose() {
     _links?.cancel();
+    _auth?.cancel();
     super.dispose();
   }
 
@@ -71,6 +90,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
     return MaterialApp.router(
       title: 'Fútbol Fantasy',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: _mensajes,
       theme: AppTheme.claro(),
       darkTheme: AppTheme.oscuro(),
       themeMode: ref.watch(temaProvider),

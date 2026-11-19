@@ -13,6 +13,7 @@ import '../features/fantasy/fantasy_screen.dart';
 import '../features/fantasy/jugador_mercado_screen.dart';
 import '../features/liga/convocatoria_cobro_screen.dart';
 import '../features/master/master_screen.dart';
+import '../features/shell/notificaciones_screen.dart';
 import '../features/liga/liga_screen.dart';
 import '../features/liga/reglas_screen.dart';
 import '../features/onboarding/buscar_ligas_screen.dart';
@@ -75,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/perfil', builder: (_, __) => const PerfilScreen()),
       GoRoute(path: '/liga/fantasy', builder: (_, __) => const AjustesFantasyScreen()),
       GoRoute(path: '/master', builder: (_, __) => const MasterScreen()),
+      GoRoute(path: '/avisos', builder: (_, __) => const NotificacionesScreen()),
       GoRoute(
         path: '/master/liga/:ligaId',
         builder: (_, state) => MasterLigaScreen(

@@ -160,7 +160,7 @@ class _Aspectos extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text('Aspectos: en modo rápido son los chips de «Destacó en…»; en modo detallado se puntúan '
-                'del 1 al 10. Se aplican a todos los jugadores por igual, porque no hay posiciones fijas.'),
+                'del 1 al 5. Se aplican a todos los jugadores por igual, porque no hay posiciones fijas.'),
           ),
           for (final a in lista.where((a) => a.clave != 'general'))
             SwitchListTile(
@@ -195,8 +195,8 @@ class _ModoValoracion extends ConsumerWidget {
     return SwitchListTile(
       title: const Text('Valoración detallada'),
       subtitle: Text(detallada
-          ? 'Cada compañero se puntúa del 1 al 10 en cada aspecto (más lento).'
-          : 'Rápida: una nota general por compañero (6 = normal), «Destacó en…» y voto MVP. ~1 minuto.'),
+          ? 'Cada compañero se puntúa del 1 al 5 en cada aspecto (más lento).'
+          : 'Rápida: una nota del 1 al 5 por compañero (3 = normal), «Destacó en…» y voto MVP. ~1 minuto.'),
       value: detallada,
       onChanged: mi.soyAdmin
           ? (v) async {

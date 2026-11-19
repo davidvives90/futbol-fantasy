@@ -119,7 +119,12 @@ class ConvocatoriaTab extends ConsumerWidget {
             partido: partido,
           ),
           _Seccion('No van', baja, nombre, rangoDeIns, mi: mi, partido: partido),
-          if (mi.soyAdmin && abierta) _AnadirJugador(partido: partido, mi: mi, yaInscritos: lista.map((i) => i.miembroId).toSet()),
+          if (mi.soyAdmin && partido.estado.antesDeJugar)
+            _AnadirJugador(
+              partido: partido,
+              mi: mi,
+              yaInscritos: lista.where((i) => i.estado != EstadoInscripcion.baja).map((i) => i.miembroId).toSet(),
+            ),
         ]);
       },
     );
@@ -157,16 +162,27 @@ class _Seccion extends StatelessWidget {
             ChipRango(rango(ins), corto: true),
           ]),
           // El admin puede dar de baja a otro (p. ej. avisó por WhatsApp).
-          trailing: mi.soyAdmin && partido.estado.antesDeJugar && ins.estado != EstadoInscripcion.baja
-              ? IconButton(
-                  tooltip: 'Dar de baja',
-                  icon: const Icon(Icons.person_remove_outlined),
-                  onPressed: () => ejecutar(
-                    context,
-                    () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.baja),
-                  ),
-                )
-              : null,
+          // El admin puede dar de baja a otro (p. ej. avisó por WhatsApp) y volver a apuntarlo.
+          trailing: !(mi.soyAdmin && partido.estado.antesDeJugar)
+              ? null
+              : ins.estado == EstadoInscripcion.baja
+                  ? IconButton(
+                      tooltip: 'Volver a apuntar',
+                      icon: Icon(Icons.person_add_alt_1_outlined, color: Theme.of(context).colorScheme.primary),
+                      onPressed: () => ejecutar(
+                        context,
+                        () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.confirmado),
+                        ok: 'Apuntado (si no hay plaza, entra en la lista de espera)',
+                      ),
+                    )
+                  : IconButton(
+                      tooltip: 'Dar de baja',
+                      icon: const Icon(Icons.person_remove_outlined),
+                      onPressed: () => ejecutar(
+                        context,
+                        () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.baja),
+                      ),
+                    ),
         ),
     ]);
   }

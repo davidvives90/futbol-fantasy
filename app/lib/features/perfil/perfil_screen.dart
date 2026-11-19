@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/liga_activa.dart';
+import '../../core/push.dart';
 import '../../core/supabase.dart';
 import '../../core/tema.dart';
 import '../../core/utils.dart';
@@ -88,6 +89,7 @@ class PerfilScreen extends ConsumerWidget {
           onTap: () async {
             if (!await confirmar(context, 'Cerrar sesión', '¿Seguro que quieres salir?')) return;
             await ref.read(ligaActivaIdProvider.notifier).elegir(null);
+            await Push.desactivar();
             await sb.auth.signOut();
           },
         ),

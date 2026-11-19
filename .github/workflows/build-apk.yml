@@ -55,6 +55,15 @@ jobs:
           fi
           head -12 "$f"
 
+      - name: minSdk 24 y permiso de notificaciones (Firebase Cloud Messaging)
+        run: |
+          for f in android/app/build.gradle.kts android/app/build.gradle; do
+            [ -f "$f" ] && sed -i -E 's/minSdk(Version)? *=? *flutter\.minSdkVersion/minSdk = 24/' "$f" && grep -n "minSdk" "$f" || true
+          done
+          m=android/app/src/main/AndroidManifest.xml
+          grep -q POST_NOTIFICATIONS "$m" || sed -i 's|<application|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application|' "$m"
+          grep -n "POST_NOTIFICATIONS" "$m"
+
       - run: flutter pub get
 
       - name: Análisis estático (informativo)
@@ -68,6 +77,10 @@ jobs:
           flutter build apk --release
           --dart-define=SUPABASE_URL=$SUPABASE_URL
           --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY }}
+          --dart-define=FIREBASE_APP_ID=${{ vars.FIREBASE_APP_ID }}
+          --dart-define=FIREBASE_SENDER_ID=${{ vars.FIREBASE_SENDER_ID }}
+          --dart-define=FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
           --build-name=0.1.${{ github.run_number }}
           --build-number=${{ github.run_number }}
 

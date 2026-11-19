@@ -7,6 +7,7 @@ import '../../core/utils.dart';
 import '../../data/providers.dart';
 import '../auth/perfil_form_screen.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'notificaciones_screen.dart';
 
 /// Barra inferior + "puerta" de sesión: sin perfil → completar perfil;
 /// sin liga → crear o unirse.
@@ -115,6 +116,7 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       actions: [
         ...?actions,
+        const CampanaAvisos(),
         // Perfil: fuera de la barra inferior para dejarla en 5 destinos (guía de Material 3).
         if (mostrarPerfil)
           Padding(

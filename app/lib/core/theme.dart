@@ -78,25 +78,28 @@ class AppTheme {
     surfaceTint: Colors.transparent,
   );
 
+  /// Tipografía: Figtree (sans moderna, humanista y muy legible; menos vista que Open Sans o Roboto).
+  /// Títulos en peso alto con interletraje ligeramente cerrado; cuerpo regular.
   static TextTheme _texto(TextTheme base, Color color) {
-    final cuerpo = GoogleFonts.manropeTextTheme(base).apply(bodyColor: color, displayColor: color);
-    TextStyle serif(TextStyle? s, double size, FontWeight w) =>
-        GoogleFonts.fraunces(textStyle: s, fontSize: size, fontWeight: w, color: color, height: 1.15);
-    return cuerpo.copyWith(
-      displayLarge: serif(cuerpo.displayLarge, 52, FontWeight.w700),
-      displayMedium: serif(cuerpo.displayMedium, 44, FontWeight.w700),
-      displaySmall: serif(cuerpo.displaySmall, 36, FontWeight.w700),
-      headlineLarge: serif(cuerpo.headlineLarge, 30, FontWeight.w600),
-      headlineMedium: serif(cuerpo.headlineMedium, 26, FontWeight.w600),
-      headlineSmall: serif(cuerpo.headlineSmall, 24, FontWeight.w600),
-      titleLarge: serif(cuerpo.titleLarge, 20, FontWeight.w600),
-      titleMedium: cuerpo.titleMedium?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
-      titleSmall: cuerpo.titleSmall?.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
-      bodyLarge: cuerpo.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w400),
-      bodyMedium: cuerpo.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w400),
-      labelLarge: cuerpo.labelLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+    final t = GoogleFonts.figtreeTextTheme(base).apply(bodyColor: color, displayColor: color);
+    TextStyle titulo(TextStyle? s, double size, FontWeight w, {double ls = -0.4}) =>
+        (s ?? const TextStyle()).copyWith(fontSize: size, fontWeight: w, letterSpacing: ls, height: 1.15, color: color);
+    return t.copyWith(
+      displayLarge: titulo(t.displayLarge, 52, FontWeight.w800, ls: -1.2),
+      displayMedium: titulo(t.displayMedium, 44, FontWeight.w800, ls: -1.0),
+      displaySmall: titulo(t.displaySmall, 36, FontWeight.w800, ls: -0.8),
+      headlineLarge: titulo(t.headlineLarge, 30, FontWeight.w800, ls: -0.6),
+      headlineMedium: titulo(t.headlineMedium, 26, FontWeight.w700, ls: -0.5),
+      headlineSmall: titulo(t.headlineSmall, 23, FontWeight.w700),
+      titleLarge: titulo(t.titleLarge, 20, FontWeight.w700, ls: -0.2),
+      titleMedium: t.titleMedium?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+      titleSmall: t.titleSmall?.copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+      bodyLarge: t.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w400, height: 1.4),
+      bodyMedium: t.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w400, height: 1.4),
+      labelLarge: t.labelLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.1),
     );
   }
+
 
   /// Modo oscuro premium: carbón verdoso cálido, verde menta y oro (mismo lenguaje que el claro).
   static const fondoOscuro = Color(0xFF0F1513);
@@ -316,7 +319,7 @@ class AppTheme {
         _ => equipo4,
       };
 
-  /// Estilo para cifras grandes (marcadores, puntos, precios, saldos): serif con cifras tabulares.
+  /// Estilo para cifras grandes (marcadores, puntos, precios, saldos): peso alto con cifras tabulares.
   static TextStyle numero(BuildContext context, {double size = 36, Color? color}) {
     final base = Theme.of(context).textTheme.displaySmall ?? const TextStyle();
     return base.copyWith(

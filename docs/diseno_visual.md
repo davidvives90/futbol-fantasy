@@ -31,13 +31,13 @@ Petición del usuario: color claro, aspecto premium y elegante sin perder funcio
 Tema oscuro: mantener el que hay generado desde semilla con primary verde (secundario; el claro es el principal).
 
 ## Tipografía (paquete google_fonts)
-- Títulos y números grandes: **Fraunces** (serif elegante), pesos 600–700; `fontFeatures: [FontFeature.tabularFigures()]` en números.
-- Texto e interfaz: **Manrope**, 400/500/600.
+- Tipografía única: **Figtree** (v0.4; antes Fraunces + Manrope). Títulos y números grandes en 700–800 con interletraje cerrado; `fontFeatures: [FontFeature.tabularFigures()]` en números.
+- Texto e interfaz: Figtree 400/600/700.
 - Escala: displaySmall 36 (marcadores), headlineSmall 24, titleLarge 20, titleMedium 16 w600, bodyLarge 16, bodyMedium 14, labelLarge 14 w600 (botones, sin mayúsculas).
 
 ## Forma y espaciado
 - Radio: tarjetas 16, botones 12, chips 10, campos 12. Altura de botón 48. Padding de pantalla 20. Separación entre tarjetas 12.
-- Tarjetas: elevación 0, borde 1 px outlineVariant. AppBar del color de fondo, sin sombra al hacer scroll (scrolledUnderElevation 0), título en Fraunces.
+- Tarjetas: elevación 0, borde 1 px outlineVariant. AppBar del color de fondo, sin sombra al hacer scroll (scrolledUnderElevation 0), título en Figtree 700.
 - NavigationBar: fondo blanco, indicador primaryContainer, iconos outline/filled.
 
 ## Jerarquía de botones (qué color lleva cada uno)
@@ -54,7 +54,7 @@ Voy / Duda / No voy (SegmentedButton de la convocatoria): seleccionado Voy = ver
 Insignias: MVP e "Invitado ×1,5" en dorado (tertiaryContainer + texto onTertiary); rango F/R/I en chips neutros; saldo positivo verde, negativo rojo.
 
 ## Implementación (app)
-- `lib/core/theme.dart`: ColorScheme claro a mano con los valores de arriba, `textTheme` con google_fonts (Fraunces títulos/display/headline, Manrope resto), temas de FilledButton/OutlinedButton/TextButton/SegmentedButton/Card/Chip/InputDecoration/AppBar/NavigationBar/Dialog/SnackBar/ListTile coherentes, y una `ThemeExtension` `AppColores` con exito, aviso, equipos 1–4.
+- `lib/core/theme.dart`: ColorScheme claro a mano con los valores de arriba, `textTheme` con google_fonts (Figtree en todo), temas de FilledButton/OutlinedButton/TextButton/SegmentedButton/Card/Chip/InputDecoration/AppBar/NavigationBar/Dialog/SnackBar/ListTile coherentes, y una `ThemeExtension` `AppColores` con exito, aviso, equipos 1–4.
 - `AppButtons.premium(context)` y `AppButtons.peligro(context)` (ButtonStyle) en el mismo fichero.
 - Recorrer las pantallas y aplicar la tabla de jerarquía (una principal por pantalla; acciones de dinero en dorado; admin en tonal; destructivas en rojo con diálogo). Sustituir colores fijos sueltos (Colors.blue, Colors.red, etc.) por los del tema.
 - Sin pérdida de funcionalidad: no se mueve ni se quita ninguna acción.

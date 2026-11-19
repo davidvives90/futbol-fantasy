@@ -36,7 +36,7 @@ class _Borrador {
   final noMeFije = <int>{};
   bool masDatos = false;
 
-  /// Nota general (modo rápido): 6 = normal.
+  /// Nota general de 1 a 5 (3 = normal). Se envía ×2 (escala 2–10 del servidor).
   final notas = <String, int>{};
 
   /// Notas por aspecto (modo detallado).
@@ -113,9 +113,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     final notasPrevias = {for (final n in (previo['notas'] as List? ?? const [])) (n as Map)['votado_id'] as String: n};
     for (final a in asistentes.where((a) => a.miembroId != widget.mi.yo.id)) {
       final n = notasPrevias[a.miembroId];
-      b.notas[a.miembroId] = n?['nota'] == null ? 6 : toInt(n!['nota']);
+      b.notas[a.miembroId] = n?['nota'] == null ? 3 : _a5(toInt(n!['nota']));
       b.aspectos[a.miembroId] = {
-        for (final e in ((n?['aspectos'] as Map?) ?? const {}).entries) e.key as String: toInt(e.value),
+        for (final e in ((n?['aspectos'] as Map?) ?? const {}).entries) e.key as String: _a5(toInt(e.value)),
       };
       b.destacados[a.miembroId] = {for (final d in (n?['destacados'] as List? ?? const [])) d as String};
       if (notasPrevias.isNotEmpty && n == null) b.sinValorar.add(a.miembroId);
@@ -209,9 +209,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
               {
                 'votado_id': id,
                 if (detallada)
-                  'aspectos': {for (final a in listaAspectos) a.clave: b.aspectos[id]?[a.clave] ?? 6}
+                  'aspectos': {for (final a in listaAspectos) a.clave: (b.aspectos[id]?[a.clave] ?? 3) * 2}
                 else
-                  'nota': b.notas[id],
+                  'nota': (b.notas[id] ?? 3) * 2,
                 'destacados': (b.destacados[id] ?? const <String>{}).toList(),
               },
         ],
@@ -392,8 +392,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           _Titulo('3', detallada ? 'Valora a tus compañeros' : 'Notas de tus compañeros'),
           Text(
             detallada
-                ? 'Del 1 al 10 en cada aspecto. ⭐ = tu MVP.'
-                : 'Todos empiezan en 6 (normal): toca solo a quien se salió de lo normal. ⭐ = tu MVP.',
+                ? 'Del 1 al 5 en cada aspecto (3 = normal).'
+                : 'Del 1 al 5. Todos empiezan en 3 (normal): toca solo a quien se salió de lo normal.',
             style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 6),
@@ -401,7 +401,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
             _TarjetaNota(
               nombre: miembros[a.miembroId]?.nombre ?? '…',
               equipo: a.equipo!,
-              nota: b.notas[a.miembroId] ?? 6,
+              nota: b.notas[a.miembroId] ?? 3,
               detallada: detallada,
               aspectos: listaAspectos,
               notasAspecto: b.aspectos.putIfAbsent(a.miembroId, () => {}),
@@ -415,7 +415,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                   b.mvp = null;
                 } else {
                   b.mvp = a.miembroId;
-                  if ((b.notas[a.miembroId] ?? 6) < 9) b.notas[a.miembroId] = 9;
+                  if ((b.notas[a.miembroId] ?? 3) < 5) b.notas[a.miembroId] = 5;
                 }
               }),
               onSinValorar: (v) => setState(() => v ? b.sinValorar.add(a.miembroId) : b.sinValorar.remove(a.miembroId)),
@@ -728,7 +728,8 @@ class _TarjetaNota extends StatelessWidget {
   final VoidCallback onMvp, onAbrir, onCambio;
   final ValueChanged<bool> onSinValorar;
 
-  static const _rapidas = [4, 5, 6, 7, 8, 9, 10];
+  static const _rapidas = [1, 2, 3, 4, 5];
+  static const _textos = {1: 'Mal', 2: 'Flojo', 3: 'Normal', 4: 'Bien', 5: 'Crack'};
 
   @override
   Widget build(BuildContext context) {
@@ -752,37 +753,37 @@ class _TarjetaNota extends StatelessWidget {
                       decoration: sinValorar ? TextDecoration.lineThrough : null,
                       color: sinValorar ? cs.onSurfaceVariant : null)),
             ),
-            IconButton(
-              tooltip: esMvp ? 'Quitar mi MVP' : 'Mi MVP',
+            TextButton.icon(
               onPressed: sinValorar ? null : onMvp,
+              style: TextButton.styleFrom(
+                foregroundColor: esMvp ? cs.onTertiaryContainer : cs.onSurfaceVariant,
+                visualDensity: VisualDensity.compact,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
               icon: Icon(esMvp ? Icons.star : Icons.star_border, color: esMvp ? cs.tertiary : null),
+              label: Text('MVP', style: TextStyle(fontWeight: esMvp ? FontWeight.w800 : FontWeight.w600)),
             ),
             PopupMenuButton<String>(
               tooltip: 'Más',
               onSelected: (v) {
                 if (v == 'novi') onSinValorar(!sinValorar);
-                if (v == 'baja') _elegirNotaBaja(context);
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'novi', child: Text(sinValorar ? 'Sí le vi: valorar' : 'No le vi (no valorar)')),
-                if (!detallada && !sinValorar) const PopupMenuItem(value: 'baja', child: Text('Nota 1–3')),
               ],
             ),
           ]),
           if (!sinValorar) ...[
             if (!detallada)
-              Wrap(spacing: 4, runSpacing: 4, children: [
+              Row(children: [
                 for (final n in _rapidas)
-                  ChoiceChip(
-                    label: Text('$n'),
-                    selected: nota == n,
-                    showCheckmark: false,
-                    visualDensity: VisualDensity.compact,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                    onSelected: (_) => onNota(n),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: _BotonNota(n: n, texto: _textos[n]!, elegida: nota == n, onTap: () => onNota(n)),
+                    ),
                   ),
-                if (nota < 4)
-                  ChoiceChip(label: Text('$nota'), selected: true, showCheckmark: false, onSelected: (_) {}),
               ])
             else
               for (final a in aspectos)
@@ -790,18 +791,18 @@ class _TarjetaNota extends StatelessWidget {
                   SizedBox(width: 96, child: Text(a.nombre, style: t.bodySmall)),
                   Expanded(
                     child: Slider(
-                      value: (notasAspecto[a.clave] ?? 6).toDouble(),
+                      value: (notasAspecto[a.clave] ?? 3).toDouble(),
                       min: 1,
-                      max: 10,
-                      divisions: 9,
-                      label: '${notasAspecto[a.clave] ?? 6}',
+                      max: 5,
+                      divisions: 4,
+                      label: '${notasAspecto[a.clave] ?? 3}',
                       onChanged: (v) {
                         notasAspecto[a.clave] = v.round();
                         onCambio();
                       },
                     ),
                   ),
-                  SizedBox(width: 24, child: Text('${notasAspecto[a.clave] ?? 6}', textAlign: TextAlign.end)),
+                  SizedBox(width: 24, child: Text('${notasAspecto[a.clave] ?? 3}', textAlign: TextAlign.end)),
                 ]),
             if (!detallada)
               Align(
@@ -837,17 +838,41 @@ class _TarjetaNota extends StatelessWidget {
     );
   }
 
-  Future<void> _elegirNotaBaja(BuildContext context) async {
-    final v = await showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text('Nota para $nombre'),
-        children: [
-          for (final n in [1, 2, 3])
-            SimpleDialogOption(onPressed: () => Navigator.pop(ctx, n), child: Text('$n')),
-        ],
+}
+
+/// Nota del 1 al 5 con su palabra debajo (1 Mal · 3 Normal · 5 Crack).
+class _BotonNota extends StatelessWidget {
+  const _BotonNota({required this.n, required this.texto, required this.elegida, required this.onTap});
+  final int n;
+  final String texto;
+  final bool elegida;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Material(
+      color: elegida ? cs.primary : cs.surfaceContainer,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(children: [
+            Text('$n',
+                style: TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w800, color: elegida ? cs.onPrimary : cs.onSurface)),
+            Text(texto,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                style: TextStyle(fontSize: 10.5, color: elegida ? cs.onPrimary : cs.onSurfaceVariant)),
+          ]),
+        ),
       ),
     );
-    if (v != null) onNota(v);
   }
 }
+
+/// Nota del servidor (2–10) a la escala de la app (1–5).
+int _a5(int n) => (n / 2).round().clamp(1, 5);
