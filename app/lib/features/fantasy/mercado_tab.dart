@@ -9,7 +9,7 @@ import '../../data/providers.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
 
-enum _Orden { precio, variacion, rating, fichado }
+enum _Orden { precio, variacion, rating, fichado, libres }
 
 extension on _Orden {
   String get etiqueta => switch (this) {
@@ -17,6 +17,7 @@ extension on _Orden {
         _Orden.variacion => 'Variación',
         _Orden.rating => 'Valoración',
         _Orden.fichado => '% fichado',
+        _Orden.libres => 'Fichas libres',
       };
 }
 
@@ -41,7 +42,10 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
     final mercado = ref.watch(mercadoProvider(ligaId));
     final abierto = ref.watch(mercadoAbiertoProvider(ligaId)).valueOrNull ?? true;
     final miembros = ref.watch(miembrosPorIdProvider(ligaId));
-    final mios = {for (final j in ref.watch(miPlantillaProvider(k)).valueOrNull ?? const <JugadorPlantilla>[]) j.jugadorId};
+    final mios = {
+      for (final j in ref.watch(miPlantillaProvider(k)).valueOrNull ?? const <JugadorPlantilla>[])
+        if (j.propia) j.jugadorId,
+    };
     final saldo = ref.watch(miManagerProvider(k)).valueOrNull?.saldo;
 
     return Column(children: [
@@ -88,6 +92,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
                   _Orden.variacion => j.variacion ?? 0,
                   _Orden.rating => j.rating ?? 0,
                   _Orden.fichado => j.pctFichado ?? 0,
+                  _Orden.libres => j.fichasLibres.toDouble(),
                 };
             filtrada.sort((a, b) => clave(b).compareTo(clave(a)));
             if (filtrada.isEmpty) {
@@ -115,9 +120,13 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
                       ],
                     ]),
                     subtitle: Text([
-                      etiquetaPosicion(m?.posicion),
                       if (j.rating != null) 'valoración ${j.rating!.round()}',
-                      if (j.pctFichado != null) '${j.pctFichado!.round()} % lo tienen',
+                      if (j.fichasTotales > 0)
+                        j.hayLibres
+                            ? '${j.fichasLibres}/${j.fichasTotales} fichas libres'
+                            : j.clausulaMinima != null
+                                ? 'agotado · cláusula desde ${millones(j.clausulaMinima)}'
+                                : 'agotado',
                     ].join(' · ')),
                     trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                       Text(millones(j.precio), style: Theme.of(context).textTheme.titleSmall),

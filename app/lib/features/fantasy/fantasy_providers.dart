@@ -63,6 +63,20 @@ final ratingsMercadoProvider = FutureProvider.autoDispose.family<Map<String, dou
   }
 });
 
+/// Habilidad bajo palos (0–100) de cada jugador según la encuesta, para igualarla entre equipos al
+/// balancear (todos rotan en la portería). Vacío si no hay valoraciones.
+final habilidadPorteriaProvider = FutureProvider.autoDispose.family<Map<String, double>, String>((ref, ligaId) async {
+  try {
+    final vs = await FantasyRepo.valoraciones(ligaId);
+    return {
+      for (final v in vs)
+        if (v.atributos[Atributo.portero] != null) v.miembroId: v.atributos[Atributo.portero]!,
+    };
+  } catch (_) {
+    return const {};
+  }
+});
+
 /// Próximo partido de la liga que todavía no se ha jugado (el de la alineación).
 final proximoPartidoProvider = Provider.autoDispose.family<Partido?, String>((ref, ligaId) {
   final lista = ref.watch(partidosProvider(ligaId)).valueOrNull ?? const <Partido>[];
@@ -87,6 +101,36 @@ final partidoSinLiquidarProvider = Provider.autoDispose.family<Partido?, String>
   return pend.firstOrNull;
 });
 
+// ---- Ampliación 0.2 ----------------------------------------------------------
+
+/// Fichas de un jugador (clave: liga + jugador).
+final fichasJugadorProvider = FutureProvider.autoDispose.family<List<FichaJugador>, LigaMiembro>(
+  (ref, k) => FantasyRepo.fichasJugador(k.ligaId, k.miembroId),
+);
+
+final misOfertasProvider = FutureProvider.autoDispose.family<List<Oferta>, String>(
+  (ref, ligaId) => FantasyRepo.misOfertas(ligaId),
+);
+
+final cesionesDisponiblesProvider = FutureProvider.autoDispose.family<List<CesionDisponible>, String>(
+  (ref, ligaId) => FantasyRepo.cesionesDisponibles(ligaId),
+);
+
+/// Bonus por rol de la alineación (claves rol_* → puntos).
+final reglasRolProvider = FutureProvider.autoDispose.family<Map<String, double>, String>((ref, ligaId) async {
+  try {
+    return await FantasyRepo.reglasRol(ligaId);
+  } catch (_) {
+    return const {};
+  }
+});
+
+/// Ofertas recibidas pendientes (para la insignia de la pestaña).
+final ofertasRecibidasPendientesProvider = Provider.autoDispose.family<int, String>((ref, ligaId) {
+  final lista = ref.watch(misOfertasProvider(ligaId)).valueOrNull ?? const <Oferta>[];
+  return lista.where((o) => o.recibida && o.pendiente).length;
+});
+
 /// Refresca todo lo del Fantasy tras comprar, vender o guardar.
 void refrescarFantasy(WidgetRef ref, LigaMiembro k) {
   ref.invalidate(miManagerProvider(k));
@@ -94,4 +138,7 @@ void refrescarFantasy(WidgetRef ref, LigaMiembro k) {
   ref.invalidate(mercadoProvider(k.ligaId));
   ref.invalidate(mercadoAbiertoProvider(k.ligaId));
   ref.invalidate(clasificacionManagersProvider(k.ligaId));
+  ref.invalidate(misOfertasProvider(k.ligaId));
+  ref.invalidate(cesionesDisponiblesProvider(k.ligaId));
+  ref.invalidate(fichasJugadorProvider);
 }

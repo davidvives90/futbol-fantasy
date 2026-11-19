@@ -27,7 +27,7 @@ class ReglasScreen extends ConsumerWidget {
           bottom: const TabBar(tabs: [Tab(text: 'Reglas'), Tab(text: 'Aspectos')]),
         ),
         body: TabBarView(children: [
-          _Reglas(ligaId: ligaId, porPosicion: mi.liga.puntuarPorPosicion),
+          _Reglas(ligaId: ligaId, bonusRoles: mi.liga.fantasy.bonusRoles),
           _Aspectos(ligaId: ligaId),
         ]),
       ),
@@ -36,13 +36,11 @@ class ReglasScreen extends ConsumerWidget {
 }
 
 class _Reglas extends ConsumerWidget {
-  const _Reglas({required this.ligaId, required this.porPosicion});
+  const _Reglas({required this.ligaId, required this.bonusRoles});
   final String ligaId;
-  final bool porPosicion;
 
-  /// Reglas que no aplican según el modo de la liga se muestran atenuadas.
-  bool _aplica(String clave) =>
-      porPosicion ? clave != 'gol' : !clave.startsWith('gol_') || clave == 'goles_encajados_3';
+  /// Si es false, las reglas rol_* se muestran atenuadas (el rol de la alineación es solo estético).
+  final bool bonusRoles;
 
   Future<void> _editar(BuildContext context, WidgetRef ref, Regla r) async {
     final ctrl = TextEditingController(text: r.puntos.toString());
@@ -77,25 +75,36 @@ class _Reglas extends ConsumerWidget {
     return reglas.when(
       loading: () => const Cargando(),
       error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(_reglasProvider(ligaId))),
-      data: (lista) => ListView(children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(porPosicion
-              ? 'La liga puntúa los goles según la posición del jugador.'
-              : 'La liga puntúa todos los goles igual (regla "Gol").'),
-        ),
-        for (final r in lista)
-          ListTile(
-            enabled: _aplica(r.clave),
-            title: Text(nombreRegla(r.clave)),
-            subtitle: r.posicion == null ? null : Text(etiquetaPosicion(r.posicion)),
-            trailing: Text(
-              '${r.puntos > 0 ? '+' : ''}${r.puntos % 1 == 0 ? r.puntos.toInt() : r.puntos}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            onTap: () => _editar(context, ref, r),
+      data: (lista) {
+        final vigentes = lista.where((r) => !reglaObsoleta(r.clave) && r.posicion == null).toList();
+        final partido = vigentes.where((r) => !r.clave.startsWith('rol_')).toList();
+        final roles = vigentes.where((r) => r.clave.startsWith('rol_')).toList();
+        Widget fila(Regla r, {bool enabled = true}) => ListTile(
+              enabled: enabled,
+              title: Text(nombreRegla(r.clave)),
+              trailing: Text(
+                '${r.puntos > 0 ? '+' : ''}${r.puntos % 1 == 0 ? r.puntos.toInt() : r.puntos}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              onTap: () => _editar(context, ref, r),
+            );
+        return ListView(children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Text('Puntos del partido real: iguales para todos, sin importar la posición '
+                '(en la liga se rota en la portería).'),
           ),
-      ]),
+          for (final r in partido) fila(r),
+          const Divider(height: 24),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: Text(bonusRoles
+                ? 'Bonus de rol en la alineación Fantasy: solo los suma el mánager que pone a ese jugador en ese rol.'
+                : 'Bonus de rol desactivados en Ajustes Fantasy: el rol de la alineación es solo estético.'),
+          ),
+          for (final r in roles) fila(r, enabled: bonusRoles),
+        ]);
+      },
     );
   }
 }
@@ -149,7 +158,7 @@ class _Aspectos extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Aspectos que los compañeros valoran del 1 al 10 tras cada partido. '
-                'A los porteros se les valora "Portería" en lugar de "Ataque".'),
+                'Se aplican a todos los jugadores por igual, porque no hay posiciones fijas.'),
           ),
           for (final a in lista)
             SwitchListTile(
@@ -159,7 +168,7 @@ class _Aspectos extends ConsumerWidget {
               onChanged: (v) async {
                 await ejecutar(
                   context,
-                  () => LigasRepo.guardarAspecto(ligaId, Aspecto(clave: a.clave, nombre: a.nombre, orden: a.orden, activo: v, aplicaA: a.aplicaA)),
+                  () => LigasRepo.guardarAspecto(ligaId, Aspecto(clave: a.clave, nombre: a.nombre, orden: a.orden, activo: v, aplicaA: 'todos')),
                 );
                 ref.invalidate(_aspectosProvider(ligaId));
                 ref.invalidate(aspectosActivosProvider(ligaId));

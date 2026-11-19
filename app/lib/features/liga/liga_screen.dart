@@ -108,7 +108,7 @@ class _Datos extends StatelessWidget {
               avatar: Icon(l.publica ? Icons.public : Icons.lock_outline, size: 18),
               label: Text(l.publica ? 'Pública' : 'Privada'),
             ),
-            if (l.puntuarPorPosicion) const Chip(label: Text('Puntúa por posición')),
+            if (l.fantasy.bonusRoles) const Chip(label: Text('Bonus por rol en la alineación')),
           ]),
           const SizedBox(height: 8),
           ListTile(

@@ -98,7 +98,10 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _posicion,
-            decoration: const InputDecoration(labelText: 'Posición habitual'),
+            decoration: const InputDecoration(
+              labelText: 'Posición preferida',
+              helperText: 'Solo informativa: no cambia tus puntos (todos rotáis, también en la portería)',
+            ),
             items: [for (final p in posiciones) DropdownMenuItem(value: p, child: Text(etiquetaPosicion(p)))],
             onChanged: (v) => setState(() => _posicion = v),
             validator: (v) => v == null ? 'Elige una posición' : null,

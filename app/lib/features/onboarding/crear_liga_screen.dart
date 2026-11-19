@@ -29,7 +29,6 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
   int _numEquipos = 2;
   bool _publica = false;
   bool _requiereAprobacion = true;
-  bool _puntuarPorPosicion = true;
   bool _guardando = false;
   Liga? _original;
 
@@ -50,7 +49,6 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
         _numEquipos = l.numEquipos;
         _publica = l.publica;
         _requiereAprobacion = l.requiereAprobacion;
-        _puntuarPorPosicion = l.puntuarPorPosicion;
       }
     }
   }
@@ -76,7 +74,6 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
         'num_equipos': _numEquipos,
         'visibilidad': _publica ? 'publica' : 'privada',
         'requiere_aprobacion': _requiereAprobacion,
-        'puntuar_por_posicion': _puntuarPorPosicion,
       };
 
   Future<void> _guardar() async {
@@ -181,13 +178,6 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
           Text('Plazas por partido: $plazas', style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 24),
           Text('Reglas', style: Theme.of(context).textTheme.titleMedium),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Puntuar según la posición'),
-            subtitle: const Text('Un gol de defensa vale más que uno de delantero'),
-            value: _puntuarPorPosicion,
-            onChanged: (v) => setState(() => _puntuarPorPosicion = v),
-          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Liga pública'),

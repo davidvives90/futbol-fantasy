@@ -35,8 +35,9 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
   /// Construye los jugadores del algoritmo a partir de confirmados + rendimiento.
   /// [mercado]: rating R (0–100) del mercado Fantasy (encuesta + rendimiento). Si existe para un jugador
   /// tiene prioridad; si no, se usa la fórmula de rendimiento de `calcularRatings`.
-  List<JugadorBalanceo> _jugadores(
-      List<Inscripcion> conf, Map<String, Miembro> miembros, List<Rendimiento> rend, Map<String, double> mercado) {
+  /// [porteria]: habilidad bajo palos 0–100 de la encuesta (vacío si no hay encuesta).
+  List<JugadorBalanceo> _jugadores(List<Inscripcion> conf, Map<String, Miembro> miembros, List<Rendimiento> rend,
+      Map<String, double> mercado, Map<String, double> porteria) {
     final porId = {for (final r in rend) r.miembroId: r};
     // Con encuesta cerrada, v_rating_balanceo da un rating 0–100 para todos: se usa para todos los
     // convocados (50 si faltara alguno) y no se mezcla con la fórmula normalizada de rendimiento.
@@ -49,7 +50,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
           id: i.miembroId,
           nombre: miembros[i.miembroId]?.nombre ?? '…',
           rating: ratings[i.miembroId] ?? 50,
-          portero: miembros[i.miembroId]?.esPortero ?? false,
+          habilidadPortero: porteria[i.miembroId],
         ),
     ];
   }
@@ -119,7 +120,8 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     if (conv == null || rend.isLoading || mercado.isLoading) return const Cargando();
 
     final conf = conv.where((i) => i.estado == EstadoInscripcion.confirmado).toList();
-    final js = _jugadores(conf, miembros, rend.valueOrNull ?? const [], mercado.valueOrNull ?? const {});
+    final porteria = ref.watch(habilidadPorteriaProvider(widget.mi.liga.id)).valueOrNull ?? const <String, double>{};
+    final js = _jugadores(conf, miembros, rend.valueOrNull ?? const [], mercado.valueOrNull ?? const {}, porteria);
     final editable = widget.mi.soyAdmin && widget.partido.estado.antesDeJugar;
 
     // Equipos ya guardados en la base de datos.
@@ -231,7 +233,7 @@ class _TarjetaEquipo extends StatelessWidget {
           for (final j in ordenados)
             ListTile(
               dense: true,
-              leading: Icon(j.portero ? Icons.sports_handball : Icons.person, color: color),
+              leading: Icon(Icons.person, color: color),
               title: Text(j.nombre),
               trailing: Text(j.rating.toStringAsFixed(0)),
               onTap: onMover == null

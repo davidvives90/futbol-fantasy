@@ -32,7 +32,15 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     ('horas_cierre_alineacion', 'Cierre de alineación (horas antes)', null),
     ('ingreso_por_punto', 'Ingreso por punto (M)', null),
     ('comision_venta', 'Comisión de venta (%)', 'Ej.: 5'),
+    ('coste_subida_clausula', 'Coste de subir la cláusula (% de la subida)', 'Ej.: 10'),
+    ('proteccion_jornadas', 'Protección tras fichar (jornadas)', 'Sin poder ser clausulado'),
+    ('cesion_pct_min', 'Cesión: % mínimo del valor', 'Ej.: 5'),
+    ('cesion_pct_max', 'Cesión: % máximo del valor', 'Ej.: 30'),
+    ('horas_caducidad_oferta', 'Caducidad de las ofertas (horas)', null),
+    ('partidos_min_rendimiento', 'Partidos antes de que el rendimiento cuente en el precio', null),
   ];
+
+  bool? _bonusRoles;
 
   void _rellenar(ParamsFantasy p) {
     final v = <String, num>{
@@ -43,7 +51,14 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'horas_cierre_alineacion': p.horasCierreAlineacion,
       'ingreso_por_punto': p.ingresoPorPunto,
       'comision_venta': p.comisionVenta * 100,
+      'coste_subida_clausula': p.costeSubidaClausula * 100,
+      'proteccion_jornadas': p.proteccionJornadas,
+      'cesion_pct_min': p.cesionPctMin * 100,
+      'cesion_pct_max': p.cesionPctMax * 100,
+      'horas_caducidad_oferta': p.horasCaducidadOferta,
+      'partidos_min_rendimiento': p.partidosMinRendimiento,
     };
+    _bonusRoles = p.bonusRoles;
     for (final (clave, _, _) in _campos) {
       final n = v[clave]!;
       (_c[clave] ??= TextEditingController()).text =
@@ -71,6 +86,13 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'horas_cierre_alineacion': _num('horas_cierre_alineacion')!.round(), // columna smallint
       'ingreso_por_punto': _num('ingreso_por_punto'),
       'comision_venta': _num('comision_venta')! / 100,
+      'coste_subida_clausula': _num('coste_subida_clausula')! / 100,
+      'proteccion_jornadas': _num('proteccion_jornadas')!.round(),
+      'cesion_pct_min': _num('cesion_pct_min')! / 100,
+      'cesion_pct_max': _num('cesion_pct_max')! / 100,
+      'horas_caducidad_oferta': _num('horas_caducidad_oferta')!.round(),
+      'partidos_min_rendimiento': _num('partidos_min_rendimiento')!.round(),
+      'bonus_roles': _bonusRoles ?? true,
     };
     setState(() => _guardando = true);
     final ok = await ejecutar(context, () => LigasRepo.actualizarLiga(mi.liga.id, datos), ok: 'Parámetros guardados');
@@ -90,6 +112,12 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'horas_cierre_alineacion' => n < 0 || n > 72 || n % 1 != 0 ? 'Horas enteras entre 0 y 72' : null,
       'ingreso_por_punto' => n < 0 ? 'No puede ser negativo' : null,
       'comision_venta' => n < 0 || n > 50 ? 'Entre 0 y 50' : null,
+      'coste_subida_clausula' => n < 0 || n > 100 ? 'Entre 0 y 100' : null,
+      'proteccion_jornadas' => n < 0 || n > 10 || n % 1 != 0 ? 'Entero entre 0 y 10' : null,
+      'cesion_pct_min' => n <= 0 || n > 100 ? 'Entre 0 y 100' : null,
+      'cesion_pct_max' => n < (_num('cesion_pct_min') ?? 0) || n > 100 ? 'Entre el mínimo y 100' : null,
+      'horas_caducidad_oferta' => n < 1 || n > 720 || n % 1 != 0 ? 'Horas enteras entre 1 y 720' : null,
+      'partidos_min_rendimiento' => n < 0 || n > 50 || n % 1 != 0 ? 'Entero entre 0 y 50' : null,
       _ => null,
     };
   }
@@ -179,7 +207,15 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
               ),
           ]),
         ),
-        const Text('Los cambios de precio mínimo y máximo se aplican a partir de la siguiente jornada.',
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Bonus por rol en la alineación'),
+          subtitle: const Text('Si se desactiva, el portero/defensa/medio/delantero de la alineación es solo estético.'),
+          value: _bonusRoles ?? true,
+          onChanged: (v) => setState(() => _bonusRoles = v),
+        ),
+        const Text('Los cambios de precio mínimo y máximo se aplican a partir de la siguiente jornada. '
+            'Los bonus de cada rol se editan en Reglas de puntuación.',
             style: TextStyle(fontSize: 12)),
         const SizedBox(height: 12),
         FilledButton(

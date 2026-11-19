@@ -10,8 +10,9 @@ import 'clasificacion_managers_tab.dart';
 import 'fantasy_providers.dart';
 import 'mercado_tab.dart';
 import 'mi_equipo_tab.dart';
+import 'ofertas_tab.dart';
 
-/// Pestaña inferior "Fantasy": Mi equipo · Mercado · Mánagers.
+/// Pestaña inferior "Fantasy": Mi equipo · Mercado · Ofertas · Mánagers.
 class FantasyScreen extends ConsumerWidget {
   const FantasyScreen({super.key});
 
@@ -20,14 +21,24 @@ class FantasyScreen extends ConsumerWidget {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const Scaffold(body: Cargando());
 
+    final pendientes = ref.watch(ofertasRecibidasPendientesProvider(mi.liga.id));
+
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
-        appBar: const LigaAppBar(
+        appBar: LigaAppBar(
           bottom: TabBar(tabs: [
-            Tab(icon: Icon(Icons.shield_outlined), text: 'Mi equipo'),
-            Tab(icon: Icon(Icons.storefront_outlined), text: 'Mercado'),
-            Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Mánagers'),
+            const Tab(icon: Icon(Icons.shield_outlined), text: 'Mi equipo'),
+            const Tab(icon: Icon(Icons.storefront_outlined), text: 'Mercado'),
+            Tab(
+              icon: Badge(
+                isLabelVisible: pendientes > 0,
+                label: Text('$pendientes'),
+                child: const Icon(Icons.handshake_outlined),
+              ),
+              text: 'Ofertas',
+            ),
+            const Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Mánagers'),
           ]),
         ),
         body: Column(children: [
@@ -36,6 +47,7 @@ class FantasyScreen extends ConsumerWidget {
             child: TabBarView(children: [
               MiEquipoTab(mi: mi),
               MercadoTab(mi: mi),
+              OfertasTab(mi: mi),
               ClasificacionManagersTab(mi: mi),
             ]),
           ),

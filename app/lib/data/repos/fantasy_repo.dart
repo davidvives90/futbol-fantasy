@@ -3,7 +3,7 @@ import '../../core/utils.dart';
 import '../models_fantasy.dart';
 
 /// Mercado Fantasy: encuesta inicial, mercado, plantillas, alineaciones y clasificación de mánagers.
-/// Contrato: docs/mercado_fantasy.md §8 (migración 0008_mercado_fantasy.sql).
+/// Contrato: docs/mercado_fantasy.md §8–10 y docs/contrato_app_backend.md (migraciones 0008–0014).
 class FantasyRepo {
   // ---- Mánager y plantilla --------------------------------------------------
 
@@ -36,12 +36,102 @@ class FantasyRepo {
     return [for (final r in rows) JugadorPlantilla.fromMap({...r, 'variacion': variacion[r['jugador_id']]})];
   }
 
+  /// Compra una ficha libre al precio de mercado (falla si no quedan: entonces cláusula u oferta).
   static Future<void> comprar(String ligaId, String jugadorId) async {
-    await sb.rpc('comprar_jugador', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
+    await sb.rpc('comprar_ficha', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
   }
 
-  static Future<void> vender(String ligaId, String jugadorId) async {
-    await sb.rpc('vender_jugador', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
+  /// Vende mi ficha al mercado (precio − comisión). Si no se conoce la ficha, usa la firma 0.1.
+  static Future<void> vender(String ligaId, String jugadorId, {String? fichaId}) async {
+    if (fichaId != null) {
+      await sb.rpc('vender_ficha', params: {'p_ficha': fichaId});
+    } else {
+      await sb.rpc('vender_jugador', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
+    }
+  }
+
+  // ---- Fichas, cláusulas, ofertas y cesiones (0.2) --------------------------
+
+  /// Todas las fichas de un jugador (`v_fichas_jugador`), libres primero.
+  static Future<List<FichaJugador>> fichasJugador(String ligaId, String jugadorId) async {
+    final rows = await sb
+        .from('v_fichas_jugador')
+        .select()
+        .eq('liga_id', ligaId)
+        .eq('jugador_id', jugadorId)
+        .order('numero');
+    return [for (final r in rows) FichaJugador.fromMap(r)];
+  }
+
+  /// Devuelve la cláusula resultante.
+  static Future<double?> fijarClausula(String fichaId, double importe) async {
+    final r = await sb.rpc('fijar_clausula', params: {'p_ficha': fichaId, 'p_importe': importe});
+    return toDouble(r);
+  }
+
+  static Future<void> pagarClausula(String fichaId) async {
+    await sb.rpc('pagar_clausula', params: {'p_ficha': fichaId});
+  }
+
+  static Future<void> hacerOferta(String fichaId, double importe) async {
+    await sb.rpc('hacer_oferta', params: {'p_ficha': fichaId, 'p_importe': importe});
+  }
+
+  /// Devuelve 'aceptada' | 'rechazada' | 'caducada'.
+  static Future<String?> responderOferta(String ofertaId, bool aceptar) async {
+    final r = await sb.rpc('responder_oferta', params: {'p_oferta': ofertaId, 'p_aceptar': aceptar});
+    return r as String?;
+  }
+
+  static Future<void> cancelarOferta(String ofertaId) async {
+    await sb.rpc('cancelar_oferta', params: {'p_oferta': ofertaId});
+  }
+
+  /// Enviadas y recibidas (`v_mis_ofertas`), más recientes primero.
+  static Future<List<Oferta>> misOfertas(String ligaId) async {
+    final rows =
+        await sb.from('v_mis_ofertas').select().eq('liga_id', ligaId).order('creada_en', ascending: false);
+    return [for (final r in rows) Oferta.fromMap(r)];
+  }
+
+  /// [pct] como fracción 0–1 (entre cesion_pct_min y cesion_pct_max de la liga).
+  static Future<void> ofrecerCesion(String fichaId, double pct) async {
+    await sb.rpc('ofrecer_cesion', params: {'p_ficha': fichaId, 'p_pct': pct});
+  }
+
+  static Future<void> aceptarCesion(String cesionId) async {
+    await sb.rpc('aceptar_cesion', params: {'p_cesion': cesionId});
+  }
+
+  static Future<void> cancelarCesion(String cesionId) async {
+    await sb.rpc('cancelar_cesion', params: {'p_cesion': cesionId});
+  }
+
+  /// Cesiones ofrecidas en la liga para el próximo partido (también las mías, marcadas con es_mia).
+  static Future<List<CesionDisponible>> cesionesDisponibles(String ligaId) async {
+    final rows = await sb.from('v_cesiones_disponibles').select().eq('liga_id', ligaId).order('importe');
+    return [for (final r in rows) CesionDisponible.fromMap(r)];
+  }
+
+  /// Id de la cesión que tengo ofrecida para una ficha (para poder retirarla).
+  static Future<String?> miCesionOfrecida(String ligaId, String fichaId) async {
+    final r = await sb
+        .from('v_cesiones_disponibles')
+        .select('cesion_id')
+        .eq('liga_id', ligaId)
+        .eq('ficha_id', fichaId)
+        .maybeSingle();
+    return r?['cesion_id'] as String?;
+  }
+
+  /// Bonus de rol de la liga (claves `rol_*` de reglas_puntuacion).
+  static Future<Map<String, double>> reglasRol(String ligaId) async {
+    final rows = await sb
+        .from('reglas_puntuacion')
+        .select('clave, puntos')
+        .eq('liga_id', ligaId)
+        .like('clave', 'rol_%');
+    return {for (final r in rows) r['clave'] as String: toDouble(r['puntos']) ?? 0};
   }
 
   // ---- Mercado --------------------------------------------------------------
@@ -99,9 +189,14 @@ class FantasyRepo {
     return [for (final r in rows) Alineado.fromMap(r)];
   }
 
-  /// La base de datos valida tamaño (plazas / num_equipos), pertenencia a la plantilla y hora de cierre.
-  static Future<void> guardarAlineacion(String partidoId, List<String> jugadores) async {
-    await sb.rpc('guardar_alineacion', params: {'p_partido': partidoId, 'p_jugadores': jugadores});
+  /// La base de datos valida tamaño (plazas / num_equipos), pertenencia a la plantilla (o cesión recibida),
+  /// hora de cierre y que haya exactamente un POR. [roles] va en el mismo orden que [jugadores].
+  static Future<void> guardarAlineacion(String partidoId, List<String> jugadores, List<RolAlineacion> roles) async {
+    await sb.rpc('guardar_alineacion', params: {
+      'p_partido': partidoId,
+      'p_jugadores': jugadores,
+      'p_roles': [for (final r in roles) r.name],
+    });
   }
 
   static Future<PuntosManager?> puntosManager(String partidoId, String managerId) async {
@@ -126,6 +221,17 @@ class FantasyRepo {
         .limit(1)
         .maybeSingle();
     return r == null ? null : PuntosManager.fromMap(r);
+  }
+
+  /// Plantilla de cualquier mánager (desde 0.2 es visible para la liga: hace falta para pagar cláusulas).
+  /// Devuelve (jugador, cláusula guardada) de sus fichas.
+  static Future<List<({String jugadorId, double? clausula})>> plantillaDe(String ligaId, String managerId) async {
+    final rows = await sb
+        .from('plantillas')
+        .select('jugador_id, clausula')
+        .eq('liga_id', ligaId)
+        .eq('manager_id', managerId);
+    return [for (final r in rows) (jugadorId: r['jugador_id'] as String, clausula: toDouble(r['clausula']))];
   }
 
   // ---- Clasificación --------------------------------------------------------

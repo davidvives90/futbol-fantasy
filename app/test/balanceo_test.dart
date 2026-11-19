@@ -3,9 +3,9 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_fantasy/features/equipos/balanceo.dart';
 
-List<JugadorBalanceo> _jugadores(List<double> ratings, {Set<int> porteros = const {}}) => [
+List<JugadorBalanceo> _jugadores(List<double> ratings, {List<double>? porteria}) => [
       for (var i = 0; i < ratings.length; i++)
-        JugadorBalanceo(id: 'j$i', nombre: 'J$i', rating: ratings[i], portero: porteros.contains(i)),
+        JugadorBalanceo(id: 'j$i', nombre: 'J$i', rating: ratings[i], habilidadPortero: porteria?[i]),
     ];
 
 void _todosUnaVez(Reparto r, List<JugadorBalanceo> js) {
@@ -34,10 +34,18 @@ void main() {
       expect(tams, [3, 4]);
     });
 
-    test('separa a los porteros si hay uno por equipo', () {
-      final js = _jugadores([50, 50, 50, 50, 50, 50, 50, 50, 50, 50], porteros: {0, 1});
+    test('con fuerza igual, reparte la habilidad en la portería (todos rotan)', () {
+      // Misma fuerza para todos; los dos mejores bajo palos (j0, j1) deben ir a equipos distintos.
+      final js = _jugadores([50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+          porteria: [95, 90, 20, 20, 20, 20, 20, 20, 20, 20]);
       final r = balancear(js, 2).first;
-      expect(r.equipos.every((e) => e.any((j) => j.portero)), isTrue);
+      final eq0 = r.equipos.indexWhere((e) => e.any((j) => j.id == 'j0'));
+      final eq1 = r.equipos.indexWhere((e) => e.any((j) => j.id == 'j1'));
+      expect(eq0, isNot(eq1));
+    });
+
+    test('la habilidad en la portería pesa poco frente a la fuerza total', () {
+      expect(pesoPorteria, lessThan(0.5));
     });
 
     test('devuelve como mucho top repartos ordenados por coste', () {

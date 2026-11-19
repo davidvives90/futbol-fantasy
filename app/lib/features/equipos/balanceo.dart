@@ -2,13 +2,17 @@ import 'dart:math';
 
 /// Jugador tal como lo ve el algoritmo de balanceo.
 class JugadorBalanceo {
-  const JugadorBalanceo({required this.id, required this.nombre, required this.rating, this.portero = false});
+  const JugadorBalanceo({required this.id, required this.nombre, required this.rating, this.habilidadPortero});
   final String id;
   final String nombre;
 
   /// Valoración 0..100.
   final double rating;
-  final bool portero;
+
+  /// Habilidad bajo palos 0..100 (ranking "portero" de la encuesta), si se conoce.
+  /// En la liga no hay portero fijo: todos rotan, así que solo se usa para que la habilidad
+  /// media en la portería quede pareja entre equipos (con poco peso).
+  final double? habilidadPortero;
 
   @override
   String toString() => '$nombre(${rating.toStringAsFixed(0)})';
@@ -92,12 +96,15 @@ class Reparto {
       };
 }
 
-/// Penalización si hay al menos un portero por equipo disponible y alguno se queda sin él.
-const penalizacionPorteros = 15.0;
+/// Peso de la diferencia de habilidad media en la portería entre equipos (0 = ignorarla).
+/// Pequeño a propósito: lo que manda es la fuerza total.
+const pesoPorteria = 0.15;
 
 /// Coste de un reparto: diferencia de fuerza entre el equipo más fuerte y el más débil
 /// (comparando la media por jugador escalada al tamaño mayor, para que un equipo con
-/// un jugador más no salga siempre como "el fuerte") + penalización de porteros.
+/// un jugador más no salga siempre como "el fuerte"). Si todos tienen habilidad de portero
+/// conocida, se suma un término pequeño para igualar la media de esa habilidad entre equipos.
+/// Ya no hay penalización por porteros fijos: en la liga todos rotan en la portería.
 double costeReparto(List<List<JugadorBalanceo>> equipos) {
   final tamMax = equipos.map((e) => e.length).reduce(max);
   final fuerzas = [
@@ -105,9 +112,13 @@ double costeReparto(List<List<JugadorBalanceo>> equipos) {
   ];
   var coste = fuerzas.reduce(max) - fuerzas.reduce(min);
 
-  final totalPorteros = equipos.fold<int>(0, (s, e) => s + e.where((j) => j.portero).length);
-  if (totalPorteros >= equipos.length && equipos.any((e) => !e.any((j) => j.portero))) {
-    coste += penalizacionPorteros;
+  final todos = equipos.expand((e) => e);
+  if (pesoPorteria > 0 && todos.isNotEmpty && todos.every((j) => j.habilidadPortero != null)) {
+    final medias = [
+      for (final e in equipos)
+        if (e.isNotEmpty) e.fold<double>(0, (s, j) => s + j.habilidadPortero!) / e.length,
+    ];
+    if (medias.length > 1) coste += pesoPorteria * (medias.reduce(max) - medias.reduce(min));
   }
   return coste;
 }

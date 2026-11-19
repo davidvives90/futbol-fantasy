@@ -177,3 +177,70 @@ class _LineaPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _LineaPainter old) => old.valores != valores || old.linea != linea;
 }
+
+/// Insignia del rol en la alineación (POR/DEF/MED/DEL).
+class InsigniaRol extends StatelessWidget {
+  const InsigniaRol(this.rol, {super.key});
+  final RolAlineacion rol;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (rol) {
+      RolAlineacion.POR => Colors.orange.shade700,
+      RolAlineacion.DEF => Colors.blue.shade700,
+      RolAlineacion.MED => Colors.green.shade700,
+      RolAlineacion.DEL => Colors.red.shade700,
+    };
+    return Container(
+      width: 34,
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+      child: Text(rol.name,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+/// Desglose de los puntos de un mánager en una jornada: por jugador, rol, puntos, bonus de rol,
+/// multiplicador de no habitual y si era una ficha cedida.
+class DesgloseManager extends StatelessWidget {
+  const DesgloseManager({super.key, required this.lineas, required this.nombres});
+  final List<LineaDesglose> lineas;
+  final Map<String, String> nombres;
+
+  static String fmt(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1).replaceAll('.', ',');
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final orden = [...lineas]..sort((a, b) => (a.rol?.index ?? 9).compareTo(b.rol?.index ?? 9));
+    return Column(children: [
+      for (final l in orden)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(children: [
+            if (l.rol != null) InsigniaRol(l.rol!) else const SizedBox(width: 34),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(nombres[l.jugadorId] ?? '…', overflow: TextOverflow.ellipsis),
+                Text(
+                  !l.jugo
+                      ? 'No jugó'
+                      : [
+                          '${fmt(l.puntos)} pts',
+                          if (l.bonusRol != 0) '${l.bonusRol > 0 ? '+' : ''}${fmt(l.bonusRol)} rol',
+                          if (l.multiplicador != 1) '×${fmt(l.multiplicador)} no habitual',
+                          if (l.cedido) 'cedido',
+                        ].join(' · '),
+                  style: t.bodySmall,
+                ),
+              ]),
+            ),
+            Text(fmt(l.total), style: t.titleSmall),
+          ]),
+        ),
+    ]);
+  }
+}

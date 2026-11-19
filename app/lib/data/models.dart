@@ -36,6 +36,7 @@ extension EstadoPartidoX on EstadoPartido {
 
 const posiciones = ['portero', 'defensa', 'medio', 'delantero'];
 
+/// Posición preferida del jugador: solo informativa (desde 0.2 los puntos no dependen de ella).
 String etiquetaPosicion(String? p) => switch (p) {
       'portero' => 'Portero',
       'defensa' => 'Defensa',
@@ -138,11 +139,37 @@ class ParamsFantasy {
     this.comisionVenta = 0.05,
     this.kEncuesta = 5,
     this.maxVariacion = 0.15,
+    this.bonusRoles = true,
+    this.copiasPorJugador = 2,
+    this.costeSubidaClausula = 0.10,
+    this.proteccionJornadas = 1,
+    this.cesionPctMin = 0.05,
+    this.cesionPctMax = 0.30,
+    this.horasCaducidadOferta = 48,
+    this.partidosMinRendimiento = 3,
   });
 
   final double precioMin, precioMax, bonusNoHabitual, horasCierreAlineacion, ingresoPorPunto, comisionVenta;
   final double kEncuesta, maxVariacion;
   final int maxPlantilla;
+
+  // ---- Ampliación 0.2 (migraciones 0010–0014) ----
+  /// Si el rol en la alineación (POR/DEF/MED/DEL) da bonus; si no, es solo estético.
+  final bool bonusRoles;
+
+  /// Fichas de cada jugador (las calcula el backend; solo lectura).
+  final int copiasPorJugador;
+
+  /// Fracción de la subida de cláusula que se paga al subirla (0,10 = 10 %).
+  final double costeSubidaClausula;
+  final int proteccionJornadas;
+
+  /// % de cesión permitido, como fracción 0–1.
+  final double cesionPctMin, cesionPctMax;
+  final int horasCaducidadOferta, partidosMinRendimiento;
+
+  /// Coste de subir una cláusula de [actual] a [nueva] (bajarla es gratis).
+  double costeSubida(double actual, double nueva) => nueva > actual ? (nueva - actual) * costeSubidaClausula : 0;
 
   /// Momento en que se cierra la alineación (y el mercado) para un partido.
   DateTime cierre(DateTime fechaHoraPartido) =>
@@ -161,6 +188,14 @@ class ParamsFantasy {
         comisionVenta: toDouble(m['comision_venta']) ?? 0.05,
         kEncuesta: toDouble(m['k_encuesta']) ?? 5,
         maxVariacion: toDouble(m['max_variacion']) ?? 0.15,
+        bonusRoles: (m['bonus_roles'] ?? true) as bool,
+        copiasPorJugador: toInt(m['copias_por_jugador'], 2),
+        costeSubidaClausula: toDouble(m['coste_subida_clausula']) ?? 0.10,
+        proteccionJornadas: toInt(m['proteccion_jornadas'], 1),
+        cesionPctMin: toDouble(m['cesion_pct_min']) ?? 0.05,
+        cesionPctMax: toDouble(m['cesion_pct_max']) ?? 0.30,
+        horasCaducidadOferta: toInt(m['horas_caducidad_oferta'], 48),
+        partidosMinRendimiento: toInt(m['partidos_min_rendimiento'], 3),
       );
 
   Map<String, dynamic> toMap() => {
@@ -171,6 +206,13 @@ class ParamsFantasy {
         'horas_cierre_alineacion': horasCierreAlineacion,
         'ingreso_por_punto': ingresoPorPunto,
         'comision_venta': comisionVenta,
+        'bonus_roles': bonusRoles,
+        'coste_subida_clausula': costeSubidaClausula,
+        'proteccion_jornadas': proteccionJornadas,
+        'cesion_pct_min': cesionPctMin,
+        'cesion_pct_max': cesionPctMax,
+        'horas_caducidad_oferta': horasCaducidadOferta,
+        'partidos_min_rendimiento': partidosMinRendimiento,
       };
 }
 
@@ -488,26 +530,31 @@ class Regla {
 }
 
 /// Nombres legibles de las reglas de puntuación.
+/// Nombres legibles de las reglas (0.2: puntos iguales para todos; la posición solo da bonus de rol
+/// en la alineación Fantasy).
 const nombresReglas = <String, String>{
   'jugado': 'Partido jugado',
-  'victoria': 'Victoria',
-  'empate': 'Empate',
-  'gol': 'Gol (sin puntuar por posición)',
-  'gol_portero': 'Gol de portero',
-  'gol_defensa': 'Gol de defensa',
-  'gol_medio': 'Gol de centrocampista',
-  'gol_delantero': 'Gol de delantero',
+  'victoria': 'Victoria (por encuentro)',
+  'empate': 'Empate (por encuentro)',
+  'gol': 'Gol',
   'asistencia': 'Asistencia',
-  'porteria_cero_portero': 'Portería a cero (portero)',
-  'porteria_cero_defensa': 'Portería a cero (defensa)',
-  'goles_encajados_3': 'Cada 3 goles encajados (portero)',
   'parada_clave_2': 'Cada 2 paradas clave',
   'penalti_parado': 'Penalti parado',
   'penalti_fallado': 'Penalti fallado',
   'autogol': 'Autogol',
   'valoracion_max': 'Valoración de compañeros (máximo)',
   'mvp': 'MVP del partido',
+  'rol_por_porteria_cero': 'Portero: su equipo no encaja',
+  'rol_por_menos_goleado': 'Portero: su equipo, el menos goleado',
+  'rol_por_encajados_3': 'Portero: cada 3 goles encajados',
+  'rol_def_menos_goleado': 'Defensa: su equipo, el menos goleado',
+  'rol_med_asistencia': 'Medio: extra por asistencia',
+  'rol_del_gol': 'Delantero: extra por gol',
 };
+
+/// Claves de 0.1 que ya no se usan desde 0.2 (puntuación por posición fija).
+bool reglaObsoleta(String clave) =>
+    clave.startsWith('gol_') || clave.startsWith('porteria_cero_') || clave == 'goles_encajados_3';
 
 String nombreRegla(String clave) => nombresReglas[clave] ?? clave;
 

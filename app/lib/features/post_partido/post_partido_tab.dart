@@ -64,7 +64,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     }
   }
 
-  /// Según `aspectos_valoracion.aplica_a` (p. ej. a los porteros se les valora "portería" en vez de "ataque").
+  /// Según `aspectos_valoracion.aplica_a`. Desde 0.2 todos los aspectos son 'todos' (no hay posiciones fijas);
+  /// el filtro se mantiene solo por si una liga crea un aspecto específico, igual que valida el backend.
   List<Aspecto> _aspectosPara(List<Aspecto> aspectos, bool portero) =>
       aspectos.where((a) => a.aplicaAJugador(portero: portero)).toList();
 
@@ -292,7 +293,6 @@ class _FilaEstadisticas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = reporte;
-    final portero = miembro?.esPortero ?? false;
     final activo = !r.noSe;
     void set(void Function() f) {
       f();
@@ -318,11 +318,11 @@ class _FilaEstadisticas extends StatelessWidget {
           _filaContador('Asistencias', r.asistencias, activo, (v) => set(() => r.asistencias = v)),
           _filaContador('Autogoles', r.autogoles, activo, (v) => set(() => r.autogoles = v)),
           _filaContador('Penaltis fallados', r.penaltisFallados, activo, (v) => set(() => r.penaltisFallados = v)),
+          // Todos rotan en la portería: paradas y penaltis parados para cualquiera que estuviera bajo palos.
           // La portería a cero no se pregunta: se deduce del resultado consolidado.
-          if (portero) ...[
-            _filaContador('Paradas clave', r.paradasClave, activo, (v) => set(() => r.paradasClave = v)),
-            _filaContador('Penaltis parados', r.penaltisParados, activo, (v) => set(() => r.penaltisParados = v)),
-          ],
+          _filaContador('Paradas clave (si estuvo de portero)', r.paradasClave, activo,
+              (v) => set(() => r.paradasClave = v)),
+          _filaContador('Penaltis parados', r.penaltisParados, activo, (v) => set(() => r.penaltisParados = v)),
         ],
       ),
     );

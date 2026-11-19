@@ -144,10 +144,25 @@ class _PuntosManagerSeccion extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     String fmt(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
 
-    // Si aún no está liquidado, se muestra el cálculo provisional con los puntos ya publicados.
-    final provisional = datos.alineados.fold<double>(
-        0, (s, a) => s + (porJugador[a.jugadorId] ?? 0) * a.multiplicador);
-    final total = datos.puntos?.puntos ?? provisional;
+    // Liquidado: el desglose del backend (rol, bonus de rol, ×1,5, cedidos). Si no, cálculo provisional
+    // con los puntos ya publicados (el bonus de rol se calcula al liquidar).
+    final lineas = (datos.puntos?.desglose.isNotEmpty ?? false)
+        ? datos.puntos!.desglose
+        : [
+            for (final a in datos.alineados)
+              LineaDesglose(
+                jugadorId: a.jugadorId,
+                rol: a.rol,
+                puntos: porJugador[a.jugadorId] ?? 0,
+                bonusRol: a.bonusRol ?? 0,
+                multiplicador: a.multiplicador,
+                jugo: porJugador.containsKey(a.jugadorId),
+                total: porJugador.containsKey(a.jugadorId)
+                    ? ((porJugador[a.jugadorId] ?? 0) + (a.bonusRol ?? 0)) * a.multiplicador
+                    : 0,
+              ),
+          ];
+    final total = datos.puntos?.puntos ?? lineas.fold<double>(0, (s, l) => s + l.total);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -160,25 +175,8 @@ class _PuntosManagerSeccion extends ConsumerWidget {
             Expanded(child: Text('Tus puntos de mánager', style: t.titleMedium)),
             Text(fmt(total), style: t.headlineSmall),
           ]),
-          for (final a in datos.alineados)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: AvatarMiembro(miembros[a.jugadorId], radio: 14),
-              title: Row(children: [
-                Flexible(child: Text(miembros[a.jugadorId]?.nombre ?? '…')),
-                if (a.multiplicador != 1) ...[
-                  const SizedBox(width: 6),
-                  InsigniaNoHabitual(bonus: a.multiplicador, corta: true),
-                ],
-              ]),
-              trailing: Text(porJugador.containsKey(a.jugadorId)
-                  ? (a.multiplicador != 1
-                      ? '${fmt(porJugador[a.jugadorId]!)} × ${a.multiplicador.toStringAsFixed(1).replaceAll('.', ',')} = '
-                          '${fmt(porJugador[a.jugadorId]! * a.multiplicador)}'
-                      : fmt(porJugador[a.jugadorId]!))
-                  : '0 (no jugó)'),
-            ),
+          const SizedBox(height: 4),
+          DesgloseManager(lineas: lineas, nombres: {for (final e in miembros.entries) e.key: e.value.nombre}),
           if (datos.puntos?.ingreso != null)
             Text('Ingreso para el mercado: ${millones(datos.puntos!.ingreso)}', style: t.bodySmall)
           else if (datos.puntos == null)

@@ -91,3 +91,14 @@ Especificación: `../docs/mercado_fantasy.md`. Necesita la migración `0008_merc
   descarga del APK, el botón "Abrir en la app" y el código para copiarlo.
 - Un APK instalado fuera de Google Play no recibe el token a través de la instalación: tras
   instalar, el jugador vuelve a tocar el enlace o pega el código en "Unirse".
+
+## Versión 0.2: fichas, cláusulas, ofertas, cesiones y roles
+
+Requiere las migraciones `0010`–`0014` en Supabase (ver `../supabase/README.md`). Contrato exacto en `../docs/contrato_app_backend.md` (sección "Ampliación 0.2").
+
+- **Mercado con fichas limitadas**: cada jugador tiene N fichas. Si quedan libres se compran al precio de mercado; si no, en su ficha de mercado aparecen los dueños con su cláusula para **pagarla** (el dueño no puede negarse; las fichas recién fichadas quedan protegidas una jornada) o **hacerles una oferta**.
+- **Mi equipo**: cada ficha tiene menú con *Cambiar cláusula* (subirla cuesta el 10 % de la subida; bajarla es gratis, mínimo el valor), *Vender al mercado* y *Ofrecer en cesión* (% entre el mínimo y el máximo de la liga). La ficha recibida en cesión aparece aparte como plaza extra.
+- **Pestaña Ofertas** (Fantasy): ofertas recibidas (Aceptar/Rechazar), enviadas (Cancelar) y cesiones disponibles para el próximo partido (1 cedida y 1 recibida por jornada).
+- **Alineación con roles** dibujada sobre un campo: exactamente 1 portero y el resto defensa/medio/delantero. Con `bonus_roles` activo se muestra la leyenda de bonus de cada rol (claves `rol_*`).
+- **Posiciones flexibles**: los puntos del partido real ya no dependen de la posición (la del perfil es solo "preferida"); paradas y penaltis se pueden reportar para cualquiera; el balanceo de equipos ya no penaliza porteros y, si hay encuesta, iguala con poco peso la habilidad media bajo palos.
+- **Ajustes Fantasy** (admin): coste de subir cláusula, protección, % de cesión, caducidad de ofertas, partidos antes de que cuente el rendimiento y el interruptor de bonus por rol.
