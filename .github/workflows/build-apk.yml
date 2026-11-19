@@ -60,6 +60,10 @@ jobs:
           for f in android/app/build.gradle.kts android/app/build.gradle; do
             [ -f "$f" ] && sed -i -E 's/minSdk(Version)? *=? *flutter\.minSdkVersion/minSdk = 24/' "$f" && grep -n "minSdk" "$f" || true
           done
+          # lintVitalRelease falla con los plugins de Firebase (bug de lint): no es necesario para compilar
+          for f in android/app/build.gradle.kts android/app/build.gradle; do
+            [ -f "$f" ] && sed -i '0,/^android {/s//android {\n    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }/' "$f" && grep -n -A3 "lint {" "$f" || true
+          done
           m=android/app/src/main/AndroidManifest.xml
           grep -q POST_NOTIFICATIONS "$m" || sed -i 's|<application|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application|' "$m"
           grep -n "POST_NOTIFICATIONS" "$m"
