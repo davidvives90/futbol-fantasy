@@ -78,7 +78,7 @@ pg_ctl -D /tmp/pgd stop
 ## Despliegue en producción (19-11-2026)
 
 Proyecto Supabase `wyybdsxnmxgfntyrzjmq` (PostgreSQL 17). Aplicadas, en este orden: 0001–0009 (copia exacta en `desplegado_v01/`), `0100_supabase_plataforma` (bucket `facturas`, Realtime en convocatorias/partidos/encuentros/disputas, endurecimiento de permisos, pg_cron: `ff_cerrar_ventanas` cada 15 min y `ff_congelar_alineaciones` cada 5 min) y `0101_endurecer_funciones`. Verificado: 26 tablas, 16 vistas, 67 funciones (igual que en local), todas las tablas con RLS.
-Las siguientes versiones (0010+) deben ser **aditivas**: no modificar los ficheros ya desplegados.
+Las siguientes versiones deben ser **aditivas**: no modificar los ficheros ya desplegados.
 
 ## Ampliación 0.2 (0010–0014, sin desplegar)
 
@@ -93,3 +93,5 @@ Aditivas sobre producción (no tocan `desplegado_v01/`). Orden: `0010_posiciones
 Decisiones: dueños y cláusulas de las fichas son visibles para toda la liga (necesario para clausular), así que las plantillas ya no son privadas; las ofertas solo las ven comprador y vendedor. Al cerrar las alineaciones (= cierre del mercado) caducan las ofertas pendientes y se retiran las cesiones sin aceptar. El bonus de rol solo cuenta si el jugador jugó y se multiplica por el ×1,5. "Menos goleado" = menor media de goles encajados por encuentro (empates: todos). Una oferta caducada al responder devuelve `'caducada'` sin error.
 
 `tests/run.sh` reproduce producción: stubs + `desplegado_v01/` + `plataforma/0101` → escenarios 0.1 (dejan datos) → permisos por defecto de Supabase → 0010+ → `escenario_ampliacion.sql` (incluye la migración de los datos 0.1).
+
+Versión 0.2 desplegada el 19-11-2026: 0010–0014 (copia exacta en `desplegado_v02/`). Verificado: 28 tablas, 20 vistas, 92 funciones, todas las tablas con RLS, ninguna función ejecutable por anon.
