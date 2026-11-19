@@ -34,6 +34,27 @@ jobs:
       - name: Generar carpetas de plataforma que falten (no toca lib/ ni ficheros existentes)
         run: flutter create . --platforms android --org com.futbolfantasy --project-name futbol_fantasy
 
+      - name: Compilar todas las librerías Android contra la SDK 36 (algunos plugins traen una más antigua)
+        run: |
+          f=android/build.gradle.kts
+          if [ -f "$f" ]; then
+            {
+              echo 'subprojects {'
+              echo '    afterEvaluate {'
+              echo '        val androidExt = extensions.findByName("android")'
+              echo '        if (androidExt is com.android.build.gradle.LibraryExtension) {'
+              echo '            androidExt.compileSdk = 36'
+              echo '        }'
+              echo '    }'
+              echo '}'
+              cat "$f"
+            } > /tmp/root.gradle.kts && mv /tmp/root.gradle.kts "$f"
+          else
+            f=android/build.gradle
+            { printf 'subprojects {\n    afterEvaluate { p ->\n        if (p.hasProperty("android") && p.plugins.hasPlugin("com.android.library")) {\n            p.android.compileSdkVersion 36\n        }\n    }\n}\n'; cat "$f"; } > /tmp/root.gradle && mv /tmp/root.gradle "$f"
+          fi
+          head -12 "$f"
+
       - run: flutter pub get
 
       - name: Análisis estático (informativo)
