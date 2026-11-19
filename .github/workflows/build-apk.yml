@@ -81,10 +81,10 @@ jobs:
           flutter build apk --release
           --dart-define=SUPABASE_URL=$SUPABASE_URL
           --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
-          --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY }}
-          --dart-define=FIREBASE_APP_ID=${{ vars.FIREBASE_APP_ID }}
-          --dart-define=FIREBASE_SENDER_ID=${{ vars.FIREBASE_SENDER_ID }}
-          --dart-define=FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
+          --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY || 'AIzaSyCg5t9gSuzifQ4FbxSqj4s3GmBtTVRK8l8' }}
+          --dart-define=FIREBASE_APP_ID=${{ vars.FIREBASE_APP_ID || '1:449293148719:android:07b08fd9645abc82f55cda' }}
+          --dart-define=FIREBASE_SENDER_ID=${{ vars.FIREBASE_SENDER_ID || '449293148719' }}
+          --dart-define=FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID || 'futbol-fantasy-89815' }}
           --build-name=0.1.${{ github.run_number }}
           --build-number=${{ github.run_number }}
 
