@@ -1,0 +1,190 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/theme.dart';
+import '../../core/utils.dart';
+import '../../data/models.dart';
+import '../../data/providers.dart';
+import '../../data/repos/partidos_repo.dart';
+import '../../data/models_fantasy.dart';
+import '../../data/repos/fantasy_repo.dart';
+import '../../data/repos/post_partido_repo.dart';
+import '../fantasy/widgets_fantasy.dart';
+
+class _DatosResultado {
+  _DatosResultado(this.encuentros, this.puntos, this.acta);
+  final List<Encuentro> encuentros;
+  final List<PuntosFantasy> puntos;
+  final Map<String, Map<String, dynamic>> acta;
+}
+
+final _resultadoProvider = FutureProvider.autoDispose.family<_DatosResultado, String>((ref, partidoId) async {
+  final r = await Future.wait([
+    PartidosRepo.encuentros(partidoId),
+    PostPartidoRepo.puntos(partidoId),
+    PostPartidoRepo.acta(partidoId),
+  ]);
+  return _DatosResultado(
+    r[0] as List<Encuentro>,
+    r[1] as List<PuntosFantasy>,
+    r[2] as Map<String, Map<String, dynamic>>,
+  );
+});
+
+/// Marcador, MVP y puntos Fantasy con su desglose.
+class ResultadoTab extends ConsumerWidget {
+  const ResultadoTab({super.key, required this.partido, required this.mi});
+  final Partido partido;
+  final MiLiga mi;
+
+  static String _etiqueta(String clave) => switch (clave) {
+        'jugado' => 'Jugado',
+        'resultado' => 'Resultado',
+        'goles' => 'Goles',
+        'asistencias' => 'Asistencias',
+        'porteria_cero' => 'Portería a cero',
+        'goles_encajados' => 'Goles encajados',
+        'paradas' => 'Paradas',
+        'penaltis_parados' => 'Penaltis parados',
+        'penaltis_fallados' => 'Penaltis fallados',
+        'autogoles' => 'Autogoles',
+        'valoracion' || 'nota' => 'Valoración',
+        'mvp' => 'MVP',
+        _ => clave,
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final datos = ref.watch(_resultadoProvider(partido.id));
+    final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
+
+    return datos.when(
+      loading: () => const Cargando(),
+      error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(_resultadoProvider(partido.id))),
+      data: (d) {
+        final mvps = d.puntos.where((p) => p.esMvp).toList();
+        return ListView(padding: const EdgeInsets.all(16), children: [
+          for (final e in d.encuentros)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  Text('Equipo ${e.equipoLocal}', style: TextStyle(color: AppTheme.colorEquipo(e.equipoLocal))),
+                  Text('${e.golesLocal} - ${e.golesVisitante}', style: Theme.of(context).textTheme.headlineMedium),
+                  Text('Equipo ${e.equipoVisitante}', style: TextStyle(color: AppTheme.colorEquipo(e.equipoVisitante))),
+                ]),
+              ),
+            ),
+          for (final m in mvps)
+            Card(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: ListTile(
+                leading: const Icon(Icons.star, color: Colors.amber, size: 36),
+                title: Text('MVP: ${miembros[m.miembroId]?.nombre ?? '…'}'),
+                subtitle: Text('Valoración media ${m.notaMedia?.toStringAsFixed(1) ?? '—'}'),
+              ),
+            ),
+          _PuntosManagerSeccion(partido: partido, mi: mi, puntos: d.puntos),
+          const SizedBox(height: 8),
+          Text('Puntos Fantasy', style: Theme.of(context).textTheme.titleMedium),
+          for (final (i, p) in d.puntos.indexed)
+            ExpansionTile(
+              leading: CircleAvatar(child: Text('${i + 1}')),
+              title: Text(miembros[p.miembroId]?.nombre ?? '…'),
+              subtitle: Text([
+                if ((d.acta[p.miembroId]?['goles'] ?? 0) as num > 0) '⚽ ${d.acta[p.miembroId]!['goles']}',
+                if ((d.acta[p.miembroId]?['asistencias'] ?? 0) as num > 0) '🅰️ ${d.acta[p.miembroId]!['asistencias']}',
+                if (p.notaMedia != null) 'nota ${p.notaMedia!.toStringAsFixed(1)}',
+              ].join('  ')),
+              trailing: Text(p.total.toStringAsFixed(p.total % 1 == 0 ? 0 : 1),
+                  style: Theme.of(context).textTheme.titleLarge),
+              children: [
+                for (final e in p.desglose.entries.where((e) => (e.value is num) && e.value != 0))
+                  ListTile(
+                    dense: true,
+                    title: Text(_etiqueta(e.key)),
+                    trailing: Text('${(e.value as num) > 0 ? '+' : ''}${e.value}'),
+                  ),
+              ],
+            ),
+        ]);
+      },
+    );
+  }
+}
+
+class _DatosManager {
+  _DatosManager(this.alineados, this.puntos);
+  final List<Alineado> alineados;
+  final PuntosManager? puntos;
+}
+
+final _managerProvider =
+    FutureProvider.autoDispose.family<_DatosManager, ({String partidoId, String managerId})>((ref, k) async {
+  final r = await Future.wait([
+    FantasyRepo.alineacion(k.partidoId, k.managerId),
+    FantasyRepo.puntosManager(k.partidoId, k.managerId),
+  ]);
+  return _DatosManager(r[0] as List<Alineado>, r[1] as PuntosManager?);
+});
+
+/// "Tus puntos de mánager": puntos de cada alineado (×1,5 si era no habitual) e ingreso de la jornada.
+class _PuntosManagerSeccion extends ConsumerWidget {
+  const _PuntosManagerSeccion({required this.partido, required this.mi, required this.puntos});
+  final Partido partido;
+  final MiLiga mi;
+  final List<PuntosFantasy> puntos;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final datos = ref.watch(_managerProvider((partidoId: partido.id, managerId: mi.yo.id))).valueOrNull;
+    if (datos == null || datos.alineados.isEmpty) return const SizedBox.shrink();
+    final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
+    final porJugador = {for (final p in puntos) p.miembroId: p.total};
+    final t = Theme.of(context).textTheme;
+    String fmt(double v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
+
+    // Si aún no está liquidado, se muestra el cálculo provisional con los puntos ya publicados.
+    final provisional = datos.alineados.fold<double>(
+        0, (s, a) => s + (porJugador[a.jugadorId] ?? 0) * a.multiplicador);
+    final total = datos.puntos?.puntos ?? provisional;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.shield_outlined),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Tus puntos de mánager', style: t.titleMedium)),
+            Text(fmt(total), style: t.headlineSmall),
+          ]),
+          for (final a in datos.alineados)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: AvatarMiembro(miembros[a.jugadorId], radio: 14),
+              title: Row(children: [
+                Flexible(child: Text(miembros[a.jugadorId]?.nombre ?? '…')),
+                if (a.multiplicador != 1) ...[
+                  const SizedBox(width: 6),
+                  InsigniaNoHabitual(bonus: a.multiplicador, corta: true),
+                ],
+              ]),
+              trailing: Text(porJugador.containsKey(a.jugadorId)
+                  ? (a.multiplicador != 1
+                      ? '${fmt(porJugador[a.jugadorId]!)} × ${a.multiplicador.toStringAsFixed(1).replaceAll('.', ',')} = '
+                          '${fmt(porJugador[a.jugadorId]! * a.multiplicador)}'
+                      : fmt(porJugador[a.jugadorId]!))
+                  : '0 (no jugó)'),
+            ),
+          if (datos.puntos?.ingreso != null)
+            Text('Ingreso para el mercado: ${millones(datos.puntos!.ingreso)}', style: t.bodySmall)
+          else if (datos.puntos == null)
+            Text('Provisional: se liquida al cerrar el partido.', style: t.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
