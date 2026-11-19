@@ -8,6 +8,7 @@ import '../../core/tema.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../master/master_screen.dart';
 import '../shell/home_shell.dart';
 import '../stats/ficha_screen.dart';
 
@@ -50,6 +51,14 @@ class PerfilScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: Text('Opciones', style: Theme.of(context).textTheme.titleSmall),
         ),
+        if (ref.watch(esMasterProvider).valueOrNull == true)
+          ListTile(
+            leading: Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.tertiary),
+            title: const Text('Panel máster'),
+            subtitle: const Text('Control interno, códigos promocionales y registro'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/master'),
+          ),
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: const Text('Apariencia'),

@@ -34,3 +34,4 @@ for f in migrations/00*.sql; do
 done
 aplicar tests/escenario_v03.sql
 aplicar tests/escenario_votacion.sql
+aplicar tests/escenario_master.sql

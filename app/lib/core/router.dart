@@ -12,6 +12,7 @@ import '../features/fantasy/encuesta_screen.dart';
 import '../features/fantasy/fantasy_screen.dart';
 import '../features/fantasy/jugador_mercado_screen.dart';
 import '../features/liga/convocatoria_cobro_screen.dart';
+import '../features/master/master_screen.dart';
 import '../features/liga/liga_screen.dart';
 import '../features/liga/reglas_screen.dart';
 import '../features/onboarding/buscar_ligas_screen.dart';
@@ -73,6 +74,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Perfil sale de la barra inferior (se abre desde el avatar de la barra superior).
       GoRoute(path: '/perfil', builder: (_, __) => const PerfilScreen()),
       GoRoute(path: '/liga/fantasy', builder: (_, __) => const AjustesFantasyScreen()),
+      GoRoute(path: '/master', builder: (_, __) => const MasterScreen()),
+      GoRoute(
+        path: '/master/liga/:ligaId',
+        builder: (_, state) => MasterLigaScreen(
+          ligaId: state.pathParameters['ligaId']!,
+          nombre: state.uri.queryParameters['nombre'] ?? 'Liga',
+        ),
+      ),
       GoRoute(
         path: '/fantasy/jugador/:miembroId',
         builder: (_, state) => JugadorMercadoScreen(miembroId: state.pathParameters['miembroId']!),

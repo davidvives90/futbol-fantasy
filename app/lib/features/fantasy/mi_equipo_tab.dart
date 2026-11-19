@@ -8,6 +8,7 @@ import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
 import '../../data/providers.dart';
 import '../../data/repos/fantasy_repo.dart';
+import '../../data/repos/master_repo.dart';
 import 'alineacion_campo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
@@ -62,6 +63,14 @@ class MiEquipoTab extends ConsumerWidget {
               _Cifra('Valor plantilla', millones(valor)),
               _Cifra('Puntos', m.puntosTotales.toStringAsFixed(m.puntosTotales % 1 == 0 ? 0 : 1)),
             ]),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => _canjear(context, ref),
+            icon: const Icon(Icons.redeem_outlined, size: 18),
+            label: const Text('Canjear código'),
           ),
         ),
         Padding(
@@ -159,6 +168,37 @@ class MiEquipoTab extends ConsumerWidget {
           AlineacionCampo(mi: mi, partido: proximo, plantilla: lista),
       ]),
     );
+  }
+
+  Future<void> _canjear(BuildContext context, WidgetRef ref) async {
+    final c = TextEditingController();
+    final codigo = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Canjear código'),
+        content: TextField(
+          controller: c,
+          autofocus: true,
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(labelText: 'Código promocional'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: const Text('Cancelar')),
+          FilledButton(
+            style: AppButtons.premium(d),
+            onPressed: () => Navigator.pop(d, c.text.trim()),
+            child: const Text('Canjear'),
+          ),
+        ],
+      ),
+    );
+    if (codigo == null || codigo.isEmpty || !context.mounted) return;
+    double? saldo;
+    final ok = await ejecutar(context, () async => saldo = await MasterRepo.canjear(mi.liga.id, codigo));
+    if (ok && context.mounted) {
+      mostrarOk(context, '¡Código canjeado! Saldo: ${millones(saldo)}');
+      refrescarFantasy(ref, _k);
+    }
   }
 
   Future<void> _accion(

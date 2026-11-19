@@ -113,3 +113,5 @@ MVP y estadísticas revisados (sin cambios de regla, sin errores encontrados): m
 Versión 0.3 desplegada el 19-11-2026: 0015–0019 (copia exacta en `desplegado_v03/`; en 0015 la firma antigua de precrear_jugadores se renombra a precrear_jugadores_obsoleta en vez de borrarse). Verificado: 29 tablas, 21 vistas, 109 funciones, todas con RLS, nada ejecutable por anon.
 
 Versión 0.3b desplegada el 19-11-2026: 0020 (en producción en dos partes, 0020a esquema y 0020b funciones; contenido idéntico a `desplegado_v03b/0020_votacion_rapida.sql`). Verificado: 31 tablas, todas con RLS, nada ejecutable por anon.
+
+0021 (cuenta máster y códigos promocionales) desplegada el 19-11-2026 (`desplegado_v04/`). Máster inicial: la cuenta del creador del proyecto. Para añadir otro máster: `insert into masters (perfil_id, nota) values (<uuid de auth.users>, <nota>);` desde el panel SQL de Supabase.
