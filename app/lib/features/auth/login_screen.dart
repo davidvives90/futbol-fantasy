@@ -82,14 +82,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(_enviando ? 'Enviando…' : 'Recibir enlace de acceso'),
                 ),
               ],
-              const SizedBox(height: 24),
-              const Row(children: [Expanded(child: Divider()), Padding(padding: EdgeInsets.all(8), child: Text('o')), Expanded(child: Divider())]),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _google,
-                icon: const Icon(Icons.login),
-                label: const Text('Continuar con Google'),
-              ),
+              // Google se activa compilando con --dart-define=GOOGLE_LOGIN=true
+              // cuando el proveedor esté configurado en Supabase (Authentication → Sign In / Providers → Google).
+              if (const bool.fromEnvironment('GOOGLE_LOGIN')) ...[
+                const SizedBox(height: 24),
+                const Row(children: [Expanded(child: Divider()), Padding(padding: EdgeInsets.all(8), child: Text('o')), Expanded(child: Divider())]),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _google,
+                  icon: const Icon(Icons.login),
+                  label: const Text('Continuar con Google'),
+                ),
+              ],
               if (_enviado)
                 TextButton(onPressed: () => setState(() => _enviado = false), child: const Text('Usar otro email')),
             ]),

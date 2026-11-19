@@ -23,7 +23,7 @@ class LigasRepo {
     if (uid == null) return [];
     final rows = await sb
         .from('miembros')
-        .select('${Miembro.select}, liga:ligas(*)')
+        .select('${Miembro.select}, liga:ligas!miembros_liga_id_fkey(*)')
         .eq('perfil_id', uid)
         .eq('estado', 'activo');
     return [
@@ -36,7 +36,7 @@ class LigasRepo {
     final uid = uidActual;
     if (uid == null) return [];
     final rows =
-        await sb.from('miembros').select('liga:ligas(nombre)').eq('perfil_id', uid).eq('estado', 'solicitud');
+        await sb.from('miembros').select('liga:ligas!miembros_liga_id_fkey(nombre)').eq('perfil_id', uid).eq('estado', 'solicitud');
     return [for (final r in rows) (r['liga'] as Map)['nombre'] as String];
   }
 

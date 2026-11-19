@@ -253,7 +253,7 @@ class Miembro {
   /// Select con el perfil embebido (FK miembros.perfil_id → perfiles.id).
   /// Columnas explícitas: `token_invitacion` y `contacto` no son legibles (ver `enlaces_invitacion`).
   static const select = 'id, liga_id, perfil_id, nombre_provisional, posicion, rol, estado, invitado_por, unido_en, '
-      'perfil:perfiles(id, nombre, apodo, avatar_url, posicion, telefono)';
+      'perfil:perfiles!miembros_perfil_id_fkey(id, nombre, apodo, avatar_url, posicion, telefono)';
 
   factory Miembro.fromMap(Map<String, dynamic> m) => Miembro(
         id: m['id'] as String,
