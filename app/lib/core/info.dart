@@ -50,6 +50,15 @@ abstract final class Ayuda {
       'Fijo: entra solo en cada partido y paga la factura del campo. Si no puede ir, marca «No voy».\n\n'
           'Reserva: se apunta con «Voy» y entra en la lista de espera; pasa dentro en cuanto queda una plaza libre.\n\n'
           'Invitado: alguien de fuera. Entra el último de la lista de espera y, en el Fantasy, cada mánager puede tener como mucho uno.');
+  static const apertura = ('Apertura de la convocatoria',
+      'La convocatoria de cada partido empieza vacía y se abre unas horas después de acabar el anterior '
+          '(2 h por defecto). Entonces todos, también los fijos, pulsan «Voy», «Duda» o «No voy».\n\n'
+          'Los fijos tienen su plaza guardada hasta 24 h antes del partido. Si no contestan a tiempo, '
+          'su plaza pasa al primero de la lista de espera.');
+  static const repartoInicial = ('Equipo inicial del Fantasy',
+      'Al empezar, cada mánager recibe 5 jugadores al azar pero compensados: todos los equipos valen más o menos lo mismo. '
+          'Además recibe un dinero inicial pequeño (1,5 veces el precio medio de un jugador) para su primer fichaje. '
+          'Los jugadores que no se reparten se quedan en el mercado.');
   static const listaEspera = ('Lista de espera',
       'Cuando no quedan plazas, los que pulsan «Voy» esperan aquí. Si alguien se da de baja, entra automáticamente el primero '
           'y le llega un aviso.\n\nEl orden lo elige el administrador: por prioridad (fijos, luego reservas, luego invitados) '
@@ -85,7 +94,7 @@ abstract final class Ayuda {
           'Si no quedan, solo puedes conseguirlo comprándoselo a otro mánager o pagando su cláusula.');
   static const clausula = ('Cláusula de rescisión',
       'Precio al que cualquiera puede quitarte un jugador sin preguntarte. Tú la fijas: subirla cuesta un porcentaje de la subida; '
-          'bajarla es gratis, pero será más fácil que te lo quiten. Recién fichado está protegido unas jornadas.');
+          'bajarla es gratis, pero será más fácil que te lo quiten. Recién fichado está protegido 7 días (lo fija el admin).');
   static const cesion = ('Cesión',
       'Prestas un jugador una jornada a otro mánager a cambio de un porcentaje de su valor que fijas tú. '
           'Puntúa para él esa jornada y luego vuelve a tu plantilla.');

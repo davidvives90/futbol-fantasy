@@ -20,6 +20,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
   final _precio = TextEditingController(text: '5');
   bool _cargado = false;
   bool _guardando = false;
+  bool _apertura = true;
+  int _duracion = 60, _horasApertura = 2, _horasReserva = 24;
 
   @override
   void dispose() {
@@ -41,6 +43,10 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
       context,
       () => LigasRepo.actualizarLiga(ligaId, {
         'orden_espera': _ordenEspera,
+        'modo_convocatoria': _apertura ? 'apertura' : 'clasica',
+        'duracion_partido_min': _duracion,
+        'horas_apertura_convocatoria': _horasApertura,
+        'horas_reserva_fijos': _horasReserva,
         'modo_cobro': _modoCobro,
         'precio_invitado': precio,
       }),
@@ -61,6 +67,10 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
       _ordenEspera = l.ordenEspera;
       _modoCobro = l.modoCobro;
       _precioFijo = l.precioInvitado != null;
+      _apertura = l.conApertura;
+      _duracion = l.duracionPartidoMin;
+      _horasApertura = l.horasAperturaConvocatoria;
+      _horasReserva = l.horasReservaFijos;
       if (l.precioInvitado != null) _precio.text = l.precioInvitado!.toStringAsFixed(2);
     }
     final t = Theme.of(context).textTheme;
@@ -68,12 +78,47 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
     return Scaffold(
       appBar: AppBar(title: const Text('Convocatoria y cobro')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
+        Text('Apertura de la convocatoria', style: t.titleMedium),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _apertura,
+          onChanged: (v) => setState(() => _apertura = v),
+          title: const Text('Convocatoria vacía hasta que se abre'),
+          subtitle: Text(_apertura
+              ? 'Se abre después del partido anterior y todos, también los fijos, pulsan «Voy».'
+              : 'Clásica: los fijos entran solos en cada partido nada más crearlo.'),
+        ),
+        if (_apertura) ...[
+          _Selector(
+            titulo: 'Duración del partido',
+            valor: _duracion,
+            opciones: const [45, 60, 75, 90, 120],
+            texto: (v) => v % 60 == 0 ? '${v ~/ 60} h' : '${v ~/ 60} h ${v % 60} min',
+            onCambio: (v) => setState(() => _duracion = v),
+          ),
+          _Selector(
+            titulo: 'Se abre después de acabar el anterior',
+            valor: _horasApertura,
+            opciones: const [0, 1, 2, 3, 6, 12, 24],
+            texto: (v) => v == 0 ? 'Al acabar' : '$v h',
+            onCambio: (v) => setState(() => _horasApertura = v),
+          ),
+          _Selector(
+            titulo: 'Plaza guardada a los fijos hasta',
+            valor: _horasReserva,
+            opciones: const [0, 12, 24, 48, 72],
+            texto: (v) => v == 0 ? 'Sin reserva' : '$v h antes',
+            onCambio: (v) => setState(() => _horasReserva = v),
+          ),
+        ],
+        const Divider(height: 32),
         Text('Lista de espera', style: t.titleMedium),
         const SizedBox(height: 4),
-        const Text(
-          'Los fijos entran solos en cada partido. Cuando un fijo marca "No voy", entra automáticamente '
-          'el primero de la lista de espera.',
-        ),
+        Text(_apertura
+            ? 'Cuando no queda plaza (sin contar las guardadas a fijos), los que pulsan «Voy» esperan aquí. '
+                'Si alguien se da de baja o se acaba la reserva de los fijos, entra el primero.'
+            : 'Los fijos entran solos en cada partido. Cuando un fijo marca "No voy", entra automáticamente '
+                'el primero de la lista de espera.'),
         RadioListTile<String>(
           value: 'prioridad',
           groupValue: _ordenEspera,
@@ -131,6 +176,29 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           child: Text(_guardando ? 'Guardando…' : 'Guardar'),
         ),
       ]),
+    );
+  }
+}
+
+class _Selector extends StatelessWidget {
+  const _Selector({required this.titulo, required this.valor, required this.opciones, required this.texto, required this.onCambio});
+  final String titulo;
+  final int valor;
+  final List<int> opciones;
+  final String Function(int) texto;
+  final ValueChanged<int> onCambio;
+
+  @override
+  Widget build(BuildContext context) {
+    final lista = {...opciones, valor}.toList()..sort();
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(titulo),
+      trailing: DropdownButton<int>(
+        value: valor,
+        items: [for (final v in lista) DropdownMenuItem(value: v, child: Text(texto(v)))],
+        onChanged: (v) => v == null ? null : onCambio(v),
+      ),
     );
   }
 }

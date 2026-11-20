@@ -35,7 +35,9 @@ class ConvocatoriaTab extends ConsumerWidget {
         final baja = de(EstadoInscripcion.baja);
         final mia = lista.where((i) => i.miembroId == mi.yo.id).firstOrNull;
         final importe = conf.isEmpty ? partido.costeTotal : partido.costeTotal / conf.length;
-        final abierta = partido.estado.antesDeJugar;
+        final todos = ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const <Partido>[];
+        final abreEn = mi.liga.abreConvocatoria(partido, todos);
+        final abierta = partido.estado.antesDeJugar && abreEn == null;
         String nombre(String id) => miembros[id]?.nombre ?? '…';
         RangoMiembro rangoDeIns(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
         final soyFijo = mi.yo.rango == RangoMiembro.fijo;
@@ -66,14 +68,30 @@ class ConvocatoriaTab extends ConsumerWidget {
               leading: Icon(Icons.schedule, color: AppColores.of(context).aviso),
               title: const Text('Hora pendiente de confirmar'),
             ),
+          if (abreEn != null)
+            Card(
+              margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: ListTile(
+                leading: const Icon(Icons.lock_clock),
+                title: Text('La convocatoria se abre el ${fechaHora(abreEn)}'),
+                subtitle: Text('${mi.liga.horasAperturaConvocatoria} h después de acabar el partido anterior. '
+                    'Te avisaremos para que pulses «Voy».'),
+              ),
+            ),
           if (abierta)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: Text(
-                soyFijo
-                    ? 'Eres fijo: ya estás dentro. Si no puedes ir, marca "No voy" y entrará el primero de la lista de espera.'
-                    : 'Los fijos ya están dentro. Si quieres jugar, pulsa "Voy": entrarás en la lista de espera '
-                        'y pasarás a la convocatoria en cuanto un fijo se dé de baja.',
+                liga.conApertura
+                    ? (soyFijo
+                        ? 'Eres fijo: tienes plaza guardada hasta el ${fechaHora(liga.finReservaFijos(partido))}. '
+                            'Pulsa «Voy» o «No voy» antes; después tu plaza pasa a la lista de espera.'
+                        : 'Los fijos tienen plaza guardada hasta el ${fechaHora(liga.finReservaFijos(partido))}. '
+                            'Si pulsas «Voy» y no queda hueco, entras en la lista de espera y te avisamos si hay plaza.')
+                    : (soyFijo
+                        ? 'Eres fijo: ya estás dentro. Si no puedes ir, marca "No voy" y entrará el primero de la lista de espera.'
+                        : 'Los fijos ya están dentro. Si quieres jugar, pulsa "Voy": entrarás en la lista de espera '
+                            'y pasarás a la convocatoria en cuanto un fijo se dé de baja.'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

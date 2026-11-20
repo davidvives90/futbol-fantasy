@@ -51,18 +51,26 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     }
     if (ligas.value!.isEmpty) return const OnboardingScreen();
 
+    // Con el Fantasy desactivado en la liga, su pestaña desaparece (rama 1 del shell)
+    final fantasy = ref.watch(ligaActualProvider)?.liga.fantasyActivo ?? true;
+    final ramas = [0, if (fantasy) 1, 2, 3, 4];
+    const destinos = [
+      NavigationDestination(icon: Icon(Icons.sports_soccer_outlined), selectedIcon: Icon(Icons.sports_soccer), label: 'Partidos'),
+      NavigationDestination(icon: Icon(Icons.shield_outlined), selectedIcon: Icon(Icons.shield), label: 'Fantasy'),
+      NavigationDestination(icon: Icon(Icons.leaderboard_outlined), selectedIcon: Icon(Icons.leaderboard), label: 'Clasificación'),
+      NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Caja'),
+      NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'Liga'),
+    ];
+    final visible = ramas.indexOf(widget.shell.currentIndex);
+    if (visible < 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => widget.shell.goBranch(0));
+    }
     return Scaffold(
       body: widget.shell,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: widget.shell.currentIndex,
-        onDestinationSelected: (i) => widget.shell.goBranch(i, initialLocation: i == widget.shell.currentIndex),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.sports_soccer_outlined), selectedIcon: Icon(Icons.sports_soccer), label: 'Partidos'),
-          NavigationDestination(icon: Icon(Icons.shield_outlined), selectedIcon: Icon(Icons.shield), label: 'Fantasy'),
-          NavigationDestination(icon: Icon(Icons.leaderboard_outlined), selectedIcon: Icon(Icons.leaderboard), label: 'Clasificación'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Caja'),
-          NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'Liga'),
-        ],
+        selectedIndex: visible < 0 ? 0 : visible,
+        onDestinationSelected: (i) => widget.shell.goBranch(ramas[i], initialLocation: ramas[i] == widget.shell.currentIndex),
+        destinations: [for (final r in ramas) destinos[r]],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
@@ -33,7 +34,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     ('ingreso_por_punto', 'Ingreso por punto (M)', null),
     ('comision_venta', 'Comisión de venta (%)', 'Ej.: 5'),
     ('coste_subida_clausula', 'Coste de subir la cláusula (% de la subida)', 'Ej.: 10'),
-    ('proteccion_jornadas', 'Protección tras fichar (jornadas)', 'Sin poder ser clausulado'),
+    ('proteccion_dias', 'Protección tras fichar (días)', 'Días sin poder ser clausulado (7 por defecto)'),
     ('cesion_pct_min', 'Cesión: % mínimo del valor', 'Ej.: 5'),
     ('cesion_pct_max', 'Cesión: % máximo del valor', 'Ej.: 30'),
     ('horas_caducidad_oferta', 'Caducidad de las ofertas (horas)', null),
@@ -54,7 +55,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'ingreso_por_punto': p.ingresoPorPunto,
       'comision_venta': p.comisionVenta * 100,
       'coste_subida_clausula': p.costeSubidaClausula * 100,
-      'proteccion_jornadas': p.proteccionJornadas,
+      'proteccion_dias': p.proteccionDias,
       'cesion_pct_min': p.cesionPctMin * 100,
       'cesion_pct_max': p.cesionPctMax * 100,
       'horas_caducidad_oferta': p.horasCaducidadOferta,
@@ -92,7 +93,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'ingreso_por_punto': _num('ingreso_por_punto'),
       'comision_venta': _num('comision_venta')! / 100,
       'coste_subida_clausula': _num('coste_subida_clausula')! / 100,
-      'proteccion_jornadas': _num('proteccion_jornadas')!.round(),
+      'proteccion_dias': _num('proteccion_dias')!.round(),
       'cesion_pct_min': _num('cesion_pct_min')! / 100,
       'cesion_pct_max': _num('cesion_pct_max')! / 100,
       'horas_caducidad_oferta': _num('horas_caducidad_oferta')!.round(),
@@ -117,7 +118,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'ingreso_por_punto' => n < 0 ? 'No puede ser negativo' : null,
       'comision_venta' => n < 0 || n > 50 ? 'Entre 0 y 50' : null,
       'coste_subida_clausula' => n < 0 || n > 100 ? 'Entre 0 y 100' : null,
-      'proteccion_jornadas' => n < 0 || n > 10 || n % 1 != 0 ? 'Entero entre 0 y 10' : null,
+      'proteccion_dias' => n < 0 || n > 30 || n % 1 != 0 ? 'Días enteros entre 0 y 30' : null,
       'cesion_pct_min' => n <= 0 || n > 100 ? 'Entre 0 y 100' : null,
       'cesion_pct_max' => n < (_num('cesion_pct_min') ?? 0) || n > 100 ? 'Entre el mínimo y 100' : null,
       'horas_caducidad_oferta' => n < 1 || n > 720 || n % 1 != 0 ? 'Horas enteras entre 1 y 720' : null,
@@ -254,6 +255,28 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         FilledButton(
           onPressed: _guardando ? null : () => _guardar(mi),
           child: const Text('Guardar parámetros'),
+        ),
+        const Divider(height: 40),
+        Text('Empezar de cero', style: t.titleMedium),
+        const SizedBox(height: 4),
+        const Text('Vacía todas las plantillas, saldos, ofertas y cesiones. Cada mánager recibe de nuevo 5 jugadores '
+            'al azar pero compensados y el dinero inicial. Los puntos de los partidos no se tocan.'),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          style: AppButtons.peligro(context),
+          icon: const Icon(Icons.restart_alt),
+          label: const Text('Reiniciar Fantasy'),
+          onPressed: () async {
+            if (!await confirmar(context, 'Reiniciar Fantasy',
+                'Todos pierden sus jugadores y su dinero y reciben un equipo nuevo. No se puede deshacer.',
+                accion: 'Reiniciar', tipo: TipoConfirmacion.peligro)) {
+              return;
+            }
+            if (!context.mounted) return;
+            if (await ejecutar(context, () => FantasyRepo.reiniciar(mi.liga.id), ok: 'Fantasy reiniciado: equipos repartidos')) {
+              refrescarLigas(ref);
+            }
+          },
         ),
       ]),
     );

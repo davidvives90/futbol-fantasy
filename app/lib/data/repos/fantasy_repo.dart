@@ -5,6 +5,16 @@ import '../models_fantasy.dart';
 /// Mercado Fantasy: encuesta inicial, mercado, plantillas, alineaciones y clasificación de mánagers.
 /// Contrato: docs/mercado_fantasy.md §8–10 y docs/contrato_app_backend.md (migraciones 0008–0014).
 class FantasyRepo {
+  /// Admin: empieza el Fantasy de cero con reparto de equipos compensados (0027). Devuelve nº de mánagers.
+  static Future<int> reiniciar(String ligaId) async =>
+      ((await sb.rpc('reiniciar_fantasy', params: {'p_liga': ligaId})) as num).toInt();
+
+  /// Resultado esperado (xG) de un partido con equipos hechos (0028). null si está desactivado.
+  static Future<Map<String, dynamic>?> prediccion(String partidoId) async {
+    final r = await sb.rpc('prediccion_partido', params: {'p_partido': partidoId});
+    return r == null ? null : (r as Map).cast<String, dynamic>();
+  }
+
   // ---- Mánager y plantilla --------------------------------------------------
 
   /// Mi ficha de mánager (saldo y puntos).

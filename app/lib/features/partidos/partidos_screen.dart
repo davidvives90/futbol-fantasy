@@ -175,6 +175,7 @@ class _ProximoPartido extends ConsumerWidget {
     final mia = conv.where((i) => i.miembroId == mi.yo.id).firstOrNull?.estado;
     final importe = confirmados.isEmpty ? null : partido.costeTotal / confirmados.length;
     final faltan = partido.plazas - confirmados.length;
+    final abreEn = mi.liga.abreConvocatoria(partido, ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const []);
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final dias = DateTime(partido.fechaHora.year, partido.fechaHora.month, partido.fechaHora.day)
@@ -246,7 +247,19 @@ class _ProximoPartido extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
-            SizedBox(width: double.infinity, child: SelectorAsistencia(partido: partido, mi: mi, actual: mia)),
+            if (abreEn != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(12)),
+                child: Row(children: [
+                  Icon(Icons.lock_clock, color: cs.onSurfaceVariant),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('La convocatoria se abre el ${fechaHora(abreEn)}', style: t.labelLarge)),
+                ]),
+              )
+            else
+              SizedBox(width: double.infinity, child: SelectorAsistencia(partido: partido, mi: mi, actual: mia)),
             if (mia == EstadoInscripcion.espera)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -304,7 +317,7 @@ class _Pendientes extends ConsumerWidget {
         ),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      EncuestaPendienteCard(mi: mi),
+      if (mi.liga.fantasyActivo) EncuestaPendienteCard(mi: mi),
       if (tareas.isNotEmpty) ...[
         const _Cabecera('Pendiente'),
         ...tareas,

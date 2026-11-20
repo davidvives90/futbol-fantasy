@@ -145,7 +145,37 @@ class Liga {
     this.modoValoracion = 'rapida',
     this.equipaciones = Equipacion.porDefecto,
     this.normas,
+    this.modoConvocatoria = 'apertura',
+    this.duracionPartidoMin = 60,
+    this.horasAperturaConvocatoria = 2,
+    this.horasReservaFijos = 24,
+    this.fantasyActivo = true,
+    this.prediccionActiva = true,
   });
+
+  /// 0026: 'apertura' (vacía hasta X h después del partido anterior; todos pulsan «Voy») | 'clasica'.
+  final String modoConvocatoria;
+  final int duracionPartidoMin, horasAperturaConvocatoria, horasReservaFijos;
+  bool get conApertura => modoConvocatoria == 'apertura';
+
+  /// 0026: la liga puede usar solo convocatorias. 0028: resultado esperado (xG).
+  final bool fantasyActivo, prediccionActiva;
+
+  /// Cuándo se abre la convocatoria de [p] (null = ya abierta): fin del partido anterior + X horas.
+  DateTime? abreConvocatoria(Partido p, List<Partido> todos) {
+    if (!conApertura) return null;
+    final anteriores = todos
+        .where((a) => a.id != p.id && a.fechaHora.isBefore(p.fechaHora) && a.estado != EstadoPartido.cancelado)
+        .map((a) => a.fechaHora)
+        .toList();
+    if (anteriores.isEmpty) return null;
+    anteriores.sort();
+    final abre = anteriores.last.add(Duration(minutes: duracionPartidoMin, hours: horasAperturaConvocatoria));
+    return abre.isAfter(DateTime.now()) ? abre : null;
+  }
+
+  /// Hasta cuándo tienen los fijos su plaza guardada.
+  DateTime finReservaFijos(Partido p) => p.fechaHora.subtract(Duration(hours: horasReservaFijos));
 
   /// Equipación de cada equipo (1, 2, 3, 4), elegida por el admin. Ver core/equipaciones.dart.
   final List<Equipacion> equipaciones;
@@ -210,6 +240,12 @@ class Liga {
           ? [for (final e in m['equipaciones'] as List) Equipacion.fromMap((e as Map).cast<String, dynamic>())]
           : Equipacion.porDefecto,
       normas: m['normas'] as String?,
+      modoConvocatoria: (m['modo_convocatoria'] ?? 'clasica') as String,
+      duracionPartidoMin: toInt(m['duracion_partido_min'], 60),
+      horasAperturaConvocatoria: toInt(m['horas_apertura_convocatoria'], 2),
+      horasReservaFijos: toInt(m['horas_reserva_fijos'], 24),
+      fantasyActivo: (m['fantasy_activo'] ?? true) as bool,
+      prediccionActiva: (m['prediccion_activa'] ?? true) as bool,
     );
   }
 }
@@ -230,6 +266,7 @@ class ParamsFantasy {
     this.copiasPorJugador = 2,
     this.costeSubidaClausula = 0.10,
     this.proteccionJornadas = 1,
+    this.proteccionDias = 7,
     this.cesionPctMin = 0.05,
     this.cesionPctMax = 0.30,
     this.horasCaducidadOferta = 48,
@@ -250,6 +287,9 @@ class ParamsFantasy {
   /// Fracción de la subida de cláusula que se paga al subirla (0,10 = 10 %).
   final double costeSubidaClausula;
   final int proteccionJornadas;
+
+  /// Días que un fichaje no se puede clausular (0027).
+  final int proteccionDias;
 
   /// % de cesión permitido, como fracción 0–1.
   final double cesionPctMin, cesionPctMax;
@@ -279,6 +319,7 @@ class ParamsFantasy {
         copiasPorJugador: toInt(m['copias_por_jugador'], 2),
         costeSubidaClausula: toDouble(m['coste_subida_clausula']) ?? 0.10,
         proteccionJornadas: toInt(m['proteccion_jornadas'], 1),
+        proteccionDias: toInt(m['proteccion_dias'], 7),
         cesionPctMin: toDouble(m['cesion_pct_min']) ?? 0.05,
         cesionPctMax: toDouble(m['cesion_pct_max']) ?? 0.30,
         horasCaducidadOferta: toInt(m['horas_caducidad_oferta'], 48),
@@ -296,6 +337,7 @@ class ParamsFantasy {
         'bonus_roles': bonusRoles,
         'coste_subida_clausula': costeSubidaClausula,
         'proteccion_jornadas': proteccionJornadas,
+        'proteccion_dias': proteccionDias,
         'cesion_pct_min': cesionPctMin,
         'cesion_pct_max': cesionPctMax,
         'horas_caducidad_oferta': horasCaducidadOferta,

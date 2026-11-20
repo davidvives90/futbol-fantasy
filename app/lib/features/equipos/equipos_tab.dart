@@ -11,6 +11,7 @@ import '../../data/repos/partidos_repo.dart';
 import '../fantasy/fantasy_providers.dart';
 import 'balanceo.dart';
 import '../../core/equipaciones.dart';
+import 'prediccion_card.dart';
 
 /// Generador de equipos nivelados (admin) y vista de equipos (todos).
 class EquiposTab extends ConsumerStatefulWidget {
@@ -103,13 +104,18 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     final equipos = _equipos;
     if (equipos == null) return;
     setState(() => _guardando = true);
-    await ejecutar(
+    final ok = await ejecutar(
       context,
       () => PartidosRepo.guardarEquipos(widget.partido.id, Reparto(equipos, 0).asignacion,
           numEquipos: widget.partido.numEquipos),
       ok: 'Equipos confirmados',
     );
-    if (mounted) setState(() => _guardando = false);
+    if (!mounted) return;
+    setState(() {
+      _guardando = false;
+      if (ok) _equipos = null; // se muestran los guardados y el resultado esperado
+    });
+    if (ok) ref.invalidate(prediccionProvider(widget.partido.id));
   }
 
   @override
@@ -155,6 +161,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
         )
       else ...[
         const SizedBox(height: 16),
+        if (hayGuardados && _equipos == null) PrediccionCard(partido: widget.partido, mi: widget.mi),
         _BarraEquilibrio(equipos: mostrar),
         const SizedBox(height: 12),
         for (var e = 0; e < mostrar.length; e++)

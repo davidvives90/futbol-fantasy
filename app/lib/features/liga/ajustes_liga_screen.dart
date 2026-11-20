@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/utils.dart';
 import '../../data/providers.dart';
+import '../../data/repos/ligas_repo.dart';
 
 /// Ajustes de la liga (solo admin): todo lo que se configura, agrupado, fuera de la vista de jugadores.
 class AjustesLigaScreen extends ConsumerWidget {
@@ -40,10 +41,48 @@ class AjustesLigaScreen extends ConsumerWidget {
         opcion(Icons.event_repeat, 'Programar temporada', 'Partidos recurrentes entre dos fechas', '/temporada'),
         opcion(Icons.how_to_reg_outlined, 'Convocatoria y cobro', 'Lista de espera, factura mensual y precio de reservas',
             '/liga/convocatoria'),
+        grupo('Módulos'),
+        _Interruptor(
+          titulo: 'Fantasy',
+          activo: mi.liga.fantasyActivo,
+          on: 'Mercado, plantillas y alineaciones',
+          off: 'Desactivado: la liga usa solo convocatorias, caja y estadísticas',
+          campo: 'fantasy_activo',
+          ligaId: mi.liga.id,
+        ),
+        _Interruptor(
+          titulo: 'Resultado esperado (xG)',
+          activo: mi.liga.prediccionActiva,
+          on: 'Con los equipos hechos, la app estima goles y probabilidades',
+          off: 'Desactivado',
+          campo: 'prediccion_activa',
+          ligaId: mi.liga.id,
+        ),
         grupo('Puntuación y Fantasy'),
         opcion(Icons.rule, 'Puntuación y valoraciones', 'Puntos por acción, valoración rápida o detallada', '/liga/reglas'),
-        opcion(Icons.storefront_outlined, 'Fantasy', 'Encuesta, mercado, multiplicador de invitados y bonus por rol', '/liga/fantasy'),
+        if (mi.liga.fantasyActivo)
+          opcion(Icons.storefront_outlined, 'Fantasy', 'Encuesta, mercado, multiplicador de invitados y bonus por rol', '/liga/fantasy'),
       ]),
     );
   }
+}
+
+
+class _Interruptor extends ConsumerWidget {
+  const _Interruptor({required this.titulo, required this.activo, required this.on, required this.off, required this.campo, required this.ligaId});
+  final String titulo, on, off, campo, ligaId;
+  final bool activo;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => SwitchListTile(
+        title: Text(titulo),
+        subtitle: Text(activo ? on : off),
+        value: activo,
+        onChanged: (v) async {
+          if (await ejecutar(context, () => LigasRepo.actualizarLiga(ligaId, {campo: v}),
+              ok: v ? '$titulo activado' : '$titulo desactivado')) {
+            refrescarLigas(ref);
+          }
+        },
+      );
 }

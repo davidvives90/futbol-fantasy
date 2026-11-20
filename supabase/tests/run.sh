@@ -32,6 +32,10 @@ for f in migrations/00*.sql; do
   n=$(basename "$f" | cut -c1-4)
   if [ "$n" -ge 15 ] 2>/dev/null; then aplicar "$f"; fi
 done
+# Pruebas antiguas: ligas nuevas en modo clásico (fijos inscritos solos); escenario_apertura prueba el modo nuevo
+psql -q -d ff_test -c "alter table ligas alter column modo_convocatoria set default 'clasica'" \
+  -c "alter table ligas alter column reparto_inicial set default 0" -c "alter table ligas alter column factor_presupuesto set default 6.5" \
+  -c "update ligas set reparto_inicial = 0, factor_presupuesto = 6.5"
 aplicar tests/escenario_v03.sql
 aplicar tests/escenario_votacion.sql
 aplicar tests/escenario_master.sql
@@ -39,3 +43,6 @@ aplicar tests/escenario_notif.sql
 aplicar tests/escenario_perfil.sql
 aplicar tests/escenario_ligas_v042.sql
 aplicar tests/escenario_mvp_pocos.sql
+aplicar tests/escenario_apertura.sql
+aplicar tests/escenario_reparto.sql
+aplicar tests/escenario_xg.sql
