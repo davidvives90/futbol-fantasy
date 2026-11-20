@@ -1,3 +1,4 @@
+import '../../core/calendario.dart';
 import '../liga/votaciones_screen.dart';
 import '../liga/asistencia_screen.dart';
 import '../../data/repos/reglamento_repo.dart';
@@ -58,7 +59,13 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: const LigaAppBar(),
+      appBar: LigaAppBar(actions: [
+        IconButton(
+          tooltip: 'Próximos partidos a mi calendario',
+          icon: const Icon(Icons.calendar_month_outlined),
+          onPressed: () => exportarProximos(context, partidos.valueOrNull ?? const <Partido>[], mi.liga),
+        ),
+      ]),
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/partidos/nuevo'),

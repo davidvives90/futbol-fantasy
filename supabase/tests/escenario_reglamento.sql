@@ -66,7 +66,9 @@ select registrar_ausencia(current_setting('t.mj')::uuid, current_date, current_d
 select registrar_ausencia(current_setting('t.mj')::uuid, current_date + 20, current_date + 60, 'lesion');
 select t_check((select count(*) = 1 and max(hasta) = current_date + 60 from ausencias where miembro_id = current_setting('t.mj')::uuid),
                'bajas solapadas se funden');
+reset role;
 select t_check(esta_de_baja(current_setting('t.mj')::uuid, now() + interval '10 days'), 'está de baja');
+set role authenticated;
 select historial_asistencia(current_setting('t.liga')::uuid, 6) as h \gset
 select t_check(jsonb_array_length(:'h'::jsonb -> 'partidos') between 1 and 6, 'historial: partidos');
 select t_check((select x -> 'baja' is not null and x -> 'baja' <> 'null'::jsonb from jsonb_array_elements(:'h'::jsonb -> 'miembros') x

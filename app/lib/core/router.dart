@@ -36,6 +36,7 @@ import '../features/liga/reglamento_screen.dart';
 import '../features/liga/votaciones_screen.dart';
 import '../features/liga/asistencia_screen.dart';
 import '../features/stats/palmares_screen.dart';
+import '../features/onboarding/asistente_liga_screen.dart';
 import 'supabase.dart';
 
 /// Notifica a go_router cada vez que cambia la sesión.
@@ -76,6 +77,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/liga/ajustes', builder: (_, __) => const AjustesLigaScreen()),
       GoRoute(path: '/liga/equipaciones', builder: (_, __) => const EquipacionesScreen()),
       GoRoute(path: '/guia', builder: (_, __) => const GuiaScreen()),
+      GoRoute(path: '/liga/asistente', builder: (_, __) => const AsistenteLigaScreen()),
       GoRoute(path: '/palmares', builder: (_, __) => const PalmaresScreen()),
       GoRoute(path: '/reglamento', builder: (_, __) => const ReglamentoScreen()),
       GoRoute(path: '/votaciones', builder: (_, __) => const VotacionesScreen()),

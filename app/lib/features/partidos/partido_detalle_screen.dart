@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/calendario.dart';
 import '../../core/compartir.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
@@ -60,6 +61,12 @@ class PartidoDetalleScreen extends ConsumerWidget {
                     tooltip: 'Compartir por WhatsApp',
                     icon: const Icon(Icons.share_outlined),
                     onPressed: () => compartirPartido(context, p, mi.liga),
+                  ),
+                if (e.antesDeJugar)
+                  IconButton(
+                    tooltip: 'Añadir al calendario',
+                    icon: const Icon(Icons.event_available_outlined),
+                    onPressed: () => anadirAlCalendario(context, p, mi.liga),
                   ),
                 IconButton(
                   tooltip: 'Abrir en Maps',

@@ -87,7 +87,8 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
         await ref.read(ligaActivaIdProvider.notifier).elegir(id);
       }
       refrescarLigas(ref);
-      if (mounted) context.go('/partidos');
+      // Liga nueva: asistente de modalidad, reglas y fijos. Edición: de vuelta a la app.
+      if (mounted) context.go(widget.editar ? '/partidos' : '/liga/asistente');
     } catch (e) {
       if (mounted) mostrarError(context, e);
     } finally {

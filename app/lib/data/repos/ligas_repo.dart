@@ -71,8 +71,9 @@ class LigasRepo {
   }
 
   /// Devuelve filas {miembro_id, nombre, token}.
-  static Future<List<Map<String, dynamic>>> precrearJugadores(String ligaId, List<String> nombres) async {
-    final r = await sb.rpc('precrear_jugadores', params: {'p_liga': ligaId, 'p_nombres': nombres});
+  static Future<List<Map<String, dynamic>>> precrearJugadores(String ligaId, List<String> nombres,
+      {RangoMiembro rango = RangoMiembro.reserva}) async {
+    final r = await sb.rpc('precrear_jugadores', params: {'p_liga': ligaId, 'p_nombres': nombres, 'p_rango': rango.name});
     return List<Map<String, dynamic>>.from(r as List);
   }
 

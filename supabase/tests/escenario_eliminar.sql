@@ -4,8 +4,10 @@ reset role;
 select set_config('t.liga', (select id::text from ligas where nombre = 'Liga Lunes'), false);
 select set_config('t.admin', (select perfil_id::text from miembros where liga_id = current_setting('t.liga')::uuid and rol = 'admin'
                                 and estado = 'activo' and perfil_id not in (select perfil_id from masters) limit 1), false);
-select set_config('t.jug', (select perfil_id::text from miembros where liga_id = current_setting('t.liga')::uuid and rol = 'jugador'
-                              and estado = 'activo' and perfil_id is not null limit 1), false);
+select set_config('t.jug', (select perfil_id::text from miembros m where liga_id = current_setting('t.liga')::uuid and rol = 'jugador'
+                              and estado = 'activo' and perfil_id is not null
+                              and exists (select 1 from puntos_fantasy pf where pf.miembro_id = m.id)
+                            order by unido_en desc, id limit 1), false);
 select set_config('t.mjug', (select id::text from miembros where perfil_id = current_setting('t.jug')::uuid
                                and liga_id = current_setting('t.liga')::uuid), false);
 set role authenticated;
