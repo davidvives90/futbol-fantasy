@@ -81,6 +81,16 @@ jobs:
           grep -q 'android:name=".App"' "$m" || sed -i 's|<application|<application android:name=".App"|' "$m"
           grep -q CrashActivity "$m" || sed -i 's|</application>|    <activity android:name=".CrashActivity" android:process=":error" android:exported="false"/>\n    </application>|' "$m"
           grep -n -E '\.App"|CrashActivity' "$m"
+          # Sin encoger con R8 (quitaba la base de datos de WorkManager y la app se cerraba al abrir en Android 17)
+          cp android_extra/proguard-rules.pro android/app/proguard-rules.pro
+          python3 - <<'PY'
+          p = 'android/app/build.gradle.kts'
+          s = open(p).read()
+          if 'isMinifyEnabled' not in s:
+              s = s.replace('release {', 'release {\n            isMinifyEnabled = false\n            isShrinkResources = false', 1)
+          open(p, 'w').write(s)
+          PY
+          grep -n -A3 "release {" android/app/build.gradle.kts
 
       - run: flutter pub get
 
