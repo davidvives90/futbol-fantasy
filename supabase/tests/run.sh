@@ -37,3 +37,5 @@ aplicar tests/escenario_votacion.sql
 aplicar tests/escenario_master.sql
 aplicar tests/escenario_notif.sql
 aplicar tests/escenario_perfil.sql
+aplicar tests/escenario_ligas_v042.sql
+aplicar tests/escenario_mvp_pocos.sql

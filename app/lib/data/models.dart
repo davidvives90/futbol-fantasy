@@ -143,7 +143,15 @@ class Liga {
     this.precioInvitado,
     this.plazasFijas,
     this.modoValoracion = 'rapida',
+    this.equipaciones = Equipacion.porDefecto,
+    this.normas,
   });
+
+  /// Equipación de cada equipo (1, 2, 3, 4), elegida por el admin. Ver core/equipaciones.dart.
+  final List<Equipacion> equipaciones;
+
+  /// Normas acordadas en la liga (texto libre del admin, se muestra en la Guía).
+  final String? normas;
 
   /// v0.3b: 'rapida' (una nota general por compañero) | 'detallada' (nota por aspecto).
   final String modoValoracion;
@@ -198,6 +206,10 @@ class Liga {
       precioInvitado: toDouble(m['precio_invitado']),
       plazasFijas: m['plazas_fijas'] == null ? null : toInt(m['plazas_fijas']),
       modoValoracion: (m['modo_valoracion'] ?? 'rapida') as String,
+      equipaciones: m['equipaciones'] is List
+          ? [for (final e in m['equipaciones'] as List) Equipacion.fromMap((e as Map).cast<String, dynamic>())]
+          : Equipacion.porDefecto,
+      normas: m['normas'] as String?,
     );
   }
 }
@@ -769,3 +781,22 @@ const nombresAspectos = <String, String>{
   'juego_limpio': 'Juego limpio',
   'porteria': 'Portería',
 };
+
+/// Equipación de un equipo: nombre («Blanco», «Petos»…) y color en hex (#RRGGBB); null = «de color» sin especificar.
+class Equipacion {
+  const Equipacion(this.nombre, [this.colorHex]);
+  final String nombre;
+  final String? colorHex;
+
+  static const porDefecto = [
+    Equipacion('Blanco', '#F4F4F2'),
+    Equipacion('Color'),
+    Equipacion('Negro', '#1E1E1E'),
+    Equipacion('Petos', '#E8C21A'),
+  ];
+
+  factory Equipacion.fromMap(Map<String, dynamic> m) =>
+      Equipacion((m['nombre'] ?? 'Equipo') as String, m['color'] as String?);
+
+  Map<String, dynamic> toMap() => {'nombre': nombre, 'color': colorHex};
+}

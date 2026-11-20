@@ -7,6 +7,8 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../../data/repos/post_partido_repo.dart';
+import '../../core/info.dart';
+import '../../core/equipaciones.dart';
 
 final _disputasProvider = FutureProvider.autoDispose.family<List<Disputa>, String>(
   (ref, partidoId) => PostPartidoRepo.disputas(partidoId),
@@ -182,11 +184,14 @@ class RevisionTab extends ConsumerWidget {
               ),
             if (encuentros.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('Resultado consolidado', style: Theme.of(context).textTheme.titleSmall),
+              Row(children: [
+                Text('Resultado consolidado', style: Theme.of(context).textTheme.titleSmall),
+                const InfoBoton(Ayuda.disputas),
+              ]),
               for (final e in encuentros)
                 ListTile(
                   dense: true,
-                  title: Text('E${e.equipoLocal} ${e.golesLocal} - ${e.golesVisitante} E${e.equipoVisitante}'),
+                  title: Text('${nombreEquipo(context, e.equipoLocal)} ${e.golesLocal} - ${e.golesVisitante} ${nombreEquipo(context, e.equipoVisitante)}'),
                   subtitle: e.confianza == null ? null : Text('Coincidencia ${e.confianza!.round()} %'),
                   trailing: e.enDisputa
                       ? Icon(Icons.warning_amber, color: AppColores.of(context).aviso)

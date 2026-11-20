@@ -42,7 +42,9 @@ String mensajeError(Object e) {
 }
 
 void mostrarError(BuildContext context, Object e) {
-  ScaffoldMessenger.of(context).showSnackBar(
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(
     SnackBar(
       content: Text(e is String ? e : mensajeError(e)),
       backgroundColor: Theme.of(context).colorScheme.error,
@@ -50,8 +52,11 @@ void mostrarError(BuildContext context, Object e) {
   );
 }
 
+/// Un aviso cada vez: el nuevo sustituye al anterior (si no, se encolan y siguen saliendo minutos después).
 void mostrarOk(BuildContext context, String texto) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(content: Text(texto), duration: const Duration(milliseconds: 2500)));
 }
 
 /// Ejecuta una acción mostrando el error si falla. Devuelve true si fue bien.
@@ -226,7 +231,7 @@ class Vacio extends StatelessWidget {
 /// Aviso con «Deshacer» para acciones reversibles (en lugar de pedir confirmación antes).
 void avisoDeshacer(BuildContext context, String texto, VoidCallback deshacer) {
   final m = ScaffoldMessenger.of(context);
-  m.hideCurrentSnackBar();
+  m.clearSnackBars();
   m.showSnackBar(SnackBar(
     content: Text(texto),
     duration: const Duration(seconds: 5),

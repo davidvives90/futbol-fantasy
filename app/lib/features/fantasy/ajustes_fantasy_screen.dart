@@ -9,6 +9,7 @@ import '../../data/providers.dart';
 import '../../data/repos/fantasy_repo.dart';
 import '../../data/repos/ligas_repo.dart';
 import 'fantasy_providers.dart';
+import '../../core/info.dart';
 
 /// Liga > Ajustes Fantasy (solo admins): encuestas de valoración y parámetros del mercado.
 class AjustesFantasyScreen extends ConsumerStatefulWidget {
@@ -28,7 +29,6 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     ('precio_min', 'Precio mínimo (M)', null),
     ('precio_max', 'Precio máximo (M)', null),
     ('max_plantilla', 'Jugadores por plantilla', null),
-    ('bonus_no_habitual', 'Multiplicador de invitados', 'Ej.: 1,5'),
     ('horas_cierre_alineacion', 'Cierre de alineación (horas antes)', null),
     ('ingreso_por_punto', 'Ingreso por punto (M)', null),
     ('comision_venta', 'Comisión de venta (%)', 'Ej.: 5'),
@@ -41,6 +41,8 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
   ];
 
   bool? _bonusRoles;
+  bool _multActivo = true;
+  final _mult = TextEditingController(text: '1,5');
 
   void _rellenar(ParamsFantasy p) {
     final v = <String, num>{
@@ -59,6 +61,8 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'partidos_min_rendimiento': p.partidosMinRendimiento,
     };
     _bonusRoles = p.bonusRoles;
+    _multActivo = p.bonusNoHabitual > 1;
+    _mult.text = (p.bonusNoHabitual > 1 ? p.bonusNoHabitual : 1.5).toString().replaceAll('.', ',');
     for (final (clave, _, _) in _campos) {
       final n = v[clave]!;
       (_c[clave] ??= TextEditingController()).text =
@@ -68,6 +72,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
 
   @override
   void dispose() {
+    _mult.dispose();
     for (final c in _c.values) {
       c.dispose();
     }
@@ -82,7 +87,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'precio_min': _num('precio_min'),
       'precio_max': _num('precio_max'),
       'max_plantilla': _num('max_plantilla')!.round(),
-      'bonus_no_habitual': _num('bonus_no_habitual'),
+      'bonus_no_habitual': _multActivo ? (double.tryParse(_mult.text.trim().replaceAll(',', '.')) ?? 1.5).clamp(1.05, 3.0) : 1,
       'horas_cierre_alineacion': _num('horas_cierre_alineacion')!.round(), // columna smallint
       'ingreso_por_punto': _num('ingreso_por_punto'),
       'comision_venta': _num('comision_venta')! / 100,
@@ -108,7 +113,6 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'precio_min' => n <= 0 ? 'Debe ser mayor que 0' : null,
       'precio_max' => n <= (_num('precio_min') ?? 0) ? 'Debe ser mayor que el mínimo' : null,
       'max_plantilla' => n < 1 || n > 15 || n % 1 != 0 ? 'Entero entre 1 y 15' : null,
-      'bonus_no_habitual' => n < 1 || n > 3 ? 'Entre 1 y 3' : null,
       'horas_cierre_alineacion' => n < 0 || n > 72 || n % 1 != 0 ? 'Horas enteras entre 0 y 72' : null,
       'ingreso_por_punto' => n < 0 ? 'No puede ser negativo' : null,
       'comision_venta' => n < 0 || n > 50 ? 'Entre 0 y 50' : null,
@@ -189,6 +193,42 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           ]),
         ),
         const Divider(height: 32),
+        Text('Bonus y multiplicadores', style: t.titleMedium),
+        const SizedBox(height: 4),
+        Text('Opcionales: desactívalos si preferís que todos puntúen igual.', style: t.bodySmall),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Row(children: [
+            Flexible(child: Text('Multiplicador de invitados')),
+            InfoBoton(Ayuda.multiplicadorInvitado),
+          ]),
+          subtitle: Text(_multActivo ? 'Los puntos del invitado alineado se multiplican' : 'Desactivado: el invitado puntúa como todos'),
+          value: _multActivo,
+          onChanged: (v) => setState(() => _multActivo = v),
+        ),
+        if (_multActivo)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: TextField(
+              controller: _mult,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+              decoration: const InputDecoration(labelText: 'Multiplicador', prefixText: '×', helperText: 'Entre 1,05 y 3 (p. ej. 1,5)'),
+            ),
+          ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Row(children: [
+            Flexible(child: Text('Bonus por rol en la alineación')),
+            InfoBoton(Ayuda.rolesBonus),
+          ]),
+          subtitle: Text((_bonusRoles ?? true)
+              ? 'Portero, defensa, medio y delantero suman extra según el partido'
+              : 'Desactivado: el rol de la alineación es solo estético'),
+          value: _bonusRoles ?? true,
+          onChanged: (v) => setState(() => _bonusRoles = v),
+        ),
+        const Divider(height: 32),
         Text('Parámetros del mercado', style: t.titleMedium),
         const SizedBox(height: 12),
         Form(
@@ -206,13 +246,6 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
                 ),
               ),
           ]),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Bonus por rol en la alineación'),
-          subtitle: const Text('Si se desactiva, el portero/defensa/medio/delantero de la alineación es solo estético.'),
-          value: _bonusRoles ?? true,
-          onChanged: (v) => setState(() => _bonusRoles = v),
         ),
         const Text('Los cambios de precio mínimo y máximo se aplican a partir de la siguiente jornada. '
             'Los bonus de cada rol se editan en Reglas de puntuación.',

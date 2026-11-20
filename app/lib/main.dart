@@ -9,7 +9,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/liga_activa.dart';
+import 'core/equipaciones.dart';
 import 'core/push.dart';
+import 'data/providers.dart';
+import 'data/models.dart';
 import 'core/router.dart';
 import 'core/supabase.dart';
 import 'core/tema.dart';
@@ -96,7 +99,10 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
         final mq = MediaQuery.of(context);
         return MediaQuery(
           data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 1.0, maxScaleFactor: 1.35)),
-          child: child!,
+          child: EquipacionesScope(
+            equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
+            child: child!,
+          ),
         );
       },
       theme: AppTheme.claro(),

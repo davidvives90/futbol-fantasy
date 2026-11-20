@@ -332,7 +332,7 @@ select t_check((select count(*) from puntos_fantasy where partido_id = :'m2' and
                and (select bool_and(total = 15) from puntos_fantasy where partido_id = :'m2' and es_mvp),
                'empate total: MVP compartido, 2 + 1 + 5 + 4 + 3 = 15 cada uno');
 
--- M3 0-0 con pocos votos: nadie llega a 3 votantes → sin nota ni MVP
+-- M3 0-0 con pocos votos: nadie llega a 3 votantes → sin nota oficial (pero sí MVP, 0025)
 select t_jugar('2027-02-16 20:00 Europe/Madrid') as m3 \gset
 select set_config('t.m3', :'m3', false);
 do $$
@@ -348,12 +348,15 @@ begin
 end $$;
 select t_como(301);
 select t_check(cerrar_post_partido(:'m3') = 'cerrado', 'M3 cerrado');
-select t_check(not exists (select 1 from puntos_fantasy where partido_id = :'m3' and es_mvp), 'menos de 3 votantes: sin MVP');
+-- 0025: con menos de 3 votantes sigue habiendo MVP entre los más votados (aquí 2): u304, sin nota oficial
+select t_check((select array_agg(miembro_id) from puntos_fantasy where partido_id = :'m3' and es_mvp) = array[t_m(304)],
+               'menos de 3 votantes: MVP entre los que más votos tienen (u304)');
 select t_check((select num_votantes = 2 and nota_media is null from puntos_fantasy where partido_id = :'m3' and miembro_id = t_m(304)),
                'u304: 2 votantes → sin nota');
 select t_check((select num_votantes = 1 and nota_media is null from puntos_fantasy where partido_id = :'m3' and miembro_id = t_m(302)),
                'u302: un único votante → sin nota');
-select t_check((select bool_and(total = 3) from puntos_fantasy where partido_id = :'m3'), 'M3: todos 2 + 1 (empate) = 3');
+select t_check((select bool_and(total = case when miembro_id = t_m(304) then 6 else 3 end) from puntos_fantasy where partido_id = :'m3'),
+               'M3: todos 2 + 1 (empate) = 3; u304 + 3 de MVP = 6');
 select t_debe_fallar(format('select calcular_puntos(%L)', :'m3'), 'un partido cerrado no se vuelve a puntuar');
 select t_check((select count(*) from puntos_fantasy where partido_id = :'m3') = 6, 'sin filas duplicadas');
 
@@ -409,9 +412,9 @@ select t_check((select partidos = 4 and goles = 4 and mvps = 2 and victorias = 2
                'u301: 4 partidos, 4 goles, 2 MVP, 50 % de victorias, 50 puntos');
 select t_check((select asistencias = 1 and goles = 1 and mvps = 0 from v_rendimiento where miembro_id = t_m(302)),
                'u302: 1 asistencia, 1 gol');
-select t_check((select mvps from v_rendimiento where miembro_id = t_m(304)) = 1, 'u304: 1 MVP (compartido en M2)');
+select t_check((select mvps from v_rendimiento where miembro_id = t_m(304)) = 2, 'u304: 2 MVP (compartido en M2 y M3 con pocos votantes)');
 select t_check((select miembro_id from v_pichichi where liga_id = :'lv' and posicion = 1) = t_m(301), 'pichichi: u301');
-select t_check((select count(*) from v_mvps where liga_id = :'lv') = 3, 'v_mvps: 3 MVP en la liga (1 + 2 compartidos)');
+select t_check((select count(*) from v_mvps where liga_id = :'lv') = 4, 'v_mvps: 4 MVP en la liga (1 + 2 compartidos + 1 con pocos votantes)');
 select t_check((select posicion from v_clasificacion where miembro_id = t_m(301)) = 1, 'clasificación: u301 primero');
 
 -- ═════════ 10. Permisos ═════════

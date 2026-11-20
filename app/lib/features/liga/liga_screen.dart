@@ -14,6 +14,7 @@ import '../../data/repos/ligas_repo.dart';
 import '../shell/home_shell.dart';
 import 'chip_rango.dart';
 import '../../core/avatar.dart';
+import '../../core/info.dart';
 
 String _enlacePersonal(String token) => '${Env.webInvitacion}/$token';
 
@@ -44,6 +45,16 @@ class LigaScreen extends ConsumerWidget {
         },
         child: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           _Datos(mi: mi),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: const Text('Guía y normas de la liga'),
+              subtitle: const Text('Lo acordado, cómo puntúa y cómo funciona el Fantasy'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/guia'),
+            ),
+          ),
           miembros.when(
             loading: () => const Cargando(),
             error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(miembrosProvider(liga.id))),
@@ -335,13 +346,18 @@ class _Miembros extends ConsumerWidget {
           ),
       ],
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
-        child: Text(
-          'Jugadores (${activos.length}) · $numFijos fijos · '
-          '${activos.where((m) => m.rango == RangoMiembro.reserva).length} reservas · '
-          '${activos.where((m) => m.rango == RangoMiembro.invitado).length} invitados',
-          style: t.titleSmall,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 24, 4, 4),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              'Jugadores (${activos.length}) · $numFijos fijos · '
+              '${activos.where((m) => m.rango == RangoMiembro.reserva).length} reservas · '
+              '${activos.where((m) => m.rango == RangoMiembro.invitado).length} invitados',
+              style: t.titleSmall,
+            ),
+          ),
+          const InfoBoton(Ayuda.rangos),
+        ]),
       ),
       if (numFijos > plazasFijas)
         Padding(

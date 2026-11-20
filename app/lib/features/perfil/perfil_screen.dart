@@ -61,6 +61,12 @@ class PerfilScreen extends ConsumerWidget {
             onTap: () => context.push('/master'),
           ),
         ListTile(
+          leading: const Icon(Icons.menu_book_outlined),
+          title: const Text('Guía y normas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/guia'),
+        ),
+        ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: const Text('Apariencia'),
           subtitle: Padding(

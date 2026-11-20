@@ -10,6 +10,7 @@ import '../../data/repos/partidos_repo.dart';
 import '../liga/chip_rango.dart';
 import '../../core/avatar.dart';
 import 'selector_asistencia.dart';
+import '../../core/info.dart';
 
 /// Lista de inscritos en tiempo real + botones Voy / Duda / No voy.
 class ConvocatoriaTab extends ConsumerWidget {
@@ -136,7 +137,10 @@ class _Seccion extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-        child: Text('$titulo (${lista.length})', style: Theme.of(context).textTheme.titleSmall),
+        child: Row(children: [
+          Flexible(child: Text('$titulo (${lista.length})', style: Theme.of(context).textTheme.titleSmall)),
+          if (titulo.startsWith('Lista de espera')) const InfoBoton(Ayuda.listaEspera),
+        ]),
       ),
       for (final (i, ins) in lista.indexed)
         ListTile(

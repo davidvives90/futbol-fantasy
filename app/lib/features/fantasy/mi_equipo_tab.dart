@@ -13,6 +13,7 @@ import 'alineacion_campo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
+import '../../core/info.dart';
 
 enum _Accion { clausula, vender, ceder, retirarCesion, ficha }
 
@@ -78,6 +79,20 @@ class MiEquipoTab extends ConsumerWidget {
           child: Row(children: [
             Text('Plantilla (${propias.length}/${params.maxPlantilla})', style: t.titleMedium),
             const Spacer(),
+            PopupMenuButton<(String, String)>(
+              tooltip: 'Ayuda del Fantasy',
+              icon: const Icon(Icons.help_outline),
+              onSelected: (a) => mostrarAyuda(context, a),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: Ayuda.alineacion, child: Text('Alineación')),
+                PopupMenuItem(value: Ayuda.clausula, child: Text('Cláusula de rescisión')),
+                PopupMenuItem(value: Ayuda.cesion, child: Text('Cesión')),
+                PopupMenuItem(value: Ayuda.valorMercado, child: Text('Valor de mercado')),
+                PopupMenuItem(value: Ayuda.fichas, child: Text('Fichas')),
+                PopupMenuItem(value: Ayuda.rolesBonus, child: Text('Bonus por rol')),
+                PopupMenuItem(value: Ayuda.multiplicadorInvitado, child: Text('Invitados')),
+              ],
+            ),
             if (!abierto) const Chip(avatar: Icon(Icons.lock_clock, size: 16), label: Text('Mercado cerrado')),
           ]),
         ),

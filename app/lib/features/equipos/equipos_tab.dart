@@ -10,6 +10,7 @@ import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../fantasy/fantasy_providers.dart';
 import 'balanceo.dart';
+import '../../core/equipaciones.dart';
 
 /// Generador de equipos nivelados (admin) y vista de equipos (todos).
 class EquiposTab extends ConsumerStatefulWidget {
@@ -196,13 +197,13 @@ class _BarraEquilibrio extends StatelessWidget {
           for (var i = 0; i < sumas.length; i++)
             Expanded(
               flex: max(1, (1000 * (total == 0 ? 1 : sumas[i] / total)).round()),
-              child: Container(height: 12, color: AppColores.of(context).equipo(i + 1)),
+              child: Container(height: 12, color: colorEquipo(context, i + 1)),
             ),
         ]),
       ),
       const SizedBox(height: 6),
       Text(
-        '${[for (var i = 0; i < sumas.length; i++) 'E${i + 1} ${sumas[i].toStringAsFixed(0)}'].join(' · ')}'
+        '${[for (var i = 0; i < sumas.length; i++) '${nombreEquipo(context, i + 1)} ${sumas[i].toStringAsFixed(0)}'].join(' · ')}'
         '  —  diferencia ${dif.toStringAsFixed(1)} %',
         style: AppTheme.tabular(Theme.of(context).textTheme.bodyMedium)?.copyWith(
           fontWeight: FontWeight.w600,
@@ -223,22 +224,25 @@ class _TarjetaEquipo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColores.of(context).equipo(numero);
+    final color = colorEquipo(context, numero);
+    final colorTexto = colorTextoEquipo(context, numero);
     final ordenados = [...jugadores]..sort((a, b) => b.rating.compareTo(a.rating));
     return Card(
-      shape: RoundedRectangleBorder(side: BorderSide(color: color, width: 2), borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(side: BorderSide(color: colorTexto, width: 2), borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Equipo $numero (${jugadores.length})',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color)),
+            child: Row(children: [
+              EtiquetaEquipo(numero, estilo: Theme.of(context).textTheme.titleMedium),
+              Text('  ·  ${jugadores.length} jugadores', style: Theme.of(context).textTheme.bodyMedium),
+            ]),
           ),
           for (final j in ordenados)
             ListTile(
               dense: true,
-              leading: Icon(Icons.person, color: color),
+              leading: Icon(Icons.person, color: colorTexto),
               title: Text(j.nombre),
               trailing: Text(j.rating.toStringAsFixed(0)),
               onTap: onMover == null
@@ -253,7 +257,7 @@ class _TarjetaEquipo extends StatelessWidget {
                               if (e != numero - 1)
                                 SimpleDialogOption(
                                   onPressed: () => Navigator.pop(c, e),
-                                  child: Text('Equipo ${e + 1}'),
+                                  child: EtiquetaEquipo(e + 1),
                                 ),
                           ],
                         ),

@@ -34,13 +34,15 @@ class AjustesLigaScreen extends ConsumerWidget {
       body: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
         grupo('Liga'),
         opcion(Icons.edit_outlined, 'Datos de la liga', 'Nombre, campo, plazas, equipos y precio', '/liga/editar'),
+        opcion(Icons.checkroom, 'Equipaciones', 'Qué lleva cada equipo (p. ej. blanco y color)', '/liga/equipaciones'),
+        opcion(Icons.menu_book_outlined, 'Normas y guía', 'Lo acordado en la liga y cómo funciona todo', '/guia'),
         grupo('Partidos'),
         opcion(Icons.event_repeat, 'Programar temporada', 'Partidos recurrentes entre dos fechas', '/temporada'),
         opcion(Icons.how_to_reg_outlined, 'Convocatoria y cobro', 'Lista de espera, factura mensual y precio de reservas',
             '/liga/convocatoria'),
         grupo('Puntuación y Fantasy'),
         opcion(Icons.rule, 'Puntuación y valoraciones', 'Puntos por acción, valoración rápida o detallada', '/liga/reglas'),
-        opcion(Icons.storefront_outlined, 'Fantasy', 'Encuesta inicial y parámetros del mercado', '/liga/fantasy'),
+        opcion(Icons.storefront_outlined, 'Fantasy', 'Encuesta, mercado, multiplicador de invitados y bonus por rol', '/liga/fantasy'),
       ]),
     );
   }

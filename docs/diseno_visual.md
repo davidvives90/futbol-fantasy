@@ -74,3 +74,10 @@ Insignias: MVP e "Invitado ×1,5" en dorado (tertiaryContainer + texto onTertiar
 - **Avatares** (`AvatarMiembro`, `PilaAvatares`) en todas las listas de personas; anillo para equipo, podio y MVP.
 - **Tono**: tú, frases cortas, verbo primero en botones («Guardar», «Apuntarme», «Cerrar ya»); la consecuencia en el subtítulo, no en el botón. Fechas siempre con `fechaHora()`; dinero con `euros()` y `millones()`.
 - **Accesibilidad**: tamaño de letra del sistema respetado hasta ×1,35; botones de icono siempre con `tooltip`; zonas táctiles ≥ 48 px (por defecto de Material); hápticos en selecciones.
+
+## v0.4.3
+- **Equipaciones** por liga (Ajustes → Equipaciones): cada equipo con nombre y color de una paleta («Color» = sin especificar). Se usan en equipos, post-partido, revisión y resultado (`core/equipaciones.dart`: `nombreEquipo`, `colorEquipo`, `colorTextoEquipo`, `EtiquetaEquipo`). El blanco/negro llevan borde y el texto se vuelve legible automáticamente.
+- **Botones «i»** (`InfoBoton(Ayuda.x)`) con hoja inferior; todos los textos en `Ayuda` (core/info.dart), que también alimenta la **Guía**.
+- **Guía y normas** (/guia, desde Liga, Perfil y Ajustes): normas escritas por el admin (`ligas.normas`), configuración real de la liga, una semana tipo y explicación de cada concepto.
+- **Avisos**: uno cada vez (`clearSnackBars`), 2,5 s; ya no se encolan.
+- Multiplicador de invitados y bonus por rol con interruptor propio en Ajustes → Fantasy.

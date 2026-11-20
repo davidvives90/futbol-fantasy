@@ -8,6 +8,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../shell/home_shell.dart';
 import '../../core/avatar.dart';
+import '../../core/info.dart';
 
 /// Una pestaña del ranking: cómo ordenar y qué valor mostrar.
 class _Ranking {
@@ -43,6 +44,7 @@ class ClasificacionScreen extends ConsumerWidget {
       length: _rankings.length,
       child: Scaffold(
         appBar: LigaAppBar(
+          actions: const [InfoBoton(Ayuda.puntos, tamano: 22)],
           bottom: TabBar(isScrollable: true, tabs: [for (final r in _rankings) Tab(text: r.titulo)]),
         ),
         body: rend.when(

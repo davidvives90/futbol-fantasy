@@ -11,6 +11,7 @@ import '../../data/repos/fantasy_repo.dart';
 import '../../data/repos/post_partido_repo.dart';
 import '../fantasy/widgets_fantasy.dart';
 import '../../core/avatar.dart';
+import '../../core/equipaciones.dart';
 
 class _DatosResultado {
   _DatosResultado(this.encuentros, this.puntos, this.acta);
@@ -70,11 +71,9 @@ class ResultadoTab extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  Text('Equipo ${e.equipoLocal}',
-                      style: TextStyle(color: AppColores.of(context).equipo(e.equipoLocal), fontWeight: FontWeight.w600)),
+                  EtiquetaEquipo(e.equipoLocal),
                   Text('${e.golesLocal} - ${e.golesVisitante}', style: AppTheme.numero(context)),
-                  Text('Equipo ${e.equipoVisitante}',
-                      style: TextStyle(color: AppColores.of(context).equipo(e.equipoVisitante), fontWeight: FontWeight.w600)),
+                  EtiquetaEquipo(e.equipoVisitante),
                 ]),
               ),
             ),

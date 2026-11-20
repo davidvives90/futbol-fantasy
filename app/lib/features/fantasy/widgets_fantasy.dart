@@ -18,7 +18,8 @@ class InsigniaNoHabitual extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final x = '×${bonus.toStringAsFixed(1).replaceAll('.', ',')}';
+    // Con el multiplicador desactivado (×1) solo se indica que es invitado
+    final x = bonus > 1 ? '×${bonus.toStringAsFixed(1).replaceAll('.', ',')}' : '';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       // Premium: dorado (tertiaryContainer + texto onTertiary)
@@ -27,7 +28,7 @@ class InsigniaNoHabitual extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: cs.tertiary.withValues(alpha: 0.5)),
       ),
-      child: Text(corta ? x : 'Invitado $x',
+      child: Text(corta ? (x.isEmpty ? 'Inv.' : x) : 'Invitado $x'.trim(),
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: cs.onTertiary)),
     );
   }

@@ -9,6 +9,8 @@ import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../../data/repos/post_partido_repo.dart';
 import '../../core/avatar.dart';
+import '../../core/equipaciones.dart';
+import '../../core/info.dart';
 
 /// Encuentros que definió el admin (quién contra quién); cada asistente solo pone el marcador.
 final _encuentrosDefProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
@@ -153,9 +155,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
         final exigido = fijado && !b.noMeFije.contains(rival);
         equipos.add(_EstadoEquipo(eq, suma, resultado, fijado));
         if (suma > resultado) {
-          error ??= 'Equipo ${letraEquipo(eq)}: hay $suma goles asignados y el resultado dice $resultado.';
+          error ??= '${nombreEquipo(context, eq)}: hay $suma goles asignados y el resultado dice $resultado.';
         } else if (exigido && suma < resultado) {
-          error ??= 'Equipo ${letraEquipo(eq)}: faltan ${resultado - suma} goles por asignar '
+          error ??= '${nombreEquipo(context, eq)}: faltan ${resultado - suma} goles por asignar '
               '(o marca «No me fijé»).';
         }
       }
@@ -348,8 +350,18 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           const SizedBox(height: 12),
 
           // ───── 2. Goles y asistencias
-          _Titulo('2', '¿Quién marcó y asistió?'),
-          Text('Toca para sumar · mantén pulsado para restar', style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          _Titulo('2', '¿Quién marcó y asistió?', ayuda: Ayuda.cotejo),
+          Row(children: [
+            Expanded(
+              child: Text('Toca para sumar · mantén pulsado para restar',
+                  style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            ),
+            TextButton.icon(
+              onPressed: () => mostrarAyuda(context, Ayuda.noMeFije),
+              icon: const Icon(Icons.info_outline, size: 16),
+              label: const Text('¿No te fijaste?'),
+            ),
+          ]),
           const SizedBox(height: 6),
           for (final eq in equipos)
             _BloqueEquipo(
@@ -392,14 +404,29 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           const SizedBox(height: 12),
 
           // ───── 3. Notas
-          _Titulo('3', detallada ? 'Valora a tus compañeros' : 'Notas de tus compañeros'),
+          _Titulo('3', detallada ? 'Valora a tus compañeros' : 'Notas de tus compañeros', ayuda: Ayuda.notas),
           Text(
             detallada
                 ? 'Del 1 al 5 en cada aspecto (3 = normal).'
                 : 'Del 1 al 5. Todos empiezan en 3 (normal): toca solo a quien se salió de lo normal.',
             style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
-          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(spacing: 4, children: [
+              TextButton.icon(
+                onPressed: () => mostrarAyuda(context, Ayuda.mvp),
+                icon: const Icon(Icons.star_border, size: 16),
+                label: const Text('¿Cómo se elige el MVP?'),
+              ),
+              if (!detallada)
+                TextButton.icon(
+                  onPressed: () => mostrarAyuda(context, Ayuda.destacados),
+                  icon: const Icon(Icons.info_outline, size: 16),
+                  label: const Text('«Destacó en»'),
+                ),
+            ]),
+          ),
           for (final a in companeros)
             _TarjetaNota(
               miembro: miembros[a.miembroId],
@@ -492,8 +519,9 @@ class _EstadoEquipo {
 }
 
 class _Titulo extends StatelessWidget {
-  const _Titulo(this.numero, this.texto);
+  const _Titulo(this.numero, this.texto, {this.ayuda});
   final String numero, texto;
+  final (String, String)? ayuda;
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +536,8 @@ class _Titulo extends StatelessWidget {
           child: Text(numero, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
         ),
         const SizedBox(width: 8),
-        Text(texto, style: Theme.of(context).textTheme.titleMedium),
+        Flexible(child: Text(texto, style: Theme.of(context).textTheme.titleMedium)),
+        if (ayuda != null) InfoBoton(ayuda!),
       ]),
     );
   }
@@ -522,9 +551,9 @@ class _Marcador extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColores.of(context).equipo(equipo);
+    final color = colorTextoEquipo(context, equipo);
     return Column(children: [
-      Text('Equipo ${letraEquipo(equipo)}', style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+      EtiquetaEquipo(equipo),
       Row(mainAxisSize: MainAxisSize.min, children: [
         IconButton(
           onPressed: valor > 0 ? () => onCambio(valor - 1) : null,
@@ -581,13 +610,7 @@ class _BloqueEquipo extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(color: AppColores.of(context).equipo(equipo), shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
-            Text('Equipo ${letraEquipo(equipo)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+            EtiquetaEquipo(equipo),
             const SizedBox(width: 8),
             if (contador != null) contador,
             const Spacer(),
@@ -761,7 +784,7 @@ class _TarjetaNota extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 4, 4, 8),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            AvatarMiembro(miembro, radio: 16, anillo: AppColores.of(context).equipo(equipo)),
+            AvatarMiembro(miembro, radio: 16, anillo: colorEquipo(context, equipo)),
             const SizedBox(width: 10),
             Expanded(
               child: Text(nombre,

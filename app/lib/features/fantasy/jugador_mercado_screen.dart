@@ -11,6 +11,7 @@ import '../../data/repos/fantasy_repo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
+import '../../core/info.dart';
 
 /// Ficha de mercado de un jugador: precio, valoración por atributos, historial y comprar/vender.
 class JugadorMercadoScreen extends ConsumerWidget {
@@ -85,7 +86,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
           if (enPlantilla != null && enPlantilla.cedidaAMi) const Chip(label: Text('Cedido a ti esta jornada')),
         ]),
         const SizedBox(height: 16),
-        Text('Valoración de la liga', style: t.titleMedium),
+        Row(children: [Text('Valoración de la liga', style: t.titleMedium), const InfoBoton(Ayuda.valorMercado)]),
         valoracion.when(
           loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
           error: (e, _) => Text(mensajeError(e)),
@@ -134,7 +135,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
                   },
           )
         else if (fila != null) ...[
-          Text('Fichas', style: t.titleMedium),
+          Row(children: [Text('Fichas', style: t.titleMedium), const InfoBoton(Ayuda.fichas)]),
           Text(
             '${fila.fichasLibres} libres de ${fila.fichasTotales}. '
             '${fila.hayLibres ? 'Puedes comprar una al precio de mercado.' : 'Están todas cogidas: paga la cláusula de un dueño o hazle una oferta.'}',
