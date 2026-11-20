@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -84,16 +85,16 @@ class MiEquipoTab extends ConsumerWidget {
               icon: const Icon(Icons.help_outline),
               onSelected: (a) => mostrarAyuda(context, a),
               itemBuilder: (_) => const [
-                PopupMenuItem(value: Ayuda.alineacion, child: Text('Alineación')),
+                PopupMenuItem(value: Ayuda.alineacion, child: Tx('Alineación')),
                 PopupMenuItem(value: Ayuda.clausula, child: Text('Cláusula de rescisión')),
                 PopupMenuItem(value: Ayuda.cesion, child: Text('Cesión')),
-                PopupMenuItem(value: Ayuda.valorMercado, child: Text('Valor de mercado')),
+                PopupMenuItem(value: Ayuda.valorMercado, child: Tx('Valor de mercado')),
                 PopupMenuItem(value: Ayuda.fichas, child: Text('Fichas')),
                 PopupMenuItem(value: Ayuda.rolesBonus, child: Text('Bonus por rol')),
                 PopupMenuItem(value: Ayuda.multiplicadorInvitado, child: Text('Invitados')),
               ],
             ),
-            if (!abierto) const Chip(avatar: Icon(Icons.lock_clock, size: 16), label: Text('Mercado cerrado')),
+            if (!abierto) const Chip(avatar: Icon(Icons.lock_clock, size: 16), label: Tx('Mercado cerrado')),
           ]),
         ),
         if (propias.isEmpty)
@@ -134,7 +135,7 @@ class MiEquipoTab extends ConsumerWidget {
                     PopupMenuItem(
                       value: _Accion.vender,
                       enabled: abierto && !j.cedidaAOtro && !j.enCesionOfrecida,
-                      child: const ListTile(leading: Icon(Icons.sell_outlined), title: Text('Vender al mercado')),
+                      child: const ListTile(leading: Icon(Icons.sell_outlined), title: Tx('Vender al mercado')),
                     ),
                     if (j.enCesionOfrecida)
                       const PopupMenuItem(
@@ -198,7 +199,7 @@ class MiEquipoTab extends ConsumerWidget {
           decoration: const InputDecoration(labelText: 'Código promocional'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(d), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(d), child: const Tx('Cancelar')),
           FilledButton(
             style: AppButtons.premium(d),
             onPressed: () => Navigator.pop(d, c.text.trim()),

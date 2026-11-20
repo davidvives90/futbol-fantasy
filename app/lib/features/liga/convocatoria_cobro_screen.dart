@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils.dart';
@@ -83,7 +84,7 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Convocatoria y cobro')),
+      appBar: AppBar(title: const Tx('Convocatoria y cobro')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Text('Apertura de la convocatoria', style: t.titleMedium),
         SwitchListTile(
@@ -119,7 +120,7 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           ),
         ],
         const Divider(height: 32),
-        Text('Lista de espera', style: t.titleMedium),
+        Tx('Lista de espera', style: t.titleMedium),
         const SizedBox(height: 4),
         Text(_apertura
             ? 'Cuando no queda plaza (sin contar las guardadas a fijos), los que pulsan «Voy» esperan aquí. '
@@ -178,7 +179,7 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
             ),
           ),
         const SizedBox(height: 24),
-        Text('Pagos', style: t.titleMedium),
+        Tx('Pagos', style: t.titleMedium),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: TextField(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -150,7 +151,7 @@ class _TemporadaScreenState extends ConsumerState<TemporadaScreen> {
     final temporadas = ref.watch(temporadasProvider(mi.liga.id));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Programar temporada')),
+      appBar: AppBar(title: const Tx('Programar temporada')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         TextField(
           controller: _nombre,
@@ -217,7 +218,7 @@ class _TemporadaScreenState extends ConsumerState<TemporadaScreen> {
         const SizedBox(height: 16),
         Row(children: [
           Expanded(child: Text('Fechas sin partido (${_excluir.length})', style: t.titleSmall)),
-          TextButton.icon(onPressed: _anadirExcluida, icon: const Icon(Icons.add), label: const Text('Añadir')),
+          TextButton.icon(onPressed: _anadirExcluida, icon: const Icon(Icons.add), label: const Tx('Añadir')),
         ]),
         Wrap(spacing: 6, runSpacing: 6, children: [
           for (final d in (_excluir.toList()..sort()))

@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'idioma.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -89,7 +90,7 @@ Future<void> compartirTexto(BuildContext context, String texto, {String asunto =
         ),
         ListTile(
           leading: const Icon(Icons.chat, color: Color(0xFF25D366)),
-          title: const Text('Enviar por WhatsApp'),
+          title: const Tx('Enviar por WhatsApp'),
           onTap: () async {
             Navigator.pop(ctx);
             final ok = await launchUrl(Uri.parse('https://wa.me/?text=${Uri.encodeComponent(texto)}'),
@@ -100,8 +101,8 @@ Future<void> compartirTexto(BuildContext context, String texto, {String asunto =
         if (tarjeta != null)
           ListTile(
             leading: const Icon(Icons.image_outlined),
-            title: const Text('Como imagen'),
-            subtitle: const Text('Para el grupo o Instagram'),
+            title: const Tx('Como imagen'),
+            subtitle: const Tx('Para el grupo o Instagram'),
             onTap: () {
               Navigator.pop(ctx);
               compartirImagen(context, tarjeta);
@@ -109,7 +110,7 @@ Future<void> compartirTexto(BuildContext context, String texto, {String asunto =
           ),
         ListTile(
           leading: const Icon(Icons.share),
-          title: const Text('Otras apps'),
+          title: const Tx('Otras apps'),
           onTap: () {
             Navigator.pop(ctx);
             Share.share(texto, subject: asunto);
@@ -157,7 +158,7 @@ Future<void> compartirImagen(BuildContext context, Widget tarjeta, {String nombr
                 }
               },
               icon: const Icon(Icons.share),
-              label: const Text('Compartir imagen'),
+              label: const Tx('Compartir imagen'),
             ),
           ),
         ]),
@@ -251,7 +252,7 @@ class TarjetaPartido extends StatelessWidget {
       final faltan = plazas - confirmados.length;
       contenido = Column(children: [
         Text('${confirmados.length}/$plazas', style: blanco.copyWith(fontSize: 44, fontWeight: FontWeight.w800)),
-        Text('confirmados', style: blanco.copyWith(fontSize: 14)),
+        Tx('confirmados', style: blanco.copyWith(fontSize: 14)),
         const SizedBox(height: 10),
         Wrap(
           alignment: WrapAlignment.center,
@@ -299,7 +300,7 @@ class TarjetaPartido extends StatelessWidget {
         const SizedBox(height: 18),
         contenido,
         const SizedBox(height: 18),
-        Text('Fútbol Fantasy', style: TextStyle(color: _oro.withValues(alpha: 0.9), fontSize: 11, letterSpacing: 2)),
+        Tx('Fútbol Fantasy', style: TextStyle(color: _oro.withValues(alpha: 0.9), fontSize: 11, letterSpacing: 2)),
       ]),
     );
   }

@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/liga_activa.dart';
 import 'core/anuncios.dart';
 import 'core/equipaciones.dart';
+import 'core/idioma.dart';
 import 'core/marco_web.dart';
 import 'core/errores.dart';
 import 'core/push.dart';
@@ -23,7 +24,7 @@ import 'core/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es');
+  await initializeDateFormatting(); // todos los idiomas de la app
   await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
   final prefs = await SharedPreferences.getInstance();
   await Push.iniciar();
@@ -106,15 +107,16 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 1.0, maxScaleFactor: 1.35)),
           child: EquipacionesScope(
             equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
-            child: MarcoWeb(child: child!),
+            // Al cambiar de idioma se reconstruye toda la interfaz (fechas y textos incluidos)
+            child: MarcoWeb(child: KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!)),
           ),
         );
       },
       theme: AppTheme.claro(),
       darkTheme: AppTheme.oscuro(),
       themeMode: ref.watch(temaProvider),
-      locale: const Locale('es'),
-      supportedLocales: const [Locale('es'), Locale('en')],
+      locale: Locale(ref.watch(idiomaProvider)),
+      supportedLocales: [for (final c in idiomas.keys) Locale(c)],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

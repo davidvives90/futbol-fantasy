@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
@@ -29,9 +30,9 @@ class SelectorAsistencia extends StatelessWidget {
       emptySelectionAllowed: true,
       showSelectedIcon: false,
       segments: const [
-        ButtonSegment(value: EstadoInscripcion.confirmado, label: Text('Voy'), icon: Icon(Icons.check)),
-        ButtonSegment(value: EstadoInscripcion.duda, label: Text('Duda'), icon: Icon(Icons.help_outline)),
-        ButtonSegment(value: EstadoInscripcion.baja, label: Text('No voy'), icon: Icon(Icons.close)),
+        ButtonSegment(value: EstadoInscripcion.confirmado, label: Tx('Voy'), icon: Icon(Icons.check)),
+        ButtonSegment(value: EstadoInscripcion.duda, label: Tx('Duda'), icon: Icon(Icons.help_outline)),
+        ButtonSegment(value: EstadoInscripcion.baja, label: Tx('No voy'), icon: Icon(Icons.close)),
       ],
       selected: {
         if (actual != null) actual == EstadoInscripcion.espera ? EstadoInscripcion.confirmado : actual!,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -120,7 +121,7 @@ class _DetalleManager extends ConsumerWidget {
           return ListView(controller: scroll, padding: const EdgeInsets.all(16), children: [
             Text(miembros[managerId]?.nombre ?? 'Mánager', style: t.titleLarge),
             const SizedBox(height: 12),
-            Text('Plantilla', style: t.titleMedium),
+            Tx('Plantilla', style: t.titleMedium),
             if (d.plantilla.isEmpty) const Text('Sin jugadores.'),
             for (final f in d.plantilla)
               ListTile(

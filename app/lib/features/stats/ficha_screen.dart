@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -101,7 +102,7 @@ class FichaScreen extends ConsumerWidget {
         if (premios.isEmpty) return const <Widget>[];
         return <Widget>[
           const SizedBox(height: 16),
-          Text('Palmarés', style: Theme.of(context).textTheme.titleMedium),
+          Tx('Palmarés', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 6),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final p in premios)
@@ -119,7 +120,7 @@ class FichaScreen extends ConsumerWidget {
         if (bajas.isEmpty) return const <Widget>[];
         return <Widget>[
           const SizedBox(height: 16),
-          Text('Bajas', style: Theme.of(context).textTheme.titleMedium),
+          Tx('Bajas', style: Theme.of(context).textTheme.titleMedium),
           for (final a in bajas.take(5))
             ListTile(
               dense: true,
@@ -140,14 +141,14 @@ class FichaScreen extends ConsumerWidget {
                 ? const <Widget>[]
                 : <Widget>[
                     const SizedBox(height: 16),
-                    Text('Evolución', style: Theme.of(context).textTheme.titleMedium),
+                    Tx('Evolución', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     GraficaEvolucion(partidos: lista.reversed.toList()),
                   ],
             orElse: () => const <Widget>[],
           ),
       const SizedBox(height: 16),
-      Text('Puntos por partido', style: Theme.of(context).textTheme.titleMedium),
+      Tx('Puntos por partido', style: Theme.of(context).textTheme.titleMedium),
       ...historial.when(
         loading: () => [const Padding(padding: EdgeInsets.all(24), child: Cargando())],
         error: (e, _) => [ErrorVista(e)],
@@ -229,7 +230,7 @@ class _Extra extends StatelessWidget {
         ),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('Forma y rachas', style: t.titleMedium),
+      Tx('Forma y rachas', style: t.titleMedium),
       const SizedBox(height: 8),
       Row(children: [
         for (final c in forma.split(''))

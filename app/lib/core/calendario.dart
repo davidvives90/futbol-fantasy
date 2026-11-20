@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -87,7 +88,7 @@ Future<void> anadirAlCalendario(BuildContext context, Partido p, Liga l) async {
         ),
         ListTile(
           leading: const Icon(Icons.event),
-          title: const Text('Google Calendar'),
+          title: const Tx('Google Calendar'),
           onTap: () {
             Navigator.pop(ctx);
             launchUrl(enlaceGoogleCalendar(p, l), mode: LaunchMode.externalApplication);
@@ -95,7 +96,7 @@ Future<void> anadirAlCalendario(BuildContext context, Partido p, Liga l) async {
         ),
         ListTile(
           leading: const Icon(Icons.calendar_month_outlined),
-          title: const Text('Otro calendario (archivo .ics)'),
+          title: const Tx('Otro calendario (archivo .ics)'),
           subtitle: const Text('Samsung, Outlook, Apple…'),
           onTap: () {
             Navigator.pop(ctx);
@@ -141,12 +142,12 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
       child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const ListTile(
-            title: Text('Partidos en tu calendario'),
+            title: Tx('Partidos en tu calendario'),
             subtitle: Text('Suscríbete una vez y se actualiza solo: partidos nuevos, cambios de hora y cancelaciones.'),
           ),
           ListTile(
             leading: const Icon(Icons.event),
-            title: const Text('Google Calendar'),
+            title: const Tx('Google Calendar'),
             subtitle: const Text('Android y web'),
             onTap: () {
               Navigator.pop(ctx);
@@ -156,7 +157,7 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
           ),
           ListTile(
             leading: const Icon(Icons.phone_iphone),
-            title: const Text('iPhone, Mac u Outlook'),
+            title: const Tx('iPhone, Mac u Outlook'),
             onTap: () {
               Navigator.pop(ctx);
               launchUrl(Uri.parse(webcal), mode: LaunchMode.externalApplication);
@@ -164,7 +165,7 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
           ),
           ListTile(
             leading: const Icon(Icons.link),
-            title: const Text('Copiar enlace'),
+            title: const Tx('Copiar enlace'),
             subtitle: const Text('Para otros calendarios: «Añadir calendario desde URL». Es personal, no lo compartas.'),
             onTap: () {
               Clipboard.setData(ClipboardData(text: url));
@@ -175,7 +176,7 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
           const Divider(),
           ListTile(
             leading: const Icon(Icons.download_outlined),
-            title: const Text('Solo descargar los próximos (.ics)'),
+            title: const Tx('Solo descargar los próximos (.ics)'),
             subtitle: const Text('No se actualiza si cambia algo'),
             onTap: () {
               Navigator.pop(ctx);

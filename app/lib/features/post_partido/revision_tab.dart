@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -118,8 +119,8 @@ class RevisionTab extends ConsumerWidget {
               ]),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-              FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Guardar')),
+              TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
+              FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Guardar')),
             ],
           );
         },
@@ -185,7 +186,7 @@ class RevisionTab extends ConsumerWidget {
             if (encuentros.isNotEmpty) ...[
               const SizedBox(height: 16),
               Row(children: [
-                Text('Resultado consolidado', style: Theme.of(context).textTheme.titleSmall),
+                Tx('Resultado consolidado', style: Theme.of(context).textTheme.titleSmall),
                 const InfoBoton(Ayuda.disputas),
               ]),
               for (final e in encuentros)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/avatar.dart';
@@ -26,7 +27,7 @@ class VotacionesScreen extends ConsumerWidget {
     final lista = ref.watch(votacionesProvider(mi.liga.id));
     final t = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Votaciones')),
+      appBar: AppBar(title: const Tx('Votaciones')),
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
               onPressed: () async {
@@ -37,13 +38,13 @@ class VotacionesScreen extends ConsumerWidget {
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       ListTile(
                         leading: const Icon(Icons.how_to_vote_outlined),
-                        title: const Text('Votación'),
+                        title: const Tx('Votación'),
                         subtitle: const Text('Una pregunta, cada uno elige una opción'),
                         onTap: () => Navigator.pop(c, 'votacion'),
                       ),
                       ListTile(
                         leading: const Icon(Icons.event_note_outlined),
-                        title: const Text('Encuesta de día y hora'),
+                        title: const Tx('Encuesta de día y hora'),
                         subtitle: const Text('Propón fechas; cada uno marca todas las que le van bien'),
                         onTap: () => Navigator.pop(c, 'fechas'),
                       ),
@@ -54,7 +55,7 @@ class VotacionesScreen extends ConsumerWidget {
                 tipo == 'fechas' ? await nuevaEncuestaFechas(context, ref, mi) : await nuevaVotacion(context, ref, mi);
               },
               icon: const Icon(Icons.add),
-              label: const Text('Nueva votación'),
+              label: const Tx('Nueva votación'),
             )
           : null,
       body: lista.when(
@@ -76,10 +77,10 @@ class VotacionesScreen extends ConsumerWidget {
             onRefresh: () async => ref.invalidate(votacionesProvider(mi.liga.id)),
             child: ListView(padding: const EdgeInsets.fromLTRB(0, 8, 0, 96), children: [
               if (abiertas.isNotEmpty)
-                Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 4), child: Text('Abiertas', style: t.titleMedium)),
+                Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 4), child: Tx('Abiertas', style: t.titleMedium)),
               for (final v in abiertas) _TarjetaVotacion(v: v, mi: mi),
               if (cerradas.isNotEmpty)
-                Padding(padding: const EdgeInsets.fromLTRB(16, 16, 16, 4), child: Text('Cerradas', style: t.titleMedium)),
+                Padding(padding: const EdgeInsets.fromLTRB(16, 16, 16, 4), child: Tx('Cerradas', style: t.titleMedium)),
               for (final v in cerradas) _TarjetaVotacion(v: v, mi: mi),
             ]),
           );
@@ -141,8 +142,8 @@ class _TarjetaVotacion extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'cerrar', child: Text('Cerrar ya')),
-                  PopupMenuItem(value: 'cancelar', child: Text('Cancelar votación')),
+                  PopupMenuItem(value: 'cerrar', child: Tx('Cerrar ya')),
+                  PopupMenuItem(value: 'cancelar', child: Tx('Cancelar votación')),
                 ],
               ),
           ]),
@@ -268,7 +269,7 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
             TextField(controller: titulo, maxLength: 140, decoration: const InputDecoration(labelText: 'Pregunta')),
             TextField(controller: descripcion, maxLines: 3, minLines: 1, decoration: const InputDecoration(labelText: 'Detalle (opcional)')),
             const SizedBox(height: 12),
-            Text('Opciones', style: Theme.of(ctx).textTheme.labelLarge),
+            Tx('Opciones', style: Theme.of(ctx).textTheme.labelLarge),
             if (regla != null)
               for (final v in regla.valoresPosibles)
                 ListTile(
@@ -290,12 +291,12 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
                   child: TextButton.icon(
                     onPressed: () => setState(() => opciones.add(TextEditingController())),
                     icon: const Icon(Icons.add),
-                    label: const Text('Añadir opción'),
+                    label: const Tx('Añadir opción'),
                   ),
                 ),
             ],
             const SizedBox(height: 8),
-            Text('Duración', style: Theme.of(ctx).textTheme.labelLarge),
+            Tx('Duración', style: Theme.of(ctx).textTheme.labelLarge),
             const SizedBox(height: 4),
             Wrap(spacing: 6, children: [
               for (final h in const [24, 48, 72, 168])
@@ -307,7 +308,7 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
             ]),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Voto anónimo'),
+              title: const Tx('Voto anónimo'),
               subtitle: Text(anonima ? 'Solo se ve el recuento' : 'Se ve quién votó qué'),
               value: anonima,
               onChanged: (v) => setState(() => anonima = v),
@@ -338,7 +339,7 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
                 if (ok && ctx.mounted) Navigator.pop(ctx, true);
               },
               icon: const Icon(Icons.send),
-              label: const Text('Abrir votación'),
+              label: const Tx('Abrir votación'),
             ),
           ]),
         ),
@@ -365,7 +366,7 @@ Future<void> nuevaEncuestaFechas(BuildContext context, WidgetRef ref, MiLiga mi)
         padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(ctx).bottom),
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Encuesta de día y hora', style: Theme.of(ctx).textTheme.titleLarge),
+            Tx('Encuesta de día y hora', style: Theme.of(ctx).textTheme.titleLarge),
             const SizedBox(height: 8),
             TextField(controller: titulo, maxLength: 140, decoration: const InputDecoration(labelText: 'Pregunta')),
             Text('Opciones (${fechas.length}/6)', style: Theme.of(ctx).textTheme.labelLarge),
@@ -395,10 +396,10 @@ Future<void> nuevaEncuestaFechas(BuildContext context, WidgetRef ref, MiLiga mi)
                   });
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Añadir día y hora'),
+                label: const Tx('Añadir día y hora'),
               ),
             const SizedBox(height: 12),
-            Text('Duración', style: Theme.of(ctx).textTheme.labelLarge),
+            Tx('Duración', style: Theme.of(ctx).textTheme.labelLarge),
             Wrap(spacing: 6, children: [
               for (final h in const [24, 48, 72, 168])
                 ChoiceChip(

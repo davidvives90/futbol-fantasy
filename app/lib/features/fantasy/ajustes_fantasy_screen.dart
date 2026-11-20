@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -176,7 +177,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
             if (lista.where((e) => !e.esMini).isEmpty)
               ListTile(
                 leading: const Icon(Icons.how_to_vote_outlined),
-                title: const Text('Abrir encuesta general'),
+                title: const Tx('Abrir encuesta general'),
                 subtitle: const Text('Antes de empezar la liga Fantasy, o para recalibrar valoraciones'),
                 onTap: () async {
                   if (!await confirmar(context, 'Abrir encuesta', 'Todos los miembros verán la encuesta en la app.')) return;
@@ -265,7 +266,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         OutlinedButton.icon(
           style: AppButtons.peligro(context),
           icon: const Icon(Icons.restart_alt),
-          label: const Text('Reiniciar Fantasy'),
+          label: const Tx('Reiniciar Fantasy'),
           onPressed: () async {
             if (!await confirmar(context, 'Reiniciar Fantasy',
                 'Todos pierden sus jugadores y su dinero y reciben un equipo nuevo. No se puede deshacer.',
@@ -348,7 +349,7 @@ class _FilaEncuestaState extends ConsumerState<_FilaEncuesta> {
               refrescarFantasy(ref, (ligaId: widget.mi.liga.id, miembroId: widget.mi.yo.id));
             }
           },
-          child: const Text('Cerrar'),
+          child: const Tx('Cerrar'),
         ),
       ),
     );

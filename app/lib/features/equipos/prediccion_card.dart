@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/equipaciones.dart';
@@ -108,7 +109,7 @@ class PrediccionCard extends ConsumerWidget {
             Row(children: [
               Text('Gana ${nombreEquipo(context, (e['local'] as num).toInt())}', style: t.labelSmall),
               const Spacer(),
-              Text('Empate', style: t.labelSmall),
+              Tx('Empate', style: t.labelSmall),
               const Spacer(),
               Text('Gana ${nombreEquipo(context, (e['visitante'] as num).toInt())}', style: t.labelSmall),
             ]),

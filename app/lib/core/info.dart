@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'idioma.dart';
 
 /// Botón «i»: abre una hoja con la explicación de algo que no es evidente.
 /// Usar el texto de [Ayuda] para que la misma explicación se lea igual en toda la app.
@@ -36,7 +37,7 @@ void mostrarAyuda(BuildContext context, (String, String) ayuda) {
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(onPressed: () => Navigator.pop(c), child: const Text('Entendido')),
+            child: TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Entendido')),
           ),
         ]),
       ),

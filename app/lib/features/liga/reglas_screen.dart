@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils.dart';
@@ -55,10 +56,10 @@ class _Reglas extends ConsumerWidget {
           decoration: const InputDecoration(labelText: 'Puntos', helperText: 'Puede ser negativo'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
           FilledButton(
             onPressed: () => Navigator.pop(c, double.tryParse(ctrl.text.replaceAll(',', '.'))),
-            child: const Text('Guardar'),
+            child: const Tx('Guardar'),
           ),
         ],
       ),
@@ -121,8 +122,8 @@ class _Aspectos extends ConsumerWidget {
         title: const Text('Nuevo aspecto'),
         content: TextField(controller: ctrl, autofocus: true, decoration: const InputDecoration(labelText: 'Nombre')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: const Text('Añadir')),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: const Tx('Añadir')),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/equipaciones.dart';
@@ -17,7 +18,7 @@ class GuiaScreen extends ConsumerWidget {
     final texto = await showDialog<String>(
       context: context,
       builder: (d) => AlertDialog(
-        title: const Text('Normas de la liga'),
+        title: const Tx('Normas de la liga'),
         content: SizedBox(
           width: 520,
           child: TextField(
@@ -33,8 +34,8 @@ class GuiaScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(d), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(d, c.text.trim()), child: const Text('Guardar')),
+          TextButton(onPressed: () => Navigator.pop(d), child: const Tx('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(d, c.text.trim()), child: const Tx('Guardar')),
         ],
       ),
     );
@@ -73,7 +74,7 @@ class GuiaScreen extends ConsumerWidget {
         );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Guía y normas')),
+      appBar: AppBar(title: const Tx('Guía y normas')),
       body: ListView(padding: const EdgeInsets.only(bottom: 40), children: [
         // ───── Normas acordadas
         seccion('Normas de ${l.nombre}'),
@@ -110,7 +111,7 @@ class GuiaScreen extends ConsumerWidget {
         ListTile(
           dense: true,
           leading: const Icon(Icons.checkroom, size: 20),
-          title: const Text('Equipaciones'),
+          title: const Tx('Equipaciones'),
           trailing: Wrap(spacing: 10, children: [for (var i = 1; i <= l.numEquipos.clamp(2, 4); i++) EtiquetaEquipo(i)]),
         ),
         dato(Icons.payments_outlined, 'Cobro', l.facturaMensual ? 'Factura mensual' : 'Por partido'),

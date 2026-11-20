@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -82,8 +83,8 @@ class ClasificacionScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: SegmentedButton<bool>(
                 segments: const [
-                  ButtonSegment(value: false, label: Text('Esta temporada')),
-                  ButtonSegment(value: true, label: Text('Histórico')),
+                  ButtonSegment(value: false, label: Tx('Esta temporada')),
+                  ButtonSegment(value: true, label: Tx('Histórico')),
                 ],
                 selected: {historico},
                 onSelectionChanged: (v) => ref.read(_verHistoricoProvider.notifier).state = v.first,
@@ -205,13 +206,13 @@ class _Records extends ConsumerWidget {
               _Cifra('Empates', '${e['empates_pct'] ?? 0} %'),
             ]),
             const SizedBox(height: 16),
-            ListTile(leading: const Icon(Icons.local_fire_department_outlined), title: const Text('Mayor goleada'),
+            ListTile(leading: const Icon(Icons.local_fire_department_outlined), title: const Tx('Mayor goleada'),
                 subtitle: Text(marcador(e['mayor_goleada']))),
-            ListTile(leading: const Icon(Icons.sports_soccer), title: const Text('Partido con más goles'),
+            ListTile(leading: const Icon(Icons.sports_soccer), title: const Tx('Partido con más goles'),
                 subtitle: Text(marcador(e['mas_goles']))),
             if (parejas.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Mejores parejas', style: t.titleMedium),
+              Tx('Mejores parejas', style: t.titleMedium),
               for (final p in parejas)
                 ListTile(dense: true, leading: const Icon(Icons.handshake_outlined),
                     title: Text('${n(p['a'])} + ${n(p['b'])}'),
@@ -219,7 +220,7 @@ class _Records extends ConsumerWidget {
             ],
             if (fieles.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Los que nunca fallan', style: t.titleMedium),
+              Tx('Los que nunca fallan', style: t.titleMedium),
               for (final f in fieles)
                 ListTile(dense: true, leading: AvatarMiembro(miembros[f['miembro_id']], radio: 14),
                     title: Text(n(f['miembro_id'])), trailing: Text('${f['partidos']} partidos')),

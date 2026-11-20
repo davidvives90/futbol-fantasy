@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -37,7 +38,7 @@ class AsistenciaScreen extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Asistencia y bajas')),
+      appBar: AppBar(title: const Tx('Asistencia y bajas')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => registrarBaja(context, ref, mi),
         icon: const Icon(Icons.event_busy_outlined),
@@ -57,7 +58,7 @@ class AsistenciaScreen extends ConsumerWidget {
             onRefresh: () => ref.refresh(historialAsistenciaProvider(mi.liga.id).future),
             child: ListView(padding: const EdgeInsets.only(bottom: 96), children: [
               if (bajas.isNotEmpty) ...[
-                Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), child: Text('De baja', style: t.titleMedium)),
+                Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), child: Tx('De baja', style: t.titleMedium)),
                 for (final b in bajas)
                   ListTile(
                     leading: AvatarMiembro(miembros[b.miembroId], radio: 18),
@@ -70,7 +71,7 @@ class AsistenciaScreen extends ConsumerWidget {
                                   ok: '¡Bienvenido de vuelta!');
                               if (ok) ref.invalidate(historialAsistenciaProvider(mi.liga.id));
                             },
-                            child: const Text('Ha vuelto'),
+                            child: const Tx('Ha vuelto'),
                           )
                         : null,
                     onTap: () => _detalle(context, ref, mi, b.miembroId),
@@ -189,12 +190,12 @@ class _DetalleBajas extends ConsumerWidget {
             Expanded(child: Text(m?.nombre ?? '…', style: Theme.of(context).textTheme.titleLarge)),
           ]),
           const SizedBox(height: 8),
-          Text('Bajas', style: Theme.of(context).textTheme.labelLarge),
+          Tx('Bajas', style: Theme.of(context).textTheme.labelLarge),
           ...bajas.when(
             loading: () => [const Padding(padding: EdgeInsets.all(16), child: Cargando())],
             error: (e, _) => [ErrorVista(e)],
             data: (l) => l.isEmpty
-                ? [const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('Ninguna registrada.'))]
+                ? [const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Tx('Ninguna registrada.'))]
                 : [
                     for (final a in l)
                       ListTile(
@@ -225,7 +226,7 @@ class _DetalleBajas extends ConsumerWidget {
                 await registrarBaja(context, ref, mi, miembroId: miembroId);
               },
               icon: const Icon(Icons.add),
-              label: const Text('Añadir baja'),
+              label: const Tx('Añadir baja'),
             ),
         ]),
       ),
@@ -261,7 +262,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
           padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(ctx).bottom),
           child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text('Baja temporal', style: Theme.of(ctx).textTheme.titleLarge),
+              Tx('Baja temporal', style: Theme.of(ctx).textTheme.titleLarge),
               const SizedBox(height: 4),
               const Text('Mientras dure no recibe avisos de convocatoria, no ocupa plaza de fijo y esos partidos no le cuentan como faltas.'),
               const SizedBox(height: 12),
@@ -281,7 +282,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.event),
-                title: const Text('Desde'),
+                title: const Tx('Desde'),
                 trailing: Text(_dia.format(desde)),
                 onTap: () async {
                   final d = await elegir(desde, DateTime(hoy.year - 1));
@@ -291,7 +292,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.event_available),
-                title: const Text('Vuelve'),
+                title: const Tx('Vuelve'),
                 trailing: Text(hasta == null ? 'No se sabe' : 'después del ${_dia.format(hasta!)}'),
                 onTap: () async {
                   final d = await elegir(hasta ?? desde, desde);
@@ -304,7 +305,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
                     label: Text(s == 7 ? '1 semana' : (s == 30 ? '1 mes' : '3 meses')),
                     onPressed: () => setState(() => hasta = desde.add(Duration(days: s))),
                   ),
-                ActionChip(label: const Text('Sin fecha'), onPressed: () => setState(() => hasta = null)),
+                ActionChip(label: const Tx('Sin fecha'), onPressed: () => setState(() => hasta = null)),
               ]),
               TextField(controller: nota, maxLength: 200, decoration: const InputDecoration(labelText: 'Nota (opcional)')),
               FilledButton(
@@ -316,7 +317,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
                   );
                   if (r && ctx.mounted) Navigator.pop(ctx, true);
                 },
-                child: const Text('Guardar'),
+                child: const Tx('Guardar'),
               ),
             ]),
           ),

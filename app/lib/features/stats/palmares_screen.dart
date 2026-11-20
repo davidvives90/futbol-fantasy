@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -27,12 +28,12 @@ class PalmaresScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Palmarés'),
+        title: const Tx('Palmarés'),
         actions: [
           if (mi.soyAdmin && (datos.valueOrNull?.isNotEmpty ?? false))
             PopupMenuButton<String>(
               onSelected: (_) => _reabrir(context, ref, mi),
-              itemBuilder: (_) => const [PopupMenuItem(value: 'reabrir', child: Text('Reabrir la última temporada'))],
+              itemBuilder: (_) => const [PopupMenuItem(value: 'reabrir', child: Tx('Reabrir la última temporada'))],
             ),
         ],
       ),
@@ -40,7 +41,7 @@ class PalmaresScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _cerrar(context, ref, mi),
               icon: const Icon(Icons.flag_outlined),
-              label: const Text('Cerrar temporada'),
+              label: const Tx('Cerrar temporada'),
             )
           : null,
       body: datos.when(
@@ -70,7 +71,7 @@ class PalmaresScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Cerrar temporada'),
+        title: const Tx('Cerrar temporada'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text('Se guarda la clasificación, se reparten los premios y la clasificación de la nueva temporada '
               'empieza de cero (el histórico se conserva).'),
@@ -82,7 +83,7 @@ class PalmaresScreen extends ConsumerWidget {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
           FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Cerrar y dar premios')),
         ],
       ),
@@ -163,7 +164,7 @@ class _TarjetaTemporada extends StatelessWidget {
           if (clasif.isNotEmpty)
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: const Text('Clasificación final'),
+              title: const Tx('Clasificación final'),
               children: [
                 for (var i = 0; i < clasif.length && i < 20; i++)
                   ListTile(

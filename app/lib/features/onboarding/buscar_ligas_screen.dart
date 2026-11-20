@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils.dart';
@@ -62,7 +63,7 @@ class _BuscarLigasScreenState extends ConsumerState<BuscarLigasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar ligas')),
+      appBar: AppBar(title: const Tx('Buscar ligas')),
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.all(16),

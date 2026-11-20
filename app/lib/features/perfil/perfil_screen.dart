@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,7 +37,7 @@ class PerfilScreen extends ConsumerWidget {
         const Divider(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text('Mis ligas', style: Theme.of(context).textTheme.titleSmall),
+          child: Tx('Mis ligas', style: Theme.of(context).textTheme.titleSmall),
         ),
         for (final l in ligas)
           ListTile(
@@ -53,19 +54,19 @@ class PerfilScreen extends ConsumerWidget {
         const Divider(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text('Opciones', style: Theme.of(context).textTheme.titleSmall),
+          child: Tx('Opciones', style: Theme.of(context).textTheme.titleSmall),
         ),
         if (ref.watch(esMasterProvider).valueOrNull == true)
           ListTile(
             leading: Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.tertiary),
-            title: const Text('Panel máster'),
+            title: const Tx('Panel máster'),
             subtitle: const Text('Control interno, códigos promocionales y registro'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/master'),
           ),
         ListTile(
           leading: const Icon(Icons.menu_book_outlined),
-          title: const Text('Guía y normas'),
+          title: const Tx('Guía y normas'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/guia'),
         ),
@@ -74,23 +75,47 @@ class PerfilScreen extends ConsumerWidget {
           builder: (_, s) => s.data == true
               ? ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
-                  title: const Text('Privacidad y anuncios'),
+                  title: const Tx('Privacidad y anuncios'),
                   subtitle: const Text('Cambia tu consentimiento de anuncios personalizados'),
                   onTap: Anuncios.abrirOpcionesPrivacidad,
                 )
               : const SizedBox.shrink(),
         ),
         ListTile(
+          leading: const Icon(Icons.translate),
+          title: const Text('Idioma · Language'),
+          subtitle: Text(idiomas[ref.watch(idiomaProvider)] ?? ''),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => showDialog<void>(
+            context: context,
+            builder: (c) => SimpleDialog(
+              title: const Text('Idioma · Language'),
+              children: [
+                for (final e in idiomas.entries)
+                  RadioListTile<String>(
+                    value: e.key,
+                    groupValue: ref.read(idiomaProvider),
+                    title: Text(e.value),
+                    onChanged: (v) {
+                      Navigator.pop(c);
+                      if (v != null) ref.read(idiomaProvider.notifier).elegir(v);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+        ListTile(
           leading: const Icon(Icons.palette_outlined),
-          title: const Text('Apariencia'),
+          title: const Tx('Apariencia'),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 8),
             child: SegmentedButton<ThemeMode>(
               showSelectedIcon: false,
               segments: const [
-                ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Claro')),
-                ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Oscuro')),
-                ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Text('Sistema')),
+                ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Tx('Claro')),
+                ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Tx('Oscuro')),
+                ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Tx('Sistema')),
               ],
               selected: {ref.watch(temaProvider)},
               onSelectionChanged: (s) => ref.read(temaProvider.notifier).elegir(s.first),
@@ -105,7 +130,7 @@ class PerfilScreen extends ConsumerWidget {
         ),
         ListTile(
           leading: const Icon(Icons.logout),
-          title: const Text('Cerrar sesión'),
+          title: const Tx('Cerrar sesión'),
           onTap: () async {
             if (!await confirmar(context, 'Cerrar sesión', '¿Seguro que quieres salir?')) return;
             await ref.read(ligaActivaIdProvider.notifier).elegir(null);
@@ -115,12 +140,12 @@ class PerfilScreen extends ConsumerWidget {
         ),
         ListTile(
           leading: const Icon(Icons.policy_outlined),
-          title: const Text('Política de privacidad'),
+          title: const Tx('Política de privacidad'),
           onTap: () => launchUrl(Uri.parse(urlPrivacidad), mode: LaunchMode.externalApplication),
         ),
         ListTile(
           leading: Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
-          title: Text('Eliminar mi cuenta', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          title: Tx('Eliminar mi cuenta', style: TextStyle(color: Theme.of(context).colorScheme.error)),
           onTap: () => _eliminarCuenta(context, ref),
         ),
         const SizedBox(height: 24),
@@ -137,7 +162,7 @@ Future<void> _eliminarCuenta(BuildContext context, WidgetRef ref) async {
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setState) => AlertDialog(
-        title: const Text('Eliminar mi cuenta'),
+        title: const Tx('Eliminar mi cuenta'),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Se borrarán tu perfil, tu foto y tu acceso. Tus partidos se conservan como «Exjugador» '
               'para no alterar las clasificaciones de tus compañeros. No se puede deshacer.'),
@@ -149,11 +174,11 @@ Future<void> _eliminarCuenta(BuildContext context, WidgetRef ref) async {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Tx('Cancelar')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             onPressed: ctrl.text.trim() == 'ELIMINAR' ? () => Navigator.pop(ctx, true) : null,
-            child: const Text('Eliminar'),
+            child: const Tx('Eliminar'),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,7 +33,7 @@ class AjustesLigaScreen extends ConsumerWidget {
           onTap: () => context.push(ruta),
         );
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes de la liga')),
+      appBar: AppBar(title: const Tx('Ajustes de la liga')),
       body: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
         grupo('Liga'),
         opcion(Icons.edit_outlined, 'Datos de la liga', 'Nombre, campo, plazas, equipos y precio', '/liga/editar'),
@@ -73,7 +74,7 @@ class AjustesLigaScreen extends ConsumerWidget {
         opcion(Icons.event_busy_outlined, 'Asistencia y bajas', 'Historial de cada jugador y bajas temporales', '/asistencia'),
         ListTile(
           leading: const Icon(Icons.table_view_outlined),
-          title: const Text('Exportar a Excel'),
+          title: const Tx('Exportar a Excel'),
           subtitle: const Text('Caja, saldos, asistencia y clasificación'),
           trailing: const Icon(Icons.download_outlined),
           onTap: () => exportarLigaExcel(context, mi.liga),

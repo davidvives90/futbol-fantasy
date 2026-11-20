@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,7 +64,7 @@ class _Pagar extends ConsumerWidget {
       context: context,
       builder: (c) => StatefulBuilder(
         builder: (c, setD) => AlertDialog(
-          title: const Text('Ya he pagado'),
+          title: const Tx('Ya he pagado'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('El administrador recibirá un aviso para confirmarlo; cuando lo haga, quedará apuntado.'),
             const SizedBox(height: 12),
@@ -79,8 +80,8 @@ class _Pagar extends ConsumerWidget {
             ]),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Avisar')),
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Avisar')),
           ],
         ),
       ),
@@ -101,7 +102,7 @@ class _Pagar extends ConsumerWidget {
     await showDialog<void>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Pagar con Bizum'),
+        title: const Tx('Pagar con Bizum'),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Abre la app de tu banco › Bizum › Enviar dinero, y usa estos datos:'),
           const SizedBox(height: 12),
@@ -111,7 +112,7 @@ class _Pagar extends ConsumerWidget {
           const SizedBox(height: 8),
           const Text('Cuando lo hayas enviado, pulsa «Ya he pagado».'),
         ]),
-        actions: [FilledButton(onPressed: () => Navigator.pop(c), child: const Text('Entendido'))],
+        actions: [FilledButton(onPressed: () => Navigator.pop(c), child: const Tx('Entendido'))],
       ),
     );
   }
@@ -129,7 +130,7 @@ class _Pagar extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.hourglass_top),
               title: Text('Has avisado de un pago de ${euros((pendiente['importe'] as num).toDouble())}'),
-              subtitle: const Text('Pendiente de que lo confirme el administrador'),
+              subtitle: const Tx('Pendiente de que lo confirme el administrador'),
             ),
           ),
         Row(children: [
@@ -138,7 +139,7 @@ class _Pagar extends ConsumerWidget {
               child: FilledButton.icon(
                 onPressed: () => _bizum(context),
                 icon: const Icon(Icons.phone_iphone),
-                label: const Text('Pagar con Bizum'),
+                label: const Tx('Pagar con Bizum'),
               ),
             ),
             const SizedBox(width: 8),
@@ -147,7 +148,7 @@ class _Pagar extends ConsumerWidget {
             child: OutlinedButton.icon(
               onPressed: () => _yaHePagado(context, ref),
               icon: const Icon(Icons.check),
-              label: const Text('Ya he pagado'),
+              label: const Tx('Ya he pagado'),
             ),
           ),
         ]),
@@ -205,7 +206,7 @@ class _MiSaldo extends ConsumerWidget {
           loading: () => [const Padding(padding: EdgeInsets.all(24), child: Cargando())],
           error: (e, _) => [ErrorVista(e)],
           data: (lista) => lista.isEmpty
-              ? [const Padding(padding: EdgeInsets.all(24), child: Text('Sin movimientos todavía.'))]
+              ? [const Padding(padding: EdgeInsets.all(24), child: Tx('Sin movimientos todavía.'))]
               : [
                   for (final m in lista)
                     ListTile(
@@ -238,8 +239,8 @@ class _Deudores extends ConsumerWidget {
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'pago', label: Text('Pago')),
-                ButtonSegment(value: 'ajuste', label: Text('Ajuste')),
+                ButtonSegment(value: 'pago', label: Tx('Pago')),
+                ButtonSegment(value: 'ajuste', label: Tx('Ajuste')),
               ],
               selected: {tipo},
               onSelectionChanged: (s) => setD(() => tipo = s.first),
@@ -258,8 +259,8 @@ class _Deudores extends ConsumerWidget {
             TextField(controller: concepto, decoration: const InputDecoration(labelText: 'Concepto')),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Registrar')),
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Registrar')),
           ],
         ),
       ),
@@ -299,7 +300,7 @@ class _Deudores extends ConsumerWidget {
           child: ListView(children: [
             _AvisosPendientes(mi: mi),
             ListTile(
-              title: const Text('Total pendiente de cobro'),
+              title: const Tx('Total pendiente de cobro'),
               trailing: Text(euros(-pendiente), style: AppTheme.numero(context, size: 22)),
             ),
             const Divider(),
@@ -330,7 +331,7 @@ class _Deudores extends ConsumerWidget {
                         });
                       },
                 icon: const Icon(Icons.notifications_active_outlined),
-                label: const Text('Recordar a todos los que deben'),
+                label: const Tx('Recordar a todos los que deben'),
               ),
             ),
             Padding(
@@ -411,7 +412,7 @@ class _Facturas extends ConsumerWidget {
             ]),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
             FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Subir')),
           ],
         ),
@@ -475,7 +476,7 @@ class _Facturas extends ConsumerWidget {
           ]),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
           FilledButton(onPressed: cargos.isEmpty ? null : () => Navigator.pop(c, true), child: const Text('Cargar a los fijos')),
         ],
       ),
@@ -502,7 +503,7 @@ class _Facturas extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _subir(context, ref),
               icon: const Icon(Icons.upload_file),
-              label: const Text('Subir factura'),
+              label: const Tx('Subir factura'),
             )
           : null,
       body: facturas.when(
@@ -573,7 +574,7 @@ class _AvisosPendientes extends ConsumerWidget {
       margin: const EdgeInsets.all(12),
       color: Theme.of(context).colorScheme.tertiaryContainer,
       child: Column(children: [
-        const ListTile(leading: Icon(Icons.payments_outlined), title: Text('Pagos por confirmar')),
+        const ListTile(leading: Icon(Icons.payments_outlined), title: Tx('Pagos por confirmar')),
         for (final a in avisos)
           ListTile(
             leading: AvatarMiembro(miembros[a['miembro_id']], radio: 16),

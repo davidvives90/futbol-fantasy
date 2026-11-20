@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,7 +71,7 @@ class _UnirseScreenState extends ConsumerState<UnirseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Unirse a una liga')),
+      appBar: AppBar(title: const Tx('Unirse a una liga')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         const Text('Pega el código de la liga (6 letras) o el enlace de invitación que te enviaron por WhatsApp.'),
         const SizedBox(height: 16),

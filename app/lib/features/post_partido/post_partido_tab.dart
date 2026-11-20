@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -283,7 +284,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       return ListView(padding: const EdgeInsets.all(24), children: [
         Icon(Icons.check_circle, size: 64, color: AppColores.of(context).exito),
         const SizedBox(height: 12),
-        Text('¡Listo! Ya has enviado el resultado y tus notas.',
+        Tx('¡Listo! Ya has enviado el resultado y tus notas.',
             textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         if (numReportes != null)
@@ -298,7 +299,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
               _editando = true;
             }),
             icon: const Icon(Icons.edit_outlined),
-            label: const Text('Corregir'),
+            label: const Tx('Corregir'),
           ),
         ),
       ]);
@@ -323,7 +324,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
             Icon(Icons.timer_outlined, size: 18, color: cs.onSurfaceVariant),
             const SizedBox(width: 6),
             Expanded(
-              child: Text('Menos de 1 minuto · anónimo · se cruza con el resto',
+              child: Tx('Menos de 1 minuto · anónimo · se cruza con el resto',
                   style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
             ),
           ]),
@@ -360,13 +361,13 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           _Titulo('2', '¿Quién marcó y asistió?', ayuda: Ayuda.cotejo),
           Row(children: [
             Expanded(
-              child: Text('Toca para sumar · mantén pulsado para restar',
+              child: Tx('Toca para sumar · mantén pulsado para restar',
                   style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
             ),
             TextButton.icon(
               onPressed: () => mostrarAyuda(context, Ayuda.noMeFije),
               icon: const Icon(Icons.info_outline, size: 16),
-              label: const Text('¿No te fijaste?'),
+              label: const Tx('¿No te fijaste?'),
             ),
           ]),
           const SizedBox(height: 6),
@@ -425,7 +426,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
               TextButton.icon(
                 onPressed: () => mostrarAyuda(context, Ayuda.mvp),
                 icon: const Icon(Icons.star_border, size: 16),
-                label: const Text('¿Cómo se elige el MVP?'),
+                label: const Tx('¿Cómo se elige el MVP?'),
               ),
               if (avanzado && !detallada)
                 TextButton.icon(
@@ -493,7 +494,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                         _borradores.remove(_clave);
                         _editando = false;
                       }),
-                      child: const Text('Cancelar'),
+                      child: const Tx('Cancelar'),
                     ),
                   ),
                 Expanded(
@@ -624,7 +625,7 @@ class _BloqueEquipo extends StatelessWidget {
             if (contador != null) contador,
             const Spacer(),
             FilterChip(
-              label: const Text('No me fijé'),
+              label: const Tx('No me fijé'),
               selected: noMeFije,
               visualDensity: VisualDensity.compact,
               onSelected: onNoMeFije,
@@ -811,7 +812,7 @@ class _TarjetaNota extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
               ),
               icon: Icon(esMvp ? Icons.star : Icons.star_border, color: esMvp ? cs.tertiary : null),
-              label: Text('MVP', style: TextStyle(fontWeight: esMvp ? FontWeight.w800 : FontWeight.w600)),
+              label: Tx('MVP', style: TextStyle(fontWeight: esMvp ? FontWeight.w800 : FontWeight.w600)),
             ),
             if (avanzado)
             PopupMenuButton<String>(

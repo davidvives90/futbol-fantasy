@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/equipaciones.dart';
@@ -46,7 +47,7 @@ class _EquipacionesScreenState extends ConsumerState<EquipacionesScreen> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Equipaciones')),
+      appBar: AppBar(title: const Tx('Equipaciones')),
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
         Text('Elige qué lleva cada equipo. Se verá en los equipos, el post-partido y el resultado.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
@@ -113,7 +114,7 @@ class _EquipacionesScreenState extends ConsumerState<EquipacionesScreen> {
                     Navigator.of(context).maybePop();
                   }
                 },
-          child: const Text('Guardar'),
+          child: const Tx('Guardar'),
         ),
       ]),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -52,7 +53,7 @@ class LigaScreen extends ConsumerWidget {
             child: Column(children: [
               ListTile(
                 leading: const Icon(Icons.gavel_outlined),
-                title: const Text('Reglamento'),
+                title: const Tx('Reglamento'),
                 subtitle: Text('${mi.liga.nombreModalidad}: cesión, saques, cambios, calzado…'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/reglamento'),
@@ -60,7 +61,7 @@ class LigaScreen extends ConsumerWidget {
               const Divider(height: 1, indent: 56),
               ListTile(
                 leading: const Icon(Icons.how_to_vote_outlined),
-                title: const Text('Votaciones'),
+                title: const Tx('Votaciones'),
                 subtitle: const Text('Lo que se decide entre todos'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/votaciones'),
@@ -68,7 +69,7 @@ class LigaScreen extends ConsumerWidget {
               const Divider(height: 1, indent: 56),
               ListTile(
                 leading: const Icon(Icons.event_busy_outlined),
-                title: const Text('Asistencia y bajas'),
+                title: const Tx('Asistencia y bajas'),
                 subtitle: const Text('Quién viene, quién falta y quién está lesionado'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/asistencia'),
@@ -76,7 +77,7 @@ class LigaScreen extends ConsumerWidget {
               const Divider(height: 1, indent: 56),
               ListTile(
                 leading: const Icon(Icons.menu_book_outlined),
-                title: const Text('Guía y normas de la liga'),
+                title: const Tx('Guía y normas de la liga'),
                 subtitle: const Text('Lo acordado, cómo puntúa y cómo funciona el Fantasy'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/guia'),
@@ -95,7 +96,7 @@ class LigaScreen extends ConsumerWidget {
             child: TextButton.icon(
               style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
               icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Abandonar la liga'),
+              label: const Tx('Abandonar la liga'),
               onPressed: () async {
               if (!await confirmar(context, 'Abandonar ${liga.nombre}',
                   'Dejarás de ver sus partidos. Tu historial y tus deudas se conservan.', accion: 'Abandonar', tipo: TipoConfirmacion.peligro)) {
@@ -179,13 +180,13 @@ class _Invitar extends ConsumerWidget {
           decoration: const InputDecoration(hintText: 'Un nombre por línea\nPepe\nLuis\nCarlos'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
           FilledButton(
             onPressed: () => Navigator.pop(
               c,
               ctrl.text.split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toSet().toList(),
             ),
-            child: const Text('Crear'),
+            child: const Tx('Crear'),
           ),
         ],
       ),

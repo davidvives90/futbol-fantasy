@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import '../liga/asistencia_screen.dart';
 import '../../data/repos/reglamento_repo.dart';
 import 'package:flutter/services.dart';
@@ -62,13 +63,13 @@ class ConvocatoriaTab extends ConsumerWidget {
                   ])
                 : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text(euros(importe), style: AppTheme.numero(context, size: 22)),
-                    const Text('por jugador'),
+                    const Tx('por jugador'),
                   ]),
           ),
           if (!partido.horaConfirmada)
             ListTile(
               leading: Icon(Icons.schedule, color: AppColores.of(context).aviso),
-              title: const Text('Hora pendiente de confirmar'),
+              title: const Tx('Hora pendiente de confirmar'),
             ),
           if (abreEn != null)
             Card(
@@ -110,7 +111,7 @@ class ConvocatoriaTab extends ConsumerWidget {
                 child: ListTile(
                   leading: const Icon(Icons.hourglass_top),
                   title: Text('Estás en lista de espera (puesto ${espera.indexWhere((i) => i.miembroId == mi.yo.id) + 1})'),
-                  subtitle: const Text('Entrarás automáticamente si alguien se da de baja.'),
+                  subtitle: const Tx('Entrarás automáticamente si alguien se da de baja.'),
                 ),
               ),
             ),

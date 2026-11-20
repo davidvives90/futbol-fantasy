@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'idioma.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'idioma.dart';
 import 'theme.dart';
 import 'errores.dart';
 
 final _euro = NumberFormat.currency(locale: 'es_ES', symbol: '€');
-final _fecha = DateFormat("EEE d MMM · HH:mm", 'es');
-final _fechaCorta = DateFormat('d/M/yy', 'es');
+// Formatos de fecha en el idioma elegido (se crean al usarlos para seguir los cambios de idioma)
+DateFormat get _fecha => DateFormat("EEE d MMM · HH:mm", idiomaActual);
+DateFormat get _fechaCorta => DateFormat('d/M/yy', idiomaActual);
 
 String euros(num? v) => v == null ? '—' : _euro.format(v);
 String fechaHora(DateTime d) => _fecha.format(d.toLocal());
@@ -84,7 +87,7 @@ Future<bool> confirmar(BuildContext context, String titulo, String texto,
       title: Text(titulo),
       content: Text(texto),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
         FilledButton(
           style: switch (tipo) {
             TipoConfirmacion.peligro => AppButtons.peligroRelleno(c),
@@ -116,7 +119,7 @@ class ErrorVista extends StatelessWidget {
             Text(mensajeError(error), textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+              OutlinedButton(onPressed: onRetry, child: const Tx('Reintentar')),
             ],
           ]),
         ),

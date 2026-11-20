@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -86,7 +87,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                   NavigationRailDestination(
                     icon: Icon(destinos[r].$1),
                     selectedIcon: Icon(destinos[r].$2),
-                    label: Text(destinos[r].$3),
+                    label: Text(tr(destinos[r].$3)),
                   ),
               ],
             ),
@@ -102,7 +103,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           onDestinationSelected: ir,
           destinations: [
             for (final r in ramas)
-              NavigationDestination(icon: Icon(destinos[r].$1), selectedIcon: Icon(destinos[r].$2), label: destinos[r].$3),
+              NavigationDestination(icon: Icon(destinos[r].$1), selectedIcon: Icon(destinos[r].$2), label: tr(destinos[r].$3)),
           ],
         ),
       );
@@ -130,7 +131,7 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return AppBar(
       title: PopupMenuButton<String>(
-        tooltip: 'Cambiar de liga',
+        tooltip: tr('Cambiar de liga'),
         onSelected: (v) {
           switch (v) {
             case '_crear':
@@ -147,9 +148,9 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
           for (final l in ligas)
             CheckedPopupMenuItem(value: l.liga.id, checked: l.liga.id == actual?.liga.id, child: Text(l.liga.nombre)),
           const PopupMenuDivider(),
-          const PopupMenuItem(value: '_crear', child: ListTile(leading: Icon(Icons.add), title: Text('Crear liga'))),
-          const PopupMenuItem(value: '_unirse', child: ListTile(leading: Icon(Icons.vpn_key_outlined), title: Text('Unirse con código'))),
-          const PopupMenuItem(value: '_buscar', child: ListTile(leading: Icon(Icons.search), title: Text('Buscar ligas'))),
+          const PopupMenuItem(value: '_crear', child: ListTile(leading: Icon(Icons.add), title: Tx('Crear liga'))),
+          const PopupMenuItem(value: '_unirse', child: ListTile(leading: Icon(Icons.vpn_key_outlined), title: Tx('Unirse con código'))),
+          const PopupMenuItem(value: '_buscar', child: ListTile(leading: Icon(Icons.search), title: Tx('Buscar ligas'))),
         ],
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Flexible(child: Text(actual?.liga.nombre ?? 'Fútbol Fantasy', overflow: TextOverflow.ellipsis)),
@@ -164,7 +165,7 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
           Padding(
           padding: const EdgeInsets.only(right: 8),
           child: IconButton(
-            tooltip: 'Mi perfil',
+            tooltip: tr('Mi perfil'),
             onPressed: () => context.push('/perfil'),
             icon: CircleAvatar(
               radius: 15,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -238,7 +239,7 @@ class _DuenosFichas extends ConsumerWidget {
                   Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                     OutlinedButton.icon(
                       icon: const Icon(Icons.handshake_outlined),
-                      label: const Text('Hacer oferta'),
+                      label: const Tx('Hacer oferta'),
                       onPressed: f.cedida
                           ? null
                           : () async {
@@ -259,7 +260,7 @@ class _DuenosFichas extends ConsumerWidget {
                     FilledButton.icon(
                       style: AppButtons.premium(context),
                       icon: const Icon(Icons.gavel),
-                      label: const Text('Pagar cláusula'),
+                      label: const Tx('Pagar cláusula'),
                       onPressed: !f.clausulable || bloqueado || (saldo != null && saldo! < (f.clausula ?? 0))
                           ? null
                           : () async {

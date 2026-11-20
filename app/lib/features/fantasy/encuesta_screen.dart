@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -150,7 +151,7 @@ class _EncuestaScreenState extends ConsumerState<EncuestaScreen> {
                 child: ListTile(
                   leading: CircleAvatar(child: Text('${i + 1}')),
                   title: Text(miembros[id]?.nombre ?? '…'),
-                  subtitle: id == mi.yo.id ? const Text('Tú') : null,
+                  subtitle: id == mi.yo.id ? const Tx('Tú') : null,
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     AvatarMiembro(miembros[id], radio: 14),
                     const SizedBox(width: 8),

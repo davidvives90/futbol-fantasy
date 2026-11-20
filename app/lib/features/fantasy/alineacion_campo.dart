@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils.dart';
@@ -307,7 +308,7 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
               icon: _guardando
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.save_outlined),
-              label: const Text('Guardar alineación'),
+              label: const Tx('Guardar alineación'),
             ),
           ]),
           if (!bloqueada && _guardada.isEmpty)

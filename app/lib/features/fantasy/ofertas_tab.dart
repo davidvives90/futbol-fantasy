@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -43,12 +44,12 @@ class OfertasTab extends ConsumerWidget {
             recibidas.sort((a, b) => orden(a).compareTo(orden(b)));
             enviadas.sort((a, b) => orden(a).compareTo(orden(b)));
             return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Ofertas recibidas', style: t.titleMedium),
+              Tx('Ofertas recibidas', style: t.titleMedium),
               if (recibidas.isEmpty)
                 const Padding(padding: EdgeInsets.all(12), child: Text('Nadie ha pujado por tus jugadores.')),
               for (final o in recibidas) _TarjetaOferta(oferta: o, mi: mi, saldo: saldo),
               const SizedBox(height: 16),
-              Text('Ofertas enviadas', style: t.titleMedium),
+              Tx('Ofertas enviadas', style: t.titleMedium),
               if (enviadas.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(12),
@@ -201,13 +202,13 @@ class _TarjetaOferta extends ConsumerWidget {
                 TextButton(
                   style: AppButtons.peligroTexto(context),
                   onPressed: () => _responder(context, ref, k, false),
-                  child: const Text('Rechazar'),
+                  child: const Tx('Rechazar'),
                 ),
                 const SizedBox(width: 4),
                 FilledButton(
                   style: AppButtons.premium(context),
                   onPressed: () => _responder(context, ref, k, true),
-                  child: const Text('Aceptar'),
+                  child: const Tx('Aceptar'),
                 ),
               ] else
                 TextButton(

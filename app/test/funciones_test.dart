@@ -2,6 +2,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbol_fantasy/core/calendario.dart';
 import 'package:futbol_fantasy/core/compartir.dart';
+import 'package:futbol_fantasy/core/idioma.dart';
 import 'package:futbol_fantasy/data/models.dart';
 import 'package:futbol_fantasy/data/repos/reglamento_repo.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -132,5 +133,17 @@ void main() {
   test('modalidades con nombre', () {
     expect(nombresModalidad['sala'], 'Fútbol sala');
     expect(_liga().nombreModalidad, 'Fútbol 7'); // sin dato: valor por defecto
+  });
+
+  test('traducciones: cada idioma y vuelta al castellano si falta', () {
+    expect(idiomas.length, 9);
+    idiomaActual = 'en';
+    expect(tr('No voy'), "I'm out");
+    idiomaActual = 'eu';
+    expect(tr('Guardar'), 'Gorde');
+    idiomaActual = 'ca';
+    expect(tr('Texto sin traducir'), 'Texto sin traducir');
+    idiomaActual = 'es';
+    expect(tr('Guardar'), 'Guardar');
   });
 }

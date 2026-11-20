@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -88,7 +89,7 @@ class ResultadoTab extends ConsumerWidget {
             ),
           _PuntosManagerSeccion(partido: partido, mi: mi, puntos: d.puntos),
           const SizedBox(height: 8),
-          Text('Puntos Fantasy', style: Theme.of(context).textTheme.titleMedium),
+          Tx('Puntos Fantasy', style: Theme.of(context).textTheme.titleMedium),
           for (final (i, p) in d.puntos.indexed)
             ExpansionTile(
               leading: AvatarMiembro(miembros[p.miembroId], anillo: p.esMvp ? Theme.of(context).colorScheme.tertiary : null),
@@ -177,7 +178,7 @@ class _PuntosManagerSeccion extends ConsumerWidget {
           Row(children: [
             const Icon(Icons.shield_outlined),
             const SizedBox(width: 8),
-            Expanded(child: Text('Tus puntos de mánager', style: t.titleMedium)),
+            Expanded(child: Tx('Tus puntos de mánager', style: t.titleMedium)),
             Text(fmt(total), style: t.headlineSmall),
           ]),
           const SizedBox(height: 4),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/supabase.dart';
@@ -70,8 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Icon(Icons.sports_soccer, size: 72, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 12),
-              Text('Fútbol Fantasy', textAlign: TextAlign.center, style: t.headlineMedium),
-              Text('Convocatorias, caja y liga Fantasy con tus amigos',
+              Tx('Fútbol Fantasy', textAlign: TextAlign.center, style: t.headlineMedium),
+              Tx('Convocatorias, caja y liga Fantasy con tus amigos',
                   textAlign: TextAlign.center, style: t.bodyMedium),
               const SizedBox(height: 32),
               if (_enviado)
@@ -108,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 OutlinedButton.icon(
                   onPressed: _google,
                   icon: const Icon(Icons.login),
-                  label: const Text('Continuar con Google'),
+                  label: const Tx('Continuar con Google'),
                 ),
               ],
               if (_enviado) ...[
@@ -122,8 +123,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   onSubmitted: (_) => _entrarConCodigo(),
                 ),
                 const SizedBox(height: 8),
-                FilledButton.tonal(onPressed: _entrarConCodigo, child: const Text('Entrar con el código')),
-                TextButton(onPressed: () => setState(() => _enviado = false), child: const Text('Usar otro email')),
+                FilledButton.tonal(onPressed: _entrarConCodigo, child: const Tx('Entrar con el código')),
+                TextButton(onPressed: () => setState(() => _enviado = false), child: const Tx('Usar otro email')),
               ],
             ]),
           ),

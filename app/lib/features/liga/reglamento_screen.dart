@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,7 +29,7 @@ class ReglamentoScreen extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reglamento')),
+      appBar: AppBar(title: const Tx('Reglamento')),
       body: reglas.when(
         loading: () => const Cargando(),
         error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(reglamentoProvider(mi.liga.id))),
@@ -37,7 +38,7 @@ class ReglamentoScreen extends ConsumerWidget {
           child: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text('Modalidad', style: t.labelLarge),
+              child: Tx('Modalidad', style: t.labelLarge),
             ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -103,7 +104,7 @@ class ReglamentoScreen extends ConsumerWidget {
               child: OutlinedButton.icon(
                 onPressed: () => context.push('/guia'),
                 icon: const Icon(Icons.menu_book_outlined),
-                label: const Text('Otras normas acordadas (texto libre)'),
+                label: const Tx('Otras normas acordadas (texto libre)'),
               ),
             ),
           ]),
@@ -128,7 +129,7 @@ class ReglamentoScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               if (r.tipo == 'si_no')
                 SegmentedButton<bool>(
-                  segments: const [ButtonSegment(value: true, label: Text('Sí')), ButtonSegment(value: false, label: Text('No'))],
+                  segments: const [ButtonSegment(value: true, label: Tx('Sí')), ButtonSegment(value: false, label: Tx('No'))],
                   selected: {valor == true},
                   onSelectionChanged: (s) => setState(() => valor = s.first),
                 )
@@ -156,15 +157,15 @@ class ReglamentoScreen extends ConsumerWidget {
                   ),
                 ]),
               const SizedBox(height: 16),
-              FilledButton(onPressed: () => Navigator.pop(ctx, 'guardar'), child: const Text('Guardar cambio')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, 'guardar'), child: const Tx('Guardar cambio')),
               if (r.tipo != 'numero')
                 OutlinedButton.icon(
                   onPressed: () => Navigator.pop(ctx, 'votar'),
                   icon: const Icon(Icons.how_to_vote_outlined),
-                  label: const Text('Mejor, que vote la liga'),
+                  label: const Tx('Mejor, que vote la liga'),
                 ),
               if (r.personalizada)
-                TextButton(onPressed: () => Navigator.pop(ctx, 'estandar'), child: const Text('Volver al valor estándar')),
+                TextButton(onPressed: () => Navigator.pop(ctx, 'estandar'), child: const Tx('Volver al valor estándar')),
             ]),
           ),
         ),

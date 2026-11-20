@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
@@ -96,11 +97,11 @@ class _DialogoClausulaState extends State<_DialogoClausula> {
             style: Theme.of(context).textTheme.bodySmall),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Tx('Cancelar')),
         FilledButton(
           style: AppButtons.premium(context),
           onPressed: error != null || nueva == null || nueva == widget.actual ? null : () => Navigator.pop(context, nueva),
-          child: const Text('Guardar'),
+          child: const Tx('Guardar'),
         ),
       ],
     );
@@ -187,7 +188,7 @@ class _DialogoOfertaState extends State<_DialogoOferta> {
         ),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Tx('Cancelar')),
         FilledButton(
           style: AppButtons.premium(context),
           onPressed: v == null || v <= 0 ? null : () => Navigator.pop(context, v),
@@ -251,7 +252,7 @@ class _DialogoCesionState extends State<_DialogoCesion> {
             style: Theme.of(context).textTheme.bodySmall),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Tx('Cancelar')),
         FilledButton(
           style: AppButtons.premium(context),
           onPressed: () => Navigator.pop(context, (_pct * 1000).round() / 1000),

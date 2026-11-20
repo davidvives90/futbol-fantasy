@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -71,7 +72,7 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
           const SizedBox(height: 12),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Yo también soy fijo'),
+            title: const Tx('Yo también soy fijo'),
             value: _yoFijo,
             onChanged: (v) => setState(() => _yoFijo = v),
           ),
@@ -91,7 +92,7 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
         ListView(padding: const EdgeInsets.all(16), children: [
           const Icon(Icons.celebration_outlined, size: 64),
           const SizedBox(height: 12),
-          Text('Invita al grupo', style: t.titleLarge, textAlign: TextAlign.center),
+          Tx('Invita al grupo', style: t.titleLarge, textAlign: TextAlign.center),
           const SizedBox(height: 8),
           Text('Código de la liga: ${mi.liga.codigoInvitacion}', style: t.titleMedium, textAlign: TextAlign.center),
           const SizedBox(height: 16),
@@ -100,13 +101,13 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
                 'Entra en ${Env.webApp} (o en la app) y usa el código *${mi.liga.codigoInvitacion}*.\n'
                 'Si te he creado ficha, en la pestaña Liga tienes tu enlace personal.'),
             icon: const Icon(Icons.share),
-            label: const Text('Compartir invitación'),
+            label: const Tx('Compartir invitación'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () => context.go('/partidos/nuevo'),
             icon: const Icon(Icons.add),
-            label: const Text('Crear el primer partido'),
+            label: const Tx('Crear el primer partido'),
           ),
           const SizedBox(height: 8),
           Text('Los enlaces personales de cada fijo están en Liga › Jugadores. Puedes cambiar todo esto en Ajustes de la liga.',
@@ -119,7 +120,7 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(pasos[_paso].$1),
-        actions: [if (_paso < 3) TextButton(onPressed: _terminar, child: const Text('Saltar'))],
+        actions: [if (_paso < 3) TextButton(onPressed: _terminar, child: const Tx('Saltar'))],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(value: (_paso + 1) / pasos.length),
@@ -131,7 +132,7 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Row(children: [
             if (_paso > 0 && _paso < 3)
-              TextButton(onPressed: () => setState(() => _paso--), child: const Text('Atrás')),
+              TextButton(onPressed: () => setState(() => _paso--), child: const Tx('Atrás')),
             const Spacer(),
             FilledButton(
               onPressed: _trabajando

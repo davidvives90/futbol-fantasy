@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -65,18 +66,18 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Elegir de la galería'),
+            title: const Tx('Elegir de la galería'),
             onTap: () => Navigator.pop(c, 'galeria'),
           ),
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Hacer una foto'),
+            title: const Tx('Hacer una foto'),
             onTap: () => Navigator.pop(c, 'camara'),
           ),
           if (_avatarUrl != null)
             ListTile(
               leading: Icon(Icons.delete_outline, color: Theme.of(c).colorScheme.error),
-              title: const Text('Quitar foto'),
+              title: const Tx('Quitar foto'),
               onTap: () => Navigator.pop(c, 'quitar'),
             ),
         ]),
@@ -229,10 +230,10 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
             decoration: const InputDecoration(labelText: 'Teléfono (opcional)'),
           ),
           const SizedBox(height: 24),
-          FilledButton(onPressed: _guardando ? null : _guardar, child: const Text('Guardar')),
+          FilledButton(onPressed: _guardando ? null : _guardar, child: const Tx('Guardar')),
           if (widget.inicial) ...[
             const SizedBox(height: 8),
-            TextButton(onPressed: () => sb.auth.signOut(), child: const Text('Cerrar sesión')),
+            TextButton(onPressed: () => sb.auth.signOut(), child: const Tx('Cerrar sesión')),
           ],
         ]),
       ),

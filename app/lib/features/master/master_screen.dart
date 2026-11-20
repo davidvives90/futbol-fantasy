@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -43,7 +44,7 @@ class MasterScreen extends ConsumerWidget {
       length: 6,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Panel máster'),
+          title: const Tx('Panel máster'),
           bottom: const TabBar(isScrollable: true, tabAlignment: TabAlignment.start, tabs: [
             Tab(text: 'Resumen'),
             Tab(text: 'Ligas'),
@@ -435,7 +436,7 @@ class _MasterLigaScreenState extends ConsumerState<MasterLigaScreen> {
           TextField(controller: motivo, decoration: const InputDecoration(labelText: 'Motivo (queda registrado)')),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
           FilledButton(
             onPressed: () => Navigator.pop(c, importe ? '${cantidad.text}|${motivo.text}' : motivo.text),
             child: const Text('Aplicar'),

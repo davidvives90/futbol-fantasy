@@ -3,6 +3,7 @@ import '../liga/votaciones_screen.dart';
 import '../liga/asistencia_screen.dart';
 import '../../data/repos/reglamento_repo.dart';
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,7 +71,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/partidos/nuevo'),
               icon: const Icon(Icons.add),
-              label: const Text('Nuevo partido'),
+              label: const Tx('Nuevo partido'),
             )
           : null,
       body: RefreshIndicator(
@@ -213,7 +214,7 @@ class _ProximoPartido extends ConsumerWidget {
                 Row(children: [
                   Icon(Icons.schedule, size: 16, color: AppColores.of(context).aviso),
                   const SizedBox(width: 4),
-                  Text('Hora por confirmar', style: t.labelMedium?.copyWith(color: AppColores.of(context).aviso)),
+                  Tx('Hora por confirmar', style: t.labelMedium?.copyWith(color: AppColores.of(context).aviso)),
                 ]),
             ]),
             const SizedBox(height: 10),

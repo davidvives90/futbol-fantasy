@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -85,7 +86,7 @@ class _CrearPartidoScreenState extends ConsumerState<CrearPartidoScreen> {
   Widget build(BuildContext context) {
     final liga = ref.watch(ligaActualProvider)!.liga;
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo partido')),
+      appBar: AppBar(title: const Tx('Nuevo partido')),
       body: Form(
         key: _form,
         child: ListView(padding: const EdgeInsets.all(16), children: [
@@ -108,7 +109,7 @@ class _CrearPartidoScreenState extends ConsumerState<CrearPartidoScreen> {
           ]),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Hora confirmada'),
+            title: const Tx('Hora confirmada'),
             subtitle: const Text('Desactívalo si aún falta cerrar la reserva'),
             value: _horaConfirmada,
             onChanged: (v) => setState(() => _horaConfirmada = v),
@@ -121,7 +122,7 @@ class _CrearPartidoScreenState extends ConsumerState<CrearPartidoScreen> {
             IconButton(onPressed: _plazas < 44 ? () => setState(() => _plazas++) : null, icon: const Icon(Icons.add)),
           ]),
           Row(children: [
-            const Expanded(child: Text('Equipos')),
+            const Expanded(child: Tx('Equipos')),
             SegmentedButton<int>(
               segments: const [
                 ButtonSegment(value: 2, label: Text('2')),
