@@ -14,6 +14,10 @@ final historialProvider = FutureProvider.autoDispose.family<List<PuntosFantasy>,
   (ref, miembroId) => StatsRepo.historial(miembroId),
 );
 
+final logrosMiembroProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+  (ref, miembroId) => StatsRepo.logrosDe(miembroId),
+);
+
 final premiosMiembroProvider = FutureProvider.autoDispose.family<List<Premio>, String>(
   (ref, miembroId) => StatsRepo.premiosDe(miembroId),
 );
@@ -70,6 +74,27 @@ class FichaScreen extends ConsumerWidget {
             _Dato('% victorias', rend.pctVictorias == null ? '—' : '${rend.pctVictorias!.toStringAsFixed(0)} %'),
           ],
         ),
+      // Logros (insignias)
+      ...() {
+        final logros = ref.watch(logrosMiembroProvider(miembroId)).valueOrNull ?? const [];
+        if (logros.isEmpty) return const <Widget>[];
+        return <Widget>[
+          const SizedBox(height: 16),
+          Text('Logros (${logros.length}/${logrosInfo.length})', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final l in logros)
+              Tooltip(
+                message: 'Conseguido el ${fechaCorta(DateTime.parse(l['conseguido_en'] as String))}',
+                child: Chip(
+                  avatar: Text(logrosInfo[l['tipo']]?.$1 ?? '🏅'),
+                  label: Text(logrosInfo[l['tipo']]?.$2 ?? '${l['tipo']}'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+          ]),
+        ];
+      }(),
       // Palmarés del jugador
       ...() {
         final premios = ref.watch(premiosMiembroProvider(miembroId)).valueOrNull ?? const <Premio>[];
@@ -108,6 +133,17 @@ class FichaScreen extends ConsumerWidget {
       }(),
       ...ref.watch(statsJugadorProvider(miembroId)).maybeWhen(
             data: (e) => [const SizedBox(height: 16), _Extra(e, miembros: ref.watch(miembrosPorIdProvider(mi.liga.id)))],
+            orElse: () => const <Widget>[],
+          ),
+      ...historial.maybeWhen(
+            data: (lista) => lista.length < 2
+                ? const <Widget>[]
+                : <Widget>[
+                    const SizedBox(height: 16),
+                    Text('Evolución', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    GraficaEvolucion(partidos: lista.reversed.toList()),
+                  ],
             orElse: () => const <Widget>[],
           ),
       const SizedBox(height: 16),
@@ -236,4 +272,99 @@ class _Extra extends StatelessWidget {
       if (filas.isNotEmpty) ...[const SizedBox(height: 8), ...filas],
     ]);
   }
+}
+
+/// Gráfica sin dependencias: barras = puntos de cada partido (oro si fue MVP); línea = nota media (escala 0–10).
+class GraficaEvolucion extends StatelessWidget {
+  const GraficaEvolucion({super.key, required this.partidos});
+
+  /// Del más antiguo al más reciente.
+  final List<PuntosFantasy> partidos;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final ultimos = partidos.length > 20 ? partidos.sublist(partidos.length - 20) : partidos;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(
+        height: 160,
+        width: double.infinity,
+        child: CustomPaint(
+          painter: _PintorEvolucion(
+            puntos: [for (final p in ultimos) p.total],
+            notas: [for (final p in ultimos) p.notaMedia],
+            mvp: [for (final p in ultimos) p.esMvp],
+            barra: cs.primary,
+            barraMvp: cs.tertiary,
+            linea: cs.secondary,
+            eje: cs.outlineVariant,
+          ),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Wrap(spacing: 14, children: [
+        _Leyenda(color: cs.primary, texto: 'Puntos'),
+        _Leyenda(color: cs.tertiary, texto: 'MVP'),
+        _Leyenda(color: cs.secondary, texto: 'Nota (0–10)', linea: true),
+        Text('Últimos ${ultimos.length} partidos', style: Theme.of(context).textTheme.bodySmall),
+      ]),
+    ]);
+  }
+}
+
+class _Leyenda extends StatelessWidget {
+  const _Leyenda({required this.color, required this.texto, this.linea = false});
+  final Color color;
+  final String texto;
+  final bool linea;
+
+  @override
+  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 12, height: linea ? 3 : 10, color: color),
+        const SizedBox(width: 4),
+        Text(texto, style: Theme.of(context).textTheme.bodySmall),
+      ]);
+}
+
+class _PintorEvolucion extends CustomPainter {
+  _PintorEvolucion({required this.puntos, required this.notas, required this.mvp, required this.barra,
+      required this.barraMvp, required this.linea, required this.eje});
+  final List<double> puntos;
+  final List<double?> notas;
+  final List<bool> mvp;
+  final Color barra, barraMvp, linea, eje;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (puntos.isEmpty) return;
+    final maxP = puntos.fold<double>(1, (a, b) => b > a ? b : a);
+    final minP = puntos.fold<double>(0, (a, b) => b < a ? b : a);
+    final rango = maxP - minP;
+    final cero = size.height * (maxP / (rango == 0 ? 1 : rango));
+    final ancho = size.width / puntos.length;
+    canvas.drawLine(Offset(0, cero), Offset(size.width, cero), Paint()..color = eje..strokeWidth = 1);
+    for (var i = 0; i < puntos.length; i++) {
+      final alto = puntos[i] / (rango == 0 ? 1 : rango) * size.height;
+      final r = Rect.fromLTWH(i * ancho + ancho * 0.2, puntos[i] >= 0 ? cero - alto : cero, ancho * 0.6, alto.abs());
+      canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(3)), Paint()..color = mvp[i] ? barraMvp : barra.withValues(alpha: 0.8));
+    }
+    final camino = Path();
+    var empezado = false;
+    for (var i = 0; i < notas.length; i++) {
+      final n = notas[i];
+      if (n == null) continue;
+      final p = Offset(i * ancho + ancho / 2, size.height - (n.clamp(0, 10) / 10) * size.height);
+      if (empezado) {
+        camino.lineTo(p.dx, p.dy);
+      } else {
+        camino.moveTo(p.dx, p.dy);
+        empezado = true;
+      }
+      canvas.drawCircle(p, 3, Paint()..color = linea);
+    }
+    canvas.drawPath(camino, Paint()..color = linea..strokeWidth = 2..style = PaintingStyle.stroke);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PintorEvolucion old) => old.puntos != puntos || old.notas != notas;
 }

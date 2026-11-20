@@ -44,6 +44,10 @@ class StatsRepo {
     return [for (final r in rows) Premio(r)];
   }
 
+  static Future<List<Map<String, dynamic>>> logrosDe(String miembroId) async =>
+      List<Map<String, dynamic>>.from(
+          await sb.from('logros').select().eq('miembro_id', miembroId).order('conseguido_en', ascending: false));
+
   static Future<void> cerrarTemporada(String ligaId, String? nombre) =>
       sb.rpc('cerrar_temporada', params: {'p_liga': ligaId, 'p_nombre': nombre});
 
@@ -85,4 +89,25 @@ final premiosInfo = <String, ({String icono, String titulo, String Function(num?
   'fiel': (icono: '🛡️', titulo: 'El más fiel', dato: (v) => '${_n(v)} partidos'),
   'mejor_nota': (icono: '📈', titulo: 'Mejor nota', dato: (v) => v == null ? '' : 'nota ${v.toStringAsFixed(1)}'),
   'ganador': (icono: '🥇', titulo: 'Más ganador', dato: (v) => '${_n(v)} % victorias'),
+};
+
+/// Insignias: icono y nombre de cada logro (el servidor decide cuándo se consigue).
+const logrosInfo = <String, (String, String)>{
+  'primer_gol': ('⚽', 'Primer gol'),
+  'hat_trick': ('🎩', 'Hat-trick'),
+  'manita': ('🖐️', 'Manita'),
+  'goles_10': ('🔟', '10 goles'),
+  'goles_25': ('🎯', '25 goles'),
+  'goles_50': ('💥', '50 goles'),
+  'goles_100': ('👑', '100 goles'),
+  'mvp_1': ('⭐', 'Primer MVP'),
+  'mvp_5': ('🌟', '5 MVPs'),
+  'mvp_10': ('💫', '10 MVPs'),
+  'partidos_10': ('👟', '10 partidos'),
+  'partidos_25': ('🏃', '25 partidos'),
+  'partidos_50': ('🎖️', '50 partidos'),
+  'partidos_100': ('🏛️', '100 partidos'),
+  'racha_10': ('🔥', '10 seguidos sin faltar'),
+  'invicto_5': ('🛡️', '5 sin perder'),
+  'muro_5': ('🧱', '5 porterías a cero'),
 };

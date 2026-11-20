@@ -61,9 +61,9 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
     return Scaffold(
       appBar: LigaAppBar(actions: [
         IconButton(
-          tooltip: 'Próximos partidos a mi calendario',
+          tooltip: 'Partidos en mi calendario',
           icon: const Icon(Icons.calendar_month_outlined),
-          onPressed: () => exportarProximos(context, partidos.valueOrNull ?? const <Partido>[], mi.liga),
+          onPressed: () => suscribirCalendario(context, mi.liga, partidos.valueOrNull ?? const <Partido>[]),
         ),
       ]),
       floatingActionButton: mi.soyAdmin
@@ -303,7 +303,7 @@ class _Pendientes extends ConsumerWidget {
     final abiertas = (ref.watch(votacionesProvider(mi.liga.id)).valueOrNull ?? const <Votacion>[]).where((v) => v.abierta);
     final sinVotar = abiertas.where((v) {
       final r = ref.watch(resultadoVotacionProvider(v.id));
-      return r.hasValue && r.value!.miVoto == null;
+      return r.hasValue && !r.value!.heVotado;
     }).toList();
     final miBaja = (ref.watch(ausenciasMiembroProvider(mi.yo.id)).valueOrNull ?? const <Ausencia>[])
         .where((a) => a.actual)

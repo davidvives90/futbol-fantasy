@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -118,4 +119,71 @@ Future<void> exportarProximos(BuildContext context, List<Partido> todos, Liga l)
   }
   await _compartirIcs(context, icsDePartidos(proximos, l), 'partidos.ics');
   if (context.mounted) mostrarOk(context, '${proximos.length} partidos listos para tu calendario');
+}
+
+/// Calendario suscrito: el móvil lo consulta solo cada pocas horas y recoge partidos nuevos, cambios de hora y cancelaciones.
+Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> todos) async {
+  String url;
+  try {
+    final token = await sb.rpc('mi_calendario', params: {'p_liga': l.id}) as String;
+    url = '${Env.supabaseUrl}/functions/v1/calendario?t=$token';
+  } catch (e) {
+    if (context.mounted) mostrarError(context, e);
+    return;
+  }
+  if (!context.mounted) return;
+  final webcal = url.replaceFirst(RegExp('^https?://'), 'webcal://');
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (ctx) => SafeArea(
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const ListTile(
+            title: Text('Partidos en tu calendario'),
+            subtitle: Text('Suscríbete una vez y se actualiza solo: partidos nuevos, cambios de hora y cancelaciones.'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.event),
+            title: const Text('Google Calendar'),
+            subtitle: const Text('Android y web'),
+            onTap: () {
+              Navigator.pop(ctx);
+              launchUrl(Uri.parse('https://calendar.google.com/calendar/r?cid=${Uri.encodeComponent(webcal)}'),
+                  mode: LaunchMode.externalApplication);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.phone_iphone),
+            title: const Text('iPhone, Mac u Outlook'),
+            onTap: () {
+              Navigator.pop(ctx);
+              launchUrl(Uri.parse(webcal), mode: LaunchMode.externalApplication);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.link),
+            title: const Text('Copiar enlace'),
+            subtitle: const Text('Para otros calendarios: «Añadir calendario desde URL». Es personal, no lo compartas.'),
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: url));
+              Navigator.pop(ctx);
+              mostrarOk(context, 'Enlace copiado');
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: const Text('Solo descargar los próximos (.ics)'),
+            subtitle: const Text('No se actualiza si cambia algo'),
+            onTap: () {
+              Navigator.pop(ctx);
+              exportarProximos(context, todos, l);
+            },
+          ),
+        ]),
+      ),
+    ),
+  );
 }

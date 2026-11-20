@@ -29,7 +29,30 @@ class VotacionesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Votaciones')),
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
-              onPressed: () => nuevaVotacion(context, ref, mi),
+              onPressed: () async {
+                final tipo = await showModalBottomSheet<String>(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (c) => SafeArea(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      ListTile(
+                        leading: const Icon(Icons.how_to_vote_outlined),
+                        title: const Text('Votación'),
+                        subtitle: const Text('Una pregunta, cada uno elige una opción'),
+                        onTap: () => Navigator.pop(c, 'votacion'),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.event_note_outlined),
+                        title: const Text('Encuesta de día y hora'),
+                        subtitle: const Text('Propón fechas; cada uno marca todas las que le van bien'),
+                        onTap: () => Navigator.pop(c, 'fechas'),
+                      ),
+                    ]),
+                  ),
+                );
+                if (!context.mounted || tipo == null) return;
+                tipo == 'fechas' ? await nuevaEncuestaFechas(context, ref, mi) : await nuevaVotacion(context, ref, mi);
+              },
               icon: const Icon(Icons.add),
               label: const Text('Nueva votación'),
             )
@@ -79,9 +102,16 @@ class _TarjetaVotacion extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     final abierta = v.abierta;
     // Mientras está abierta, los resultados se ven después de votar (para no condicionar)
-    final verResultados = !abierta || res?.miVoto != null;
+    final verResultados = !abierta || (res?.heVotado ?? false);
 
     Future<void> votar(int i) async {
+      if (v.multiple) {
+        final mias = {...?res?.misOpciones};
+        mias.contains(i) ? mias.remove(i) : mias.add(i);
+        final ok = await ejecutar(context, () => ReglamentoRepo.votarEncuesta(v.id, mias));
+        if (ok) ref.invalidate(resultadoVotacionProvider(v.id));
+        return;
+      }
       final ok = await ejecutar(context, () => ReglamentoRepo.votar(v.id, i), ok: 'Voto guardado');
       if (ok) ref.invalidate(resultadoVotacionProvider(v.id));
     }
@@ -121,6 +151,7 @@ class _TarjetaVotacion extends ConsumerWidget {
           Text(
             [
               if (v.reglaClave != null) 'Cambia el reglamento',
+              if (v.multiple) 'Marca todas las que te vayan bien',
               v.anonima ? 'Anónima' : 'Voto público',
               abierta ? 'Cierra ${fechaHora(v.cierraEn)}' : (v.estado == 'cerrada' ? 'Cerrada' : 'Cancelada'),
               if (res != null) '${res.total} de ${res.censo} han votado',
@@ -133,7 +164,8 @@ class _TarjetaVotacion extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 6, right: 8),
               child: _Opcion(
                 texto: v.opciones[i],
-                elegida: res?.miVoto == i,
+                elegida: v.multiple ? (res?.misOpciones.contains(i) ?? false) : res?.miVoto == i,
+                multiple: v.multiple,
                 ganadora: !abierta && v.ganadora == i,
                 pct: verResultados && res != null && res.total > 0 ? res.votos(i) / res.total : null,
                 votos: verResultados ? res?.votos(i) : null,
@@ -163,9 +195,9 @@ class _TarjetaVotacion extends ConsumerWidget {
 
 class _Opcion extends StatelessWidget {
   const _Opcion({required this.texto, required this.elegida, required this.ganadora, this.pct, this.votos,
-      this.quien = const [], this.onTap});
+      this.quien = const [], this.onTap, this.multiple = false});
   final String texto;
-  final bool elegida, ganadora;
+  final bool elegida, ganadora, multiple;
   final double? pct;
   final int? votos;
   final List<Miembro?> quien;
@@ -193,7 +225,9 @@ class _Opcion extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(children: [
-              Icon(elegida ? Icons.check_circle : Icons.radio_button_unchecked,
+              Icon(multiple
+                      ? (elegida ? Icons.check_box : Icons.check_box_outline_blank)
+                      : (elegida ? Icons.check_circle : Icons.radio_button_unchecked),
                   size: 20, color: elegida ? cs.primary : cs.onSurfaceVariant),
               const SizedBox(width: 10),
               Expanded(child: Text(texto, style: TextStyle(fontWeight: ganadora ? FontWeight.w700 : null))),
@@ -313,6 +347,93 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
   );
   if (creada == true && context.mounted) {
     mostrarOk(context, 'Votación abierta: se ha avisado a la liga');
+    ref.invalidate(votacionesProvider(mi.liga.id));
+  }
+}
+
+/// Encuesta de día y hora: el admin propone de 2 a 6 fechas; cada uno marca todas las que le van bien.
+Future<void> nuevaEncuestaFechas(BuildContext context, WidgetRef ref, MiLiga mi) async {
+  final titulo = TextEditingController(text: '¿Qué día y hora os viene bien?');
+  final fechas = <DateTime>[];
+  var horas = 48;
+  final ok = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(ctx).bottom),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text('Encuesta de día y hora', style: Theme.of(ctx).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            TextField(controller: titulo, maxLength: 140, decoration: const InputDecoration(labelText: 'Pregunta')),
+            Text('Opciones (${fechas.length}/6)', style: Theme.of(ctx).textTheme.labelLarge),
+            for (var i = 0; i < fechas.length; i++)
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event),
+                title: Text(fechaHora(fechas[i])),
+                trailing: IconButton(icon: const Icon(Icons.close), onPressed: () => setState(() => fechas.removeAt(i))),
+              ),
+            if (fechas.length < 6)
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final hoy = DateTime.now();
+                  final base = fechas.isEmpty ? hoy.add(const Duration(days: 1)) : fechas.last.add(const Duration(days: 1));
+                  final d = await showDatePicker(
+                      context: ctx, initialDate: base, firstDate: hoy, lastDate: hoy.add(const Duration(days: 180)));
+                  if (d == null || !ctx.mounted) return;
+                  final h = await showTimePicker(
+                      context: ctx,
+                      initialTime: fechas.isEmpty ? const TimeOfDay(hour: 21, minute: 0) : TimeOfDay.fromDateTime(fechas.last));
+                  if (h == null) return;
+                  setState(() {
+                    fechas.add(DateTime(d.year, d.month, d.day, h.hour, h.minute));
+                    fechas.sort();
+                  });
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Añadir día y hora'),
+              ),
+            const SizedBox(height: 12),
+            Text('Duración', style: Theme.of(ctx).textTheme.labelLarge),
+            Wrap(spacing: 6, children: [
+              for (final h in const [24, 48, 72, 168])
+                ChoiceChip(
+                  label: Text(h == 168 ? '1 semana' : (h == 24 ? '1 día' : '${h ~/ 24} días')),
+                  selected: horas == h,
+                  onSelected: (_) => setState(() => horas = h),
+                ),
+            ]),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: fechas.length < 2
+                  ? null
+                  : () async {
+                      final hecho = await ejecutar(
+                        ctx,
+                        () => ReglamentoRepo.crearEncuesta(
+                          ligaId: mi.liga.id,
+                          titulo: titulo.text.trim().isEmpty ? '¿Qué día y hora os viene bien?' : titulo.text.trim(),
+                          descripcion: 'Marca todas las opciones que te vengan bien.',
+                          opciones: [for (final f in fechas) fechaHora(f)],
+                          cierraEn: DateTime.now().add(Duration(hours: horas)),
+                        ),
+                      );
+                      if (hecho && ctx.mounted) Navigator.pop(ctx, true);
+                    },
+              icon: const Icon(Icons.send),
+              label: Text(fechas.length < 2 ? 'Añade al menos 2 opciones' : 'Abrir encuesta'),
+            ),
+          ]),
+        ),
+      ),
+    ),
+  );
+  if (ok == true && context.mounted) {
+    mostrarOk(context, 'Encuesta abierta: se ha avisado a la liga');
     ref.invalidate(votacionesProvider(mi.liga.id));
   }
 }

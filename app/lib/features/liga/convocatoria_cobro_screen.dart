@@ -22,10 +22,13 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
   bool _guardando = false;
   bool _apertura = true;
   int _duracion = 60, _horasApertura = 2, _horasReserva = 24;
+  String _recordatorio = 'mensual';
+  final _bizum = TextEditingController();
 
   @override
   void dispose() {
     _precio.dispose();
+    _bizum.dispose();
     super.dispose();
   }
 
@@ -49,6 +52,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
         'horas_reserva_fijos': _horasReserva,
         'modo_cobro': _modoCobro,
         'precio_invitado': precio,
+        'recordatorio_deudas': _recordatorio,
+        'bizum_telefono': _bizum.text.trim().isEmpty ? null : _bizum.text.trim(),
       }),
       ok: 'Ajustes guardados',
     );
@@ -72,6 +77,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
       _horasApertura = l.horasAperturaConvocatoria;
       _horasReserva = l.horasReservaFijos;
       if (l.precioInvitado != null) _precio.text = l.precioInvitado!.toStringAsFixed(2);
+      _recordatorio = l.recordatorioDeudas;
+      _bizum.text = l.bizumTelefono ?? '';
     }
     final t = Theme.of(context).textTheme;
 
@@ -170,6 +177,34 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
               decoration: const InputDecoration(labelText: 'Precio por partido', suffixText: '€'),
             ),
           ),
+        const SizedBox(height: 24),
+        Text('Pagos', style: t.titleMedium),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TextField(
+            controller: _bizum,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(
+              labelText: 'Teléfono para Bizum (opcional)',
+              helperText: 'Los jugadores verán «Pagar con Bizum» con este número, el importe y el concepto',
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ListTile(
+          title: const Text('Recordatorio automático a los que deben'),
+          subtitle: const Text('Aviso con el importe que debe cada uno (entre las 10:00 y las 21:00)'),
+          trailing: DropdownButton<String>(
+            value: _recordatorio,
+            items: const [
+              DropdownMenuItem(value: 'nunca', child: Text('Nunca')),
+              DropdownMenuItem(value: 'semanal', child: Text('Semanal')),
+              DropdownMenuItem(value: 'mensual', child: Text('Mensual')),
+              DropdownMenuItem(value: 'trimestral', child: Text('Trimestral')),
+            ],
+            onChanged: (v) => setState(() => _recordatorio = v ?? _recordatorio),
+          ),
+        ),
         const SizedBox(height: 24),
         FilledButton(
           onPressed: _guardando ? null : () => _guardar(l.id),

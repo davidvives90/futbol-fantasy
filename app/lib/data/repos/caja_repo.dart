@@ -37,6 +37,23 @@ class CajaRepo {
     });
   }
 
+  /// Avisa al admin de que he pagado (él lo confirma y queda apuntado en caja).
+  static Future<void> avisarPago(String ligaId, double importe, String metodo, {String? nota}) =>
+      sb.rpc('avisar_pago', params: {'p_liga': ligaId, 'p_importe': importe, 'p_metodo': metodo, 'p_nota': nota});
+
+  static Future<List<Map<String, dynamic>>> avisosPago(String ligaId, {bool soloPendientes = true}) async {
+    var q = sb.from('avisos_pago').select().eq('liga_id', ligaId);
+    if (soloPendientes) q = q.eq('estado', 'pendiente');
+    return List<Map<String, dynamic>>.from(await q.order('creado_en', ascending: false).limit(50));
+  }
+
+  static Future<void> resolverAviso(String avisoId, bool aceptar) =>
+      sb.rpc('resolver_aviso_pago', params: {'p_aviso': avisoId, 'p_aceptar': aceptar});
+
+  /// Avisa ahora a todos los que deben (admin).
+  static Future<int> recordarDeudas(String ligaId) async =>
+      ((await sb.rpc('recordar_deudas', params: {'p_liga': ligaId})) as num).toInt();
+
   static Future<List<Factura>> facturas(String ligaId) async {
     final rows = await sb.from('facturas').select().eq('liga_id', ligaId).order('fecha', ascending: false);
     return [for (final r in rows) Factura.fromMap(r)];

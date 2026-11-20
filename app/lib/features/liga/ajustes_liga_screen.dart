@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/exportar.dart';
 import '../../core/utils.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
@@ -70,6 +71,13 @@ class AjustesLigaScreen extends ConsumerWidget {
         opcion(Icons.gavel_outlined, 'Reglamento', 'Modalidad (${mi.liga.nombreModalidad}) y reglas del partido', '/reglamento'),
         opcion(Icons.how_to_vote_outlined, 'Votaciones', 'Pregunta a la liga o somete a votación un cambio de regla', '/votaciones'),
         opcion(Icons.event_busy_outlined, 'Asistencia y bajas', 'Historial de cada jugador y bajas temporales', '/asistencia'),
+        ListTile(
+          leading: const Icon(Icons.table_view_outlined),
+          title: const Text('Exportar a Excel'),
+          subtitle: const Text('Caja, saldos, asistencia y clasificación'),
+          trailing: const Icon(Icons.download_outlined),
+          onTap: () => exportarLigaExcel(context, mi.liga),
+        ),
         grupo('Puntuación y Fantasy'),
         opcion(Icons.rule, 'Puntuación y valoraciones', 'Puntos por acción, valoración rápida o detallada', '/liga/reglas'),
         if (mi.liga.fantasyActivo)

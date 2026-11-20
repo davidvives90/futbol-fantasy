@@ -153,7 +153,15 @@ class Liga {
     this.prediccionActiva = true,
     this.valoracionAvanzada = false,
     this.modalidad = 'f7',
+    this.recordatorioDeudas = 'mensual',
+    this.bizumTelefono,
   });
+
+  /// 0036: 'nunca' | 'semanal' | 'mensual' | 'trimestral'.
+  final String recordatorioDeudas;
+
+  /// 0036: teléfono al que se hace Bizum (lo pone el admin).
+  final String? bizumTelefono;
 
   /// 0032: post-partido avanzado (destacados, más datos, valoración por aspectos, «no le vi»). Por defecto, simple.
   final bool valoracionAvanzada;
@@ -257,6 +265,8 @@ class Liga {
       prediccionActiva: (m['prediccion_activa'] ?? true) as bool,
       valoracionAvanzada: (m['valoracion_avanzada'] ?? false) as bool,
       modalidad: (m['modalidad'] ?? 'f7') as String,
+      recordatorioDeudas: (m['recordatorio_deudas'] ?? 'mensual') as String,
+      bizumTelefono: m['bizum_telefono'] as String?,
     );
   }
 }

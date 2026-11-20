@@ -57,12 +57,17 @@ class Votacion {
   int? get ganadora => (m['ganadora'] as num?)?.toInt();
   bool get aplicada => (m['aplicada'] ?? false) as bool;
   bool get abierta => estado == 'abierta' && cierraEn.isAfter(DateTime.now());
+
+  /// Encuesta de opción múltiple (p. ej. día y hora): cada uno marca todas las que le van bien.
+  bool get multiple => (m['multiple'] ?? false) as bool;
 }
 
 class ResultadoVotacion {
   ResultadoVotacion(this.m);
   final Map<String, dynamic> m;
   int? get miVoto => (m['mi_voto'] as num?)?.toInt();
+  Set<int> get misOpciones => {for (final o in (m['mis_opciones'] as List?) ?? const []) (o as num).toInt()};
+  bool get heVotado => miVoto != null || misOpciones.isNotEmpty;
   int get total => (m['total'] as num?)?.toInt() ?? 0;
   int get censo => (m['censo'] as num?)?.toInt() ?? 0;
   int votos(int opcion) =>
@@ -149,6 +154,26 @@ class ReglamentoRepo {
         'p_regla_valores': reglaValores,
         'p_anonima': anonima,
       });
+
+  static Future<void> crearEncuesta({
+    required String ligaId,
+    required String titulo,
+    String? descripcion,
+    required List<String> opciones,
+    required DateTime cierraEn,
+    bool anonima = false,
+  }) =>
+      sb.rpc('crear_encuesta', params: {
+        'p_liga': ligaId,
+        'p_titulo': titulo,
+        'p_descripcion': descripcion,
+        'p_opciones': opciones,
+        'p_cierra_en': cierraEn.toUtc().toIso8601String(),
+        'p_anonima': anonima,
+      });
+
+  static Future<void> votarEncuesta(String votacionId, Set<int> opciones) =>
+      sb.rpc('votar_encuesta', params: {'p_votacion': votacionId, 'p_opciones': (opciones.toList()..sort())});
 
   static Future<void> votar(String votacionId, int opcion) =>
       sb.rpc('votar_votacion', params: {'p_votacion': votacionId, 'p_opcion': opcion});

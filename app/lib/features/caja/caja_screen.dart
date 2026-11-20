@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -45,6 +46,137 @@ class CajaScreen extends ConsumerWidget {
   }
 }
 
+final avisosPagoProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+  (ref, ligaId) => CajaRepo.avisosPago(ligaId),
+);
+
+/// «Pagar con Bizum» (copia teléfono, importe y concepto) y «Ya he pagado» (aviso al admin para que lo confirme).
+class _Pagar extends ConsumerWidget {
+  const _Pagar({required this.mi, required this.deuda});
+  final MiLiga mi;
+  final double deuda;
+
+  Future<void> _yaHePagado(BuildContext context, WidgetRef ref) async {
+    final importe = TextEditingController(text: deuda.toStringAsFixed(2));
+    var metodo = 'bizum';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setD) => AlertDialog(
+          title: const Text('Ya he pagado'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('El administrador recibirá un aviso para confirmarlo; cuando lo haga, quedará apuntado.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: importe,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Importe', suffixText: '€'),
+            ),
+            const SizedBox(height: 12),
+            Wrap(spacing: 6, children: [
+              for (final e in const {'bizum': 'Bizum', 'efectivo': 'Efectivo', 'transferencia': 'Transferencia'}.entries)
+                ChoiceChip(label: Text(e.value), selected: metodo == e.key, onSelected: (_) => setD(() => metodo = e.key)),
+            ]),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Avisar')),
+          ],
+        ),
+      ),
+    );
+    final valor = double.tryParse(importe.text.replaceAll(',', '.'));
+    importe.dispose();
+    if (ok != true || valor == null || !context.mounted) return;
+    final hecho = await ejecutar(context, () => CajaRepo.avisarPago(mi.liga.id, valor, metodo),
+        ok: 'Aviso enviado al administrador');
+    if (hecho) ref.invalidate(avisosPagoProvider(mi.liga.id));
+  }
+
+  Future<void> _bizum(BuildContext context) async {
+    final tel = mi.liga.bizumTelefono!;
+    final texto = '${deuda.toStringAsFixed(2).replaceAll('.', ',')} € · Fútbol ${mi.liga.nombre} · ${mi.yo.nombre}';
+    await Clipboard.setData(ClipboardData(text: tel.replaceAll(' ', '')));
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Pagar con Bizum'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Abre la app de tu banco › Bizum › Enviar dinero, y usa estos datos:'),
+          const SizedBox(height: 12),
+          _DatoCopiable('Teléfono', tel),
+          _DatoCopiable('Importe', '${deuda.toStringAsFixed(2).replaceAll('.', ',')} €'),
+          _DatoCopiable('Concepto', texto),
+          const SizedBox(height: 8),
+          const Text('Cuando lo hayas enviado, pulsa «Ya he pagado».'),
+        ]),
+        actions: [FilledButton(onPressed: () => Navigator.pop(c), child: const Text('Entendido'))],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pendiente = (ref.watch(avisosPagoProvider(mi.liga.id)).valueOrNull ?? const [])
+        .where((a) => a['miembro_id'] == mi.yo.id)
+        .firstOrNull;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(children: [
+        if (pendiente != null)
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.hourglass_top),
+              title: Text('Has avisado de un pago de ${euros((pendiente['importe'] as num).toDouble())}'),
+              subtitle: const Text('Pendiente de que lo confirme el administrador'),
+            ),
+          ),
+        Row(children: [
+          if (mi.liga.bizumTelefono != null) ...[
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: () => _bizum(context),
+                icon: const Icon(Icons.phone_iphone),
+                label: const Text('Pagar con Bizum'),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _yaHePagado(context, ref),
+              icon: const Icon(Icons.check),
+              label: const Text('Ya he pagado'),
+            ),
+          ),
+        ]),
+      ]),
+    );
+  }
+}
+
+class _DatoCopiable extends StatelessWidget {
+  const _DatoCopiable(this.etiqueta, this.valor);
+  final String etiqueta, valor;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        title: Text(etiqueta),
+        subtitle: Text(valor, style: Theme.of(context).textTheme.titleMedium),
+        trailing: IconButton(
+          tooltip: 'Copiar',
+          icon: const Icon(Icons.copy, size: 20),
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: valor));
+            mostrarOk(context, '$etiqueta copiado');
+          },
+        ),
+      );
+}
+
 class _MiSaldo extends ConsumerWidget {
   const _MiSaldo({required this.mi});
   final MiLiga mi;
@@ -66,6 +198,7 @@ class _MiSaldo extends ConsumerWidget {
         const SizedBox(height: 24),
         Center(child: Text(euros(saldo), style: AppTheme.numero(context, size: 40, color: color))),
         Center(child: Text(saldo < 0 ? 'Debes a la caja' : (saldo > 0 ? 'A tu favor' : 'Estás al día'))),
+        if (saldo < -0.005) _Pagar(mi: mi, deuda: -saldo),
         const SizedBox(height: 24),
         const Divider(),
         ...movs.when(
@@ -164,6 +297,7 @@ class _Deudores extends ConsumerWidget {
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(saldosProvider(mi.liga.id)),
           child: ListView(children: [
+            _AvisosPendientes(mi: mi),
             ListTile(
               title: const Text('Total pendiente de cobro'),
               trailing: Text(euros(-pendiente), style: AppTheme.numero(context, size: 22)),
@@ -179,9 +313,31 @@ class _Deudores extends ConsumerWidget {
                           ?.copyWith(color: s.saldo < 0 ? Theme.of(context).colorScheme.error : null)),
                   onTap: () => _registrar(context, ref, miembros[s.miembroId]!, -s.saldo),
                 ),
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Toca a un jugador para registrar un pago o un ajuste.'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: OutlinedButton.icon(
+                onPressed: pendiente.abs() < 0.005
+                    ? null
+                    : () async {
+                        if (!await confirmar(context, 'Recordar a los que deben',
+                            'Cada jugador con deuda recibirá un aviso con su importe.', accion: 'Enviar')) {
+                          return;
+                        }
+                        if (!context.mounted) return;
+                        await ejecutar(context, () async {
+                          final n = await CajaRepo.recordarDeudas(mi.liga.id);
+                          if (context.mounted) mostrarOk(context, n == 1 ? 'Aviso enviado a 1 jugador' : 'Avisos enviados a $n jugadores');
+                        });
+                      },
+                icon: const Icon(Icons.notifications_active_outlined),
+                label: const Text('Recordar a todos los que deben'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Toca a un jugador para registrar un pago o un ajuste. '
+                  'Recordatorio automático: ${const {'nunca': 'desactivado', 'semanal': 'cada semana', 'mensual': 'cada mes', 'trimestral': 'cada trimestre'}[mi.liga.recordatorioDeudas] ?? mi.liga.recordatorioDeudas} '
+                  '(se cambia en Ajustes › Convocatoria y cobro).'),
             ),
           ]),
         );
@@ -391,6 +547,44 @@ class _Facturas extends ConsumerWidget {
                   ),
               ]),
       ),
+    );
+  }
+}
+
+/// Avisos de «Ya he pagado» pendientes de confirmar (admin).
+class _AvisosPendientes extends ConsumerWidget {
+  const _AvisosPendientes({required this.mi});
+  final MiLiga mi;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final avisos = ref.watch(avisosPagoProvider(mi.liga.id)).valueOrNull ?? const [];
+    if (avisos.isEmpty) return const SizedBox.shrink();
+    final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
+    Future<void> resolver(String id, bool ok) async {
+      final hecho = await ejecutar(context, () => CajaRepo.resolverAviso(id, ok), ok: ok ? 'Pago apuntado' : 'Aviso rechazado');
+      if (hecho) {
+        ref.invalidate(avisosPagoProvider(mi.liga.id));
+        ref.invalidate(saldosProvider(mi.liga.id));
+      }
+    }
+
+    return Card(
+      margin: const EdgeInsets.all(12),
+      color: Theme.of(context).colorScheme.tertiaryContainer,
+      child: Column(children: [
+        const ListTile(leading: Icon(Icons.payments_outlined), title: Text('Pagos por confirmar')),
+        for (final a in avisos)
+          ListTile(
+            leading: AvatarMiembro(miembros[a['miembro_id']], radio: 16),
+            title: Text('${miembros[a['miembro_id']]?.nombre ?? '…'} · ${euros((a['importe'] as num).toDouble())}'),
+            subtitle: Text('${a['metodo']} · ${fechaCorta(DateTime.parse(a['creado_en'] as String))}'),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              IconButton(tooltip: 'No lo encuentro', icon: const Icon(Icons.close), onPressed: () => resolver(a['id'] as String, false)),
+              IconButton.filled(tooltip: 'Confirmar', icon: const Icon(Icons.check), onPressed: () => resolver(a['id'] as String, true)),
+            ]),
+          ),
+      ]),
     );
   }
 }
