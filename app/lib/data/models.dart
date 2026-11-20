@@ -293,6 +293,7 @@ class ParamsFantasy {
     this.cesionPctMax = 0.30,
     this.horasCaducidadOferta = 48,
     this.partidosMinRendimiento = 3,
+    this.cesionesActivas = false,
   });
 
   final double precioMin, precioMax, bonusNoHabitual, horasCierreAlineacion, ingresoPorPunto, comisionVenta;
@@ -316,6 +317,9 @@ class ParamsFantasy {
   /// % de cesión permitido, como fracción 0–1.
   final double cesionPctMin, cesionPctMax;
   final int horasCaducidadOferta, partidosMinRendimiento;
+
+  /// Cesiones de jugadores entre mánagers (0039): opcional, desactivadas por defecto.
+  final bool cesionesActivas;
 
   /// Coste de subir una cláusula de [actual] a [nueva] (bajarla es gratis).
   double costeSubida(double actual, double nueva) => nueva > actual ? (nueva - actual) * costeSubidaClausula : 0;
@@ -346,6 +350,7 @@ class ParamsFantasy {
         cesionPctMax: toDouble(m['cesion_pct_max']) ?? 0.30,
         horasCaducidadOferta: toInt(m['horas_caducidad_oferta'], 48),
         partidosMinRendimiento: toInt(m['partidos_min_rendimiento'], 3),
+        cesionesActivas: (m['cesiones_activas'] ?? false) as bool,
       );
 
   Map<String, dynamic> toMap() => {
@@ -357,6 +362,7 @@ class ParamsFantasy {
         'ingreso_por_punto': ingresoPorPunto,
         'comision_venta': comisionVenta,
         'bonus_roles': bonusRoles,
+        'cesiones_activas': cesionesActivas,
         'coste_subida_clausula': costeSubidaClausula,
         'proteccion_jornadas': proteccionJornadas,
         'proteccion_dias': proteccionDias,

@@ -43,6 +43,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
   ];
 
   bool? _bonusRoles;
+  bool _cesiones = false;
   bool _multActivo = true;
   final _mult = TextEditingController(text: '1,5');
 
@@ -63,6 +64,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'partidos_min_rendimiento': p.partidosMinRendimiento,
     };
     _bonusRoles = p.bonusRoles;
+    _cesiones = p.cesionesActivas;
     _multActivo = p.bonusNoHabitual > 1;
     _mult.text = (p.bonusNoHabitual > 1 ? p.bonusNoHabitual : 1.5).toString().replaceAll('.', ',');
     for (final (clave, _, _) in _campos) {
@@ -100,6 +102,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
       'horas_caducidad_oferta': _num('horas_caducidad_oferta')!.round(),
       'partidos_min_rendimiento': _num('partidos_min_rendimiento')!.round(),
       'bonus_roles': _bonusRoles ?? true,
+      'cesiones_activas': _cesiones,
     };
     setState(() => _guardando = true);
     final ok = await ejecutar(context, () => LigasRepo.actualizarLiga(mi.liga.id, datos), ok: 'Parámetros guardados');
@@ -221,6 +224,14 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           subtitle: const Tx('Precios, plantillas, cláusulas, cesiones… Los valores por defecto funcionan bien.'),
           childrenPadding: const EdgeInsets.only(top: 8),
           children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Row(children: [Flexible(child: Tx('Cesiones entre mánagers')), InfoBoton(Ayuda.cesion)]),
+              subtitle: const Tx('Prestar un jugador una jornada a cambio de dinero'),
+              value: _cesiones,
+              onChanged: (v) => setState(() => _cesiones = v),
+            ),
+            const SizedBox(height: 8),
         Form(
           key: _form,
           child: Column(children: [
@@ -246,7 +257,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         const SizedBox(height: 12),
         FilledButton(
           onPressed: _guardando ? null : () => _guardar(mi),
-          child: const Tx('Guardar parámetros'),
+          child: const Tx('Guardar'),
         ),
         const Divider(height: 32),
         ExpansionTile(

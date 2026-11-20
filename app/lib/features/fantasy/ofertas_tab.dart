@@ -59,6 +59,7 @@ class OfertasTab extends ConsumerWidget {
             ]);
           },
         ),
+        if (mi.liga.fantasy.cesionesActivas) ...[
         const Divider(height: 32),
         Text('Cesiones para el próximo partido', style: t.titleMedium),
         Padding(
@@ -139,6 +140,7 @@ class OfertasTab extends ConsumerWidget {
             ]);
           },
         ),
+        ],
       ]),
     );
   }

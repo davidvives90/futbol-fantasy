@@ -102,7 +102,8 @@ abstract final class Ayuda {
           'Puntúa para él esa jornada y luego vuelve a tu plantilla.');
   static const alineacion = ('Alineación',
       'Elige a quién alineas en cada partido. Se cierra unas horas antes (lo fija el admin) y ya no se puede cambiar. '
-          'Solo puntúan los alineados.');
+          'Solo puntúan los alineados. Si se te olvida, juegas con tu última alineación o, si no tienes, '
+          'con tus mejores jugadores.');
   static const rolesBonus = ('Bonus por rol',
       'Si la liga lo tiene activado, el rol que pones en la alineación da puntos extra: portero con portería a cero o '
           'el menos goleado, defensa del equipo menos goleado, medio que asiste y delantero que marca. '

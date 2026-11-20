@@ -3,7 +3,11 @@ import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 import '../../core/liga_activa.dart';
+import '../../core/supabase.dart';
+import '../../data/repos/partidos_repo.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -99,6 +103,7 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.editar) return const _NuevaLiga();
     final plazas = _jugadoresPorEquipo * _numEquipos;
     return Scaffold(
       appBar: AppBar(title: Text(widget.editar ? 'Editar liga' : 'Nueva liga')),
@@ -200,6 +205,221 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
             child: Text(widget.editar ? 'Guardar cambios' : 'Crear liga'),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+
+/// Alta de liga en 3 pasos: nombre y formato · cuándo y dónde · invitar. Todo lo demás, por defecto
+/// (se cambia luego en Ajustes de la liga).
+class _NuevaLiga extends ConsumerStatefulWidget {
+  const _NuevaLiga();
+
+  @override
+  ConsumerState<_NuevaLiga> createState() => _NuevaLigaState();
+}
+
+class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
+  int _paso = 0;
+  final _nombre = TextEditingController();
+  final _campo = TextEditingController();
+  final _precio = TextEditingController();
+  int _jugadores = 5;
+  final _dias = <int>{1};
+  TimeOfDay _hora = const TimeOfDay(hour: 21, minute: 0);
+  bool _programar = true;
+  bool _trabajando = false;
+  String? _codigo;
+
+  static const _formatos = <(int, String, String)>[
+    (5, 'Fútbol sala', '5 contra 5'),
+    (7, 'Fútbol 7', '7 contra 7'),
+    (8, 'Fútbol 8', '8 contra 8'),
+    (11, 'Fútbol 11', '11 contra 11'),
+    (3, 'Fútbol 3', '3 contra 3'),
+  ];
+
+  @override
+  void dispose() {
+    for (final c in [_nombre, _campo, _precio]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String get _horaTexto => '${_hora.hour.toString().padLeft(2, '0')}:${_hora.minute.toString().padLeft(2, '0')}';
+
+  Future<void> _crear() async {
+    setState(() => _trabajando = true);
+    final precio = double.tryParse(_precio.text.trim().replaceAll(',', '.'));
+    final ok = await ejecutar(context, () async {
+      final id = await LigasRepo.crearLiga({
+        'nombre': _nombre.text.trim(),
+        'campo_nombre': _campo.text.trim().isEmpty ? null : _campo.text.trim(),
+        'precio_estimado': precio,
+        'jugadores_por_equipo': _jugadores,
+        'num_equipos': 2,
+        'visibilidad': 'privada',
+        'requiere_aprobacion': true,
+      });
+      await ref.read(ligaActivaIdProvider.notifier).elegir(id);
+      // Quien crea la liga juega: queda como fijo
+      final yo = await sb.from('miembros').select('id').eq('liga_id', id).eq('perfil_id', uidActual!).maybeSingle();
+      if (yo != null) {
+        try {
+          await LigasRepo.cambiarRango(yo['id'] as String, RangoMiembro.fijo);
+        } catch (_) {}
+      }
+      if (_programar && _dias.isNotEmpty) {
+        final hoy = DateTime.now();
+        await PartidosRepo.programarTemporada(
+          id,
+          desde: DateTime(hoy.year, hoy.month, hoy.day),
+          hasta: DateTime(hoy.month > 6 ? hoy.year + 1 : hoy.year, 6, 30),
+          diasSemana: _dias.toList()..sort(),
+          hora: _horaTexto,
+          horaFija: true,
+          coste: precio == null ? 0 : precio * _jugadores * 2,
+        );
+      }
+      final l = await sb.from('ligas').select('codigo_invitacion').eq('id', id).single();
+      _codigo = l['codigo_invitacion'] as String?;
+    });
+    if (!mounted) return;
+    setState(() => _trabajando = false);
+    if (ok) {
+      refrescarLigas(ref);
+      setState(() => _paso = 2);
+    }
+  }
+
+  void _compartir() => Share.share(trf(
+      '⚽ Únete a «{liga}» en Fútbol Fantasy.\nEntra en {web} (o en la app) y usa el código *{codigo}*.',
+      {'liga': _nombre.text.trim(), 'web': Env.webApp, 'codigo': _codigo ?? ''}));
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final titulos = ['Tu liga', '¿Cuándo jugáis?', '¡Liga creada!'];
+
+    final cuerpo = switch (_paso) {
+      0 => ListView(padding: const EdgeInsets.all(16), children: [
+          TextField(
+            controller: _nombre,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(labelText: tr('Nombre de la liga'), hintText: tr('Ej.: Los lunes del barrio')),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 20),
+          Tx('¿A qué jugáis?', style: t.titleMedium),
+          const SizedBox(height: 8),
+          for (final (n, nombre, desc) in _formatos)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(_jugadores == n ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: _jugadores == n ? cs.primary : null),
+              onTap: () => setState(() => _jugadores = n),
+              title: Text(tr(nombre)),
+              subtitle: Text(tr(desc)),
+            ),
+        ]),
+      1 => ListView(padding: const EdgeInsets.all(16), children: [
+          Tx('Día de partido', style: t.titleMedium),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, children: [
+            for (var d = 1; d <= 7; d++)
+              FilterChip(
+                label: Text(nombresDiasCortos[d - 1]),
+                selected: _dias.contains(d),
+                onSelected: (v) => setState(() => v ? _dias.add(d) : _dias.remove(d)),
+              ),
+          ]),
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.schedule),
+            title: Text(trf('Hora: {h}', {'h': _horaTexto})),
+            trailing: const Icon(Icons.edit_outlined),
+            onTap: () async {
+              final r = await showTimePicker(context: context, initialTime: _hora);
+              if (r != null) setState(() => _hora = r);
+            },
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _campo,
+            decoration: InputDecoration(labelText: tr('Campo (opcional)'), prefixIcon: const Icon(Icons.place_outlined)),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _precio,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: tr('Precio por jugador (opcional)'), suffixText: '€'),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Tx('Crear ya los partidos de la temporada'),
+            subtitle: const Tx('Hasta el 30 de junio. Se pueden cambiar o cancelar uno a uno.'),
+            value: _programar,
+            onChanged: (v) => setState(() => _programar = v),
+          ),
+        ]),
+      _ => ListView(padding: const EdgeInsets.all(24), children: [
+          Icon(Icons.celebration_outlined, size: 64, color: cs.primary),
+          const SizedBox(height: 12),
+          Tx('Invita al grupo', style: t.titleLarge, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(trf('Código de la liga: {c}', {'c': _codigo ?? '…'}), style: t.titleMedium, textAlign: TextAlign.center),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _compartir,
+            icon: const Icon(Icons.share),
+            label: const Tx('Compartir por WhatsApp'),
+          ),
+          const SizedBox(height: 12),
+          Tx('Todo lo demás (reglas, fijos, Fantasy…) ya está listo con valores por defecto. '
+              'Lo puedes cambiar cuando quieras en Liga › Ajustes.',
+              style: t.bodySmall, textAlign: TextAlign.center),
+        ]),
+    };
+
+    final puedeSeguir = switch (_paso) {
+      0 => _nombre.text.trim().length >= 3,
+      1 => _dias.isNotEmpty || !_programar,
+      _ => true,
+    };
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(tr(titulos[_paso])),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: LinearProgressIndicator(value: (_paso + 1) / 3),
+        ),
+      ),
+      body: cuerpo,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(children: [
+            if (_paso == 1) TextButton(onPressed: () => setState(() => _paso = 0), child: const Tx('Atrás')),
+            const Spacer(),
+            FilledButton(
+              onPressed: _trabajando || !puedeSeguir
+                  ? null
+                  : switch (_paso) {
+                      0 => () => setState(() => _paso = 1),
+                      1 => _crear,
+                      _ => () => context.go('/partidos'),
+                    },
+              child: Text(tr(switch (_paso) { 0 => 'Siguiente', 1 => 'Crear liga', _ => 'Ir a mi liga' })),
+            ),
+          ]),
+        ),
       ),
     );
   }

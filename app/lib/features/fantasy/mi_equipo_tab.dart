@@ -76,7 +76,7 @@ class MiEquipoTab extends ConsumerWidget {
               const SizedBox(width: 8),
               const Expanded(
                 child: Tx('Todos empiezan con un valor parecido. Después de cada partido, quien juega bien sube '
-                    'de precio y quien no, baja. Alinea a tus jugadores antes del partido para sumar puntos.'),
+                    'de precio y quien no, baja. Si no haces la alineación, juegan tus mejores jugadores.'),
               ),
             ]),
           ),
@@ -97,10 +97,10 @@ class MiEquipoTab extends ConsumerWidget {
               tooltip: tr('Ayuda del Fantasy'),
               icon: const Icon(Icons.help_outline),
               onSelected: (a) => mostrarAyuda(context, a),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: Ayuda.alineacion, child: Tx('Alineación')),
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: Ayuda.alineacion, child: Tx('Alineación')),
                 PopupMenuItem(value: Ayuda.clausula, child: Tx('Cláusula de rescisión')),
-                PopupMenuItem(value: Ayuda.cesion, child: Tx('Cesión')),
+                if (mi.liga.fantasy.cesionesActivas) const PopupMenuItem(value: Ayuda.cesion, child: Tx('Cesión')),
                 PopupMenuItem(value: Ayuda.valorMercado, child: Tx('Valor de mercado')),
                 PopupMenuItem(value: Ayuda.fichas, child: Tx('Fichas')),
                 PopupMenuItem(value: Ayuda.rolesBonus, child: Tx('Bonus por rol')),
@@ -150,7 +150,9 @@ class MiEquipoTab extends ConsumerWidget {
                       enabled: abierto && !j.cedidaAOtro && !j.enCesionOfrecida,
                       child: const ListTile(leading: Icon(Icons.sell_outlined), title: Tx('Vender al mercado')),
                     ),
-                    if (j.enCesionOfrecida)
+                    if (!mi.liga.fantasy.cesionesActivas)
+                      ...[]
+                    else if (j.enCesionOfrecida)
                       const PopupMenuItem(
                         value: _Accion.retirarCesion,
                         child: ListTile(leading: Icon(Icons.undo), title: Tx('Retirar cesión')),

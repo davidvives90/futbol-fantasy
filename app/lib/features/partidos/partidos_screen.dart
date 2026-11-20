@@ -14,7 +14,6 @@ import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/post_partido_repo.dart';
-import '../fantasy/fantasy_screen.dart';
 import '../shell/home_shell.dart';
 import 'selector_asistencia.dart';
 
@@ -95,6 +94,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
 
             return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
               _Saludo(mi: mi),
+              _Pendientes(mi: mi),
               if (proximos.isNotEmpty)
                 _ProximoPartido(partido: proximos.first, mi: mi)
               else
@@ -110,7 +110,6 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
                     onAccion: mi.soyAdmin ? () => context.push('/temporada') : null,
                   ),
                 ),
-              _Pendientes(mi: mi),
               if (proximos.length > 1) ...[
                 _Cabecera('Próximos', accion: mi.soyAdmin ? 'Temporada' : null, onAccion: () => context.push('/temporada')),
                 for (final p in proximos.skip(1).take(6)) _FilaPartido(p, mi: mi),
@@ -167,8 +166,8 @@ class _Cabecera extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 12, 4),
         child: Row(children: [
-          Expanded(child: Text(texto, style: Theme.of(context).textTheme.titleMedium)),
-          if (accion != null) TextButton(onPressed: onAccion, child: Text(accion!)),
+          Expanded(child: Text(tr(texto), style: Theme.of(context).textTheme.titleMedium)),
+          if (accion != null) TextButton(onPressed: onAccion, child: Text(tr(accion!))),
         ]),
       );
 }
@@ -310,13 +309,51 @@ class _Pendientes extends ConsumerWidget {
         .where((a) => a.actual)
         .firstOrNull;
 
-    final tareas = <Widget>[
+    // Por orden de urgencia: lo primero es la acción principal
+    final tareas = <_Tarea>[
+      for (final p in votar)
+        _Tarea(
+          icono: Icons.how_to_vote_outlined,
+          color: cs.primary,
+          titulo: trf('Vota el partido del {f}', {'f': fechaHora(p.fechaHora)}),
+          subtitulo: 'Resultado y notas · 1 minuto',
+          boton: 'Votar',
+          onTap: () => context.push('/partidos/${p.id}'),
+        ),
+      if (miSaldo < -0.005)
+        _Tarea(
+          icono: Icons.account_balance_wallet_outlined,
+          color: cs.error,
+          titulo: trf('Debes {x}', {'x': euros(-miSaldo)}),
+          subtitulo: 'Págalo y pulsa «Ya he pagado» en Caja',
+          boton: 'Ir a Caja',
+          onTap: () => context.go('/caja'),
+        ),
+      for (final v in sinVotar)
+        _Tarea(
+          icono: Icons.ballot_outlined,
+          color: cs.secondary,
+          titulo: v.titulo,
+          subtitulo: trf('Votación de la liga · cierra {f}', {'f': fechaHora(v.cierraEn)}),
+          boton: 'Votar',
+          onTap: () => context.push('/votaciones'),
+        ),
+      if (solicitudes > 0)
+        _Tarea(
+          icono: Icons.person_add_alt_1_outlined,
+          color: cs.tertiary,
+          titulo: solicitudes == 1 ? tr('1 solicitud para unirse') : trf('{n} solicitudes para unirse', {'n': solicitudes}),
+          subtitulo: 'Acéptalas o recházalas en Liga',
+          boton: 'Revisar',
+          onTap: () => context.go('/liga'),
+        ),
       if (miBaja != null)
         _Tarea(
           icono: Icons.healing,
           color: Colors.amber.shade700,
           titulo: 'Estás de baja',
           subtitulo: trf('{x} · Toca si ya has vuelto', {'x': textoBaja(miBaja)}),
+          boton: 'He vuelto',
           onTap: () async {
             if (!await confirmar(context, '¿Has vuelto?', 'Se termina tu baja y vuelves a recibir las convocatorias.',
                 accion: 'He vuelto')) {
@@ -327,52 +364,63 @@ class _Pendientes extends ConsumerWidget {
             if (ok) ref.invalidate(ausenciasMiembroProvider(mi.yo.id));
           },
         ),
-      for (final v in sinVotar)
-        _Tarea(
-          icono: Icons.ballot_outlined,
-          color: cs.secondary,
-          titulo: v.titulo,
-          subtitulo: trf('Votación de la liga · cierra {f}', {'f': fechaHora(v.cierraEn)}),
-          onTap: () => context.push('/votaciones'),
-        ),
-      for (final p in votar)
-        _Tarea(
-          icono: Icons.how_to_vote_outlined,
-          color: cs.primary,
-          titulo: trf('Vota el partido del {f}', {'f': fechaHora(p.fechaHora)}),
-          subtitulo: 'Resultado y notas · 1 minuto',
-          onTap: () => context.push('/partidos/${p.id}'),
-        ),
-      if (miSaldo < -0.005)
-        _Tarea(
-          icono: Icons.account_balance_wallet_outlined,
-          color: cs.error,
-          titulo: trf('Debes {x}', {'x': euros(-miSaldo)}),
-          subtitulo: 'Págaselo al administrador; él lo marca en Caja',
-          onTap: () => context.go('/caja'),
-        ),
-      if (solicitudes > 0)
-        _Tarea(
-          icono: Icons.person_add_alt_1_outlined,
-          color: cs.tertiary,
-          titulo: solicitudes == 1 ? tr('1 solicitud para unirse') : trf('{n} solicitudes para unirse', {'n': solicitudes}),
-          subtitulo: 'Acéptalas o recházalas en Liga',
-          onTap: () => context.go('/liga'),
-        ),
     ];
+    if (tareas.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (mi.liga.fantasyActivo) EncuestaPendienteCard(mi: mi),
-      if (tareas.isNotEmpty) ...[
-        const _Cabecera('Pendiente'),
-        ...tareas,
+      _AccionPrincipal(tareas.first),
+      if (tareas.length > 1) ...[
+        const _Cabecera('También pendiente'),
+        ...tareas.skip(1),
       ],
     ]);
   }
 }
 
+/// La tarea más urgente, destacada arriba del todo con un botón grande.
+class _AccionPrincipal extends StatelessWidget {
+  const _AccionPrincipal(this.t);
+  final _Tarea t;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      color: t.color.withValues(alpha: 0.10),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: t.color.withValues(alpha: 0.35)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(t.icono, color: t.color),
+            const SizedBox(width: 10),
+            Expanded(child: Text(tr(t.titulo), style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700))),
+          ]),
+          const SizedBox(height: 4),
+          Text(tr(t.subtitulo), style: tt.bodyMedium),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: t.color),
+              onPressed: t.onTap,
+              child: Text(tr(t.boton ?? 'Hacerlo ahora')),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
 class _Tarea extends StatelessWidget {
-  const _Tarea({required this.icono, required this.color, required this.titulo, required this.subtitulo, this.onTap});
+  const _Tarea({required this.icono, required this.color, required this.titulo, required this.subtitulo, this.onTap, this.boton});
   final IconData icono;
+  final String? boton;
   final Color color;
   final String titulo, subtitulo;
   final VoidCallback? onTap;

@@ -35,9 +35,11 @@ class PartidoDetalleScreen extends ConsumerWidget {
         final e = p.estado;
         final postPartido = e == EstadoPartido.jugado || e == EstadoPartido.post_partido || e == EstadoPartido.en_revision;
 
+        // Post-partido para jugadores: una sola pantalla (resultado, goles y estrellas), sin pestañas
+        final soloPost = postPartido && !admin;
         final tabs = <(String, Widget)>[
-          ('Convocatoria', ConvocatoriaTab(partido: p, mi: mi)),
-          if (e != EstadoPartido.cancelado) ('Equipos', EquiposTab(partido: p, mi: mi)),
+          if (!soloPost) ('Convocatoria', ConvocatoriaTab(partido: p, mi: mi)),
+          if (e != EstadoPartido.cancelado && !soloPost) ('Equipos', EquiposTab(partido: p, mi: mi)),
           if (postPartido) ('Post-partido', PostPartidoTab(partido: p, mi: mi)),
           if (admin && (e == EstadoPartido.post_partido || e == EstadoPartido.en_revision))
             ('Revisión', RevisionTab(partido: p, mi: mi)),
@@ -76,7 +78,9 @@ class PartidoDetalleScreen extends ConsumerWidget {
                 ),
                 if (admin) _MenuAdmin(partido: p),
               ],
-              bottom: TabBar(isScrollable: tabs.length > 3, tabs: [for (final t in tabs) Tab(text: t.$1)]),
+              bottom: tabs.length < 2
+                  ? null
+                  : TabBar(isScrollable: tabs.length > 3, tabs: [for (final t in tabs) Tab(text: tr(t.$1))]),
             ),
             body: Column(children: [
               if (admin) _SiguientePaso(partido: p, pestanas: [for (final t in tabs) t.$1]),
