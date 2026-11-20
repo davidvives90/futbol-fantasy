@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../liga/asistencia_screen.dart';
+import '../../data/repos/reglamento_repo.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -125,6 +127,28 @@ class ConvocatoriaTab extends ConsumerWidget {
             miembros: miembros,
           ),
           _Seccion('No van', baja, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
+          // Lesionados y ausentes en la fecha del partido (no reciben avisos ni ocupan plaza de fijo)
+          ...() {
+            final enLista = {for (final i in lista) if (i.estado != EstadoInscripcion.baja) i.miembroId};
+            final deBaja = (ref.watch(bajasLigaProvider(mi.liga.id)).valueOrNull ?? const <Ausencia>[])
+                .where((a) => a.cubre(partido.fechaHora.toLocal()) && !enLista.contains(a.miembroId))
+                .toList();
+            if (deBaja.isEmpty) return const <Widget>[];
+            return <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text('De baja (${deBaja.length})', style: Theme.of(context).textTheme.titleSmall),
+              ),
+              for (final a in deBaja)
+                ListTile(
+                  dense: true,
+                  leading: AvatarMiembro(miembros[a.miembroId], radio: 14),
+                  title: Text(nombre(a.miembroId)),
+                  subtitle: Text(textoBaja(a)),
+                  trailing: Icon(Icons.healing, color: Colors.amber.shade700, size: 20),
+                ),
+            ];
+          }(),
           if (mi.soyAdmin && partido.estado.antesDeJugar)
             _AnadirJugador(
               partido: partido,

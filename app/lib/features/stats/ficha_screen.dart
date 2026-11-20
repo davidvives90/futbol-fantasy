@@ -7,9 +7,15 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/stats_repo.dart';
 import '../../core/avatar.dart';
+import '../../data/repos/reglamento_repo.dart';
+import '../liga/asistencia_screen.dart';
 
 final historialProvider = FutureProvider.autoDispose.family<List<PuntosFantasy>, String>(
   (ref, miembroId) => StatsRepo.historial(miembroId),
+);
+
+final premiosMiembroProvider = FutureProvider.autoDispose.family<List<Premio>, String>(
+  (ref, miembroId) => StatsRepo.premiosDe(miembroId),
 );
 
 final statsJugadorProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
@@ -64,6 +70,42 @@ class FichaScreen extends ConsumerWidget {
             _Dato('% victorias', rend.pctVictorias == null ? '—' : '${rend.pctVictorias!.toStringAsFixed(0)} %'),
           ],
         ),
+      // Palmarés del jugador
+      ...() {
+        final premios = ref.watch(premiosMiembroProvider(miembroId)).valueOrNull ?? const <Premio>[];
+        if (premios.isEmpty) return const <Widget>[];
+        return <Widget>[
+          const SizedBox(height: 16),
+          Text('Palmarés', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final p in premios)
+              Chip(
+                avatar: Text(p.info.icono),
+                label: Text('${p.info.titulo}${p.temporada == null ? '' : ' · ${p.temporada}'}'),
+                visualDensity: VisualDensity.compact,
+              ),
+          ]),
+        ];
+      }(),
+      // Bajas (lesiones, viajes…)
+      ...() {
+        final bajas = ref.watch(ausenciasMiembroProvider(miembroId)).valueOrNull ?? const <Ausencia>[];
+        if (bajas.isEmpty) return const <Widget>[];
+        return <Widget>[
+          const SizedBox(height: 16),
+          Text('Bajas', style: Theme.of(context).textTheme.titleMedium),
+          for (final a in bajas.take(5))
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(a.actual ? Icons.healing : Icons.history,
+                  color: a.actual ? Colors.amber.shade700 : null),
+              title: Text(textoBaja(a)),
+              subtitle: a.nota == null ? null : Text(a.nota!),
+            ),
+        ];
+      }(),
       ...ref.watch(statsJugadorProvider(miembroId)).maybeWhen(
             data: (e) => [const SizedBox(height: 16), _Extra(e, miembros: ref.watch(miembrosPorIdProvider(mi.liga.id)))],
             orElse: () => const <Widget>[],

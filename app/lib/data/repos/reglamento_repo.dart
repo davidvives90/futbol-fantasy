@@ -82,6 +82,14 @@ class Ausencia {
   DateTime? get hasta => m['hasta'] == null ? null : DateTime.parse(m['hasta'] as String);
   String get motivo => (m['motivo'] ?? 'otro') as String;
   String? get nota => m['nota'] as String?;
+  String get miembroId => m['miembro_id'] as String;
+
+  /// ¿La baja cubre el día [d]?
+  bool cubre(DateTime d) {
+    final dia = DateTime(d.year, d.month, d.day);
+    return !desde.isAfter(dia) && (hasta == null || !hasta!.isBefore(dia));
+  }
+
   bool get actual {
     final hoy = DateTime.now();
     final h = DateTime(hoy.year, hoy.month, hoy.day);
@@ -169,6 +177,14 @@ class ReglamentoRepo {
         'p_motivo': motivo,
         'p_nota': nota,
       });
+
+  /// Bajas en curso o por venir de toda la liga.
+  static Future<List<Ausencia>> bajasLiga(String ligaId) async {
+    final h = DateTime.now();
+    final rows = await sb.from('ausencias').select().eq('liga_id', ligaId)
+        .or('hasta.is.null,hasta.gte.${_fecha(DateTime(h.year, h.month, h.day))}');
+    return [for (final r in rows) Ausencia(r)];
+  }
 
   static Future<void> terminarAusencia(String id) => sb.rpc('terminar_ausencia', params: {'p_ausencia': id});
   static Future<void> borrarAusencia(String id) => sb.rpc('borrar_ausencia', params: {'p_ausencia': id});

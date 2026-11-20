@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/supabase.dart';
 import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
@@ -31,6 +32,19 @@ final _rankings = [
       minPartidos: 3),
 ];
 
+/// Inicio de la temporada en curso (null = nunca se ha cerrado una temporada).
+final inicioTemporadaProvider = FutureProvider.autoDispose.family<DateTime?, String>((ref, ligaId) async {
+  final r = await sb.rpc('inicio_temporada', params: {'p_liga': ligaId});
+  return r == null ? null : DateTime.parse(r as String);
+});
+final _verHistoricoProvider = StateProvider<bool>((ref) => false);
+final _clasificacionProvider =
+    FutureProvider.autoDispose.family<List<Rendimiento>, ({String ligaId, bool historico})>((ref, k) async {
+  final inicio = await ref.watch(inicioTemporadaProvider(k.ligaId).future);
+  if (k.historico || inicio == null) return ref.watch(rendimientoProvider(k.ligaId).future);
+  return StatsRepo.rendimientoPeriodo(k.ligaId, desde: inicio);
+});
+
 class ClasificacionScreen extends ConsumerWidget {
   const ClasificacionScreen({super.key});
 
@@ -38,28 +52,56 @@ class ClasificacionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const Scaffold(body: Cargando());
-    final rend = ref.watch(rendimientoProvider(mi.liga.id));
+    final historico = ref.watch(_verHistoricoProvider);
+    final inicio = ref.watch(inicioTemporadaProvider(mi.liga.id)).valueOrNull;
+    final rend = ref.watch(_clasificacionProvider((ligaId: mi.liga.id, historico: historico)));
     final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
+    Future<void> refrescar() async {
+      ref.invalidate(rendimientoProvider(mi.liga.id));
+      ref.invalidate(inicioTemporadaProvider(mi.liga.id));
+      await ref.refresh(_clasificacionProvider((ligaId: mi.liga.id, historico: historico)).future);
+    }
 
     return DefaultTabController(
       length: _rankings.length + 1,
       child: Scaffold(
         appBar: LigaAppBar(
-          actions: const [InfoBoton(Ayuda.puntos, tamano: 22)],
+          actions: [
+            IconButton(
+              tooltip: 'Palmarés y temporadas',
+              icon: const Icon(Icons.emoji_events_outlined),
+              onPressed: () => context.push('/palmares'),
+            ),
+            const InfoBoton(Ayuda.puntos, tamano: 22),
+          ],
           bottom: TabBar(isScrollable: true, tabs: [for (final r in _rankings) Tab(text: r.titulo), const Tab(text: 'Récords')]),
         ),
-        body: rend.when(
+        body: Column(children: [
+          if (inicio != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Esta temporada')),
+                  ButtonSegment(value: true, label: Text('Histórico')),
+                ],
+                selected: {historico},
+                onSelectionChanged: (v) => ref.read(_verHistoricoProvider.notifier).state = v.first,
+              ),
+            ),
+          Expanded(child: rend.when(
           loading: () => const Cargando(),
-          error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(rendimientoProvider(mi.liga.id))),
+          error: (e, _) => ErrorVista(e, onRetry: refrescar),
           data: (lista) => TabBarView(children: [
             for (final rk in _rankings)
               RefreshIndicator(
-                onRefresh: () => ref.refresh(rendimientoProvider(mi.liga.id).future),
+                onRefresh: refrescar,
                 child: _Lista(ranking: rk, datos: lista, miembros: miembros, yo: mi.yo.id),
               ),
             _Records(ligaId: mi.liga.id, miembros: miembros),
           ]),
-        ),
+        )),
+        ]),
       ),
     );
   }

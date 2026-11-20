@@ -15,6 +15,10 @@ final ausenciasMiembroProvider = FutureProvider.autoDispose.family<List<Ausencia
   (ref, miembroId) => ReglamentoRepo.ausenciasDe(miembroId),
 );
 
+final bajasLigaProvider = FutureProvider.autoDispose.family<List<Ausencia>, String>(
+  (ref, ligaId) => ReglamentoRepo.bajasLiga(ligaId),
+);
+
 final _dia = DateFormat('d MMM', 'es');
 String textoBaja(Ausencia a) =>
     '${motivosAusencia[a.motivo] ?? a.motivo} · ${a.hasta == null ? 'desde el ${_dia.format(a.desde)}, sin fecha de vuelta' : 'del ${_dia.format(a.desde)} al ${_dia.format(a.hasta!)}'}';
@@ -321,6 +325,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
     ),
   );
   if (ok == true) {
+    ref.invalidate(bajasLigaProvider(mi.liga.id));
     ref.invalidate(historialAsistenciaProvider(mi.liga.id));
     ref.invalidate(ausenciasMiembroProvider(quien));
   }

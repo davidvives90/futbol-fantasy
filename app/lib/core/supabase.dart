@@ -16,6 +16,9 @@ class Env {
   static const webInvitacion = 'https://futbolfantasy.app/i';
 
   static const bucketFacturas = 'facturas';
+
+  /// Dirección de la versión web (enlaces al compartir). Con dominio propio: --dart-define=WEB_APP=https://…/
+  static const webApp = String.fromEnvironment('WEB_APP', defaultValue: 'https://davidvives90.github.io/futbol-fantasy/');
 }
 
 /// Cliente global de Supabase.

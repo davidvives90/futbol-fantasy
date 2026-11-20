@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/compartir.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -54,6 +55,12 @@ class PartidoDetalleScreen extends ConsumerWidget {
                 Text(p.estado.etiqueta, style: Theme.of(context).textTheme.bodySmall),
               ]),
               actions: [
+                if (e != EstadoPartido.cancelado)
+                  IconButton(
+                    tooltip: 'Compartir por WhatsApp',
+                    icon: const Icon(Icons.share_outlined),
+                    onPressed: () => compartirPartido(context, p, mi.liga),
+                  ),
                 IconButton(
                   tooltip: 'Abrir en Maps',
                   icon: const Icon(Icons.map_outlined),

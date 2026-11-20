@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'asistencia_screen.dart';
+import '../../data/repos/reglamento_repo.dart';
 
 import '../../core/liga_activa.dart';
 import '../../core/supabase.dart';
@@ -339,6 +341,10 @@ class _Miembros extends ConsumerWidget {
         return a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase());
       });
     final expulsados = miembros.where((m) => m.estado == EstadoMiembro.expulsado).toList();
+    final deBaja = {
+      for (final a in ref.watch(bajasLigaProvider(mi.liga.id)).valueOrNull ?? const <Ausencia>[])
+        if (a.actual) a.miembroId
+    };
     final t = Theme.of(context).textTheme;
     final numFijos = activos.where((m) => m.rango == RangoMiembro.fijo).length;
     final plazasFijas = mi.liga.plazasFijas ?? mi.liga.plazas;
@@ -405,6 +411,10 @@ class _Miembros extends ConsumerWidget {
             Flexible(child: Text(m.nombre + (m.id == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 8),
             ChipRango(m.rango),
+            if (deBaja.contains(m.id)) ...[
+              const SizedBox(width: 6),
+              Tooltip(message: 'De baja', child: Icon(Icons.healing, size: 18, color: Colors.amber.shade700)),
+            ],
           ]),
           subtitle: Text([
             if (m.esAdmin) 'Administrador',
