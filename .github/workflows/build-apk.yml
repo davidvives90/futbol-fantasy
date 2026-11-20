@@ -72,6 +72,16 @@ jobs:
           grep -q "gms.ads.APPLICATION_ID" "$m" || sed -i "s|</application>|    <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\"/>\n    </application>|" "$m"
           grep -n "APPLICATION_ID" "$m"
 
+      - name: Capturador de cierres (muestra el error en pantalla si la app se cae al abrir)
+        run: |
+          d=android/app/src/main/kotlin/com/futbolfantasy/futbol_fantasy
+          mkdir -p "$d" && cp android_extra/App.kt android_extra/CrashActivity.kt "$d/"
+          m=android/app/src/main/AndroidManifest.xml
+          sed -i 's|android:name="${applicationName}"|android:name=".App"|' "$m"
+          grep -q 'android:name=".App"' "$m" || sed -i 's|<application|<application android:name=".App"|' "$m"
+          grep -q CrashActivity "$m" || sed -i 's|</application>|    <activity android:name=".CrashActivity" android:process=":error" android:exported="false"/>\n    </application>|' "$m"
+          grep -n -E '\.App"|CrashActivity' "$m"
+
       - run: flutter pub get
 
       - name: Icono y nombre de la app
