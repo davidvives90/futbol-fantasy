@@ -74,7 +74,7 @@ class _Lista extends StatelessWidget {
       ..sort((a, b) => ranking.valor(b).compareTo(ranking.valor(a)));
     if (filas.isEmpty) {
       return ListView(children: const [
-        SizedBox(height: 300, child: Vacio('Todavía no hay datos. Se rellenará al cerrar el primer partido.', icono: Icons.leaderboard_outlined)),
+        SizedBox(height: 360, child: Vacio('Se rellena sola al cerrar el primer partido: puntos, goles, MVP y racha de cada uno.', titulo: 'Aún no hay clasificación', icono: Icons.leaderboard_outlined)),
       ]);
     }
 

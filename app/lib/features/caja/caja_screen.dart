@@ -353,7 +353,7 @@ class _Facturas extends ConsumerWidget {
         loading: () => const Cargando(),
         error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(_facturasProvider(mi.liga.id))),
         data: (lista) => lista.isEmpty
-            ? const Vacio('No hay facturas subidas.', icono: Icons.receipt_long_outlined)
+            ? const Vacio('Sube aquí la factura del campo (foto o PDF) y la app reparte el importe.', titulo: 'Sin facturas', icono: Icons.receipt_long_outlined)
             : ListView(padding: const EdgeInsets.only(bottom: 96), children: [
                 for (final f in lista)
                   ListTile(

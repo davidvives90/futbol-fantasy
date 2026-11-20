@@ -9,6 +9,7 @@ import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../liga/chip_rango.dart';
 import '../../core/avatar.dart';
+import 'selector_asistencia.dart';
 
 /// Lista de inscritos en tiempo real + botones Voy / Duda / No voy.
 class ConvocatoriaTab extends ConsumerWidget {
@@ -78,25 +79,7 @@ class ConvocatoriaTab extends ConsumerWidget {
           if (abierta)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: SegmentedButton<EstadoInscripcion>(
-                // Voy = verde éxito · Duda = ámbar · No voy = gris neutro (no es destructivo)
-                style: AppButtons.segmentoEstado(context, mia?.estado.name),
-                emptySelectionAllowed: true,
-                segments: const [
-                  ButtonSegment(value: EstadoInscripcion.confirmado, label: Text('Voy'), icon: Icon(Icons.check)),
-                  ButtonSegment(value: EstadoInscripcion.duda, label: Text('Duda'), icon: Icon(Icons.help_outline)),
-                  ButtonSegment(value: EstadoInscripcion.baja, label: Text('No voy'), icon: Icon(Icons.close)),
-                ],
-                selected: {
-                  if (mia != null)
-                    mia.estado == EstadoInscripcion.espera ? EstadoInscripcion.confirmado : mia.estado,
-                },
-                onSelectionChanged: (s) {
-                  if (s.isEmpty) return;
-                  HapticFeedback.selectionClick();
-                  ejecutar(context, () => PartidosRepo.cambiarEstado(partido.id, mi.yo.id, s.first));
-                },
-              ),
+              child: SelectorAsistencia(partido: partido, mi: mi, actual: mia?.estado),
             ),
           if (mia?.estado == EstadoInscripcion.espera)
             Padding(
@@ -196,10 +179,17 @@ class _Seccion extends StatelessWidget {
                   : IconButton(
                       tooltip: 'Dar de baja',
                       icon: const Icon(Icons.person_remove_outlined),
-                      onPressed: () => ejecutar(
-                        context,
-                        () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.baja),
-                      ),
+                      onPressed: () async {
+                        final antes = ins.estado;
+                        final ok = await ejecutar(
+                          context,
+                          () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.baja),
+                        );
+                        if (ok && context.mounted) {
+                          avisoDeshacer(context, '${nombre(ins.miembroId)} ya no va',
+                              () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, antes));
+                        }
+                      },
                     ),
         ),
     ]);

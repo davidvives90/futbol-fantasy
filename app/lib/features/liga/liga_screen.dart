@@ -35,7 +35,7 @@ class LigaScreen extends ConsumerWidget {
     return Scaffold(
       appBar: LigaAppBar(actions: [
         if (mi.soyAdmin)
-          IconButton(tooltip: 'Editar liga', icon: const Icon(Icons.edit_outlined), onPressed: () => context.push('/liga/editar')),
+          IconButton(tooltip: 'Ajustes de la liga', icon: const Icon(Icons.tune), onPressed: () => context.push('/liga/ajustes')),
       ]),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -44,39 +44,20 @@ class LigaScreen extends ConsumerWidget {
         },
         child: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           _Datos(mi: mi),
-          _Invitar(mi: mi),
           miembros.when(
-            loading: () => const Padding(padding: EdgeInsets.all(24), child: Cargando()),
+            loading: () => const Cargando(),
             error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(miembrosProvider(liga.id))),
             data: (lista) => _Miembros(mi: mi, miembros: lista),
           ),
-          if (mi.soyAdmin)
-            ListTile(
-              leading: const Icon(Icons.event_repeat),
-              title: const Text('Convocatoria y cobro'),
-              subtitle: const Text('Lista de espera, factura mensual y precio de reservas'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/liga/convocatoria'),
-            ),
-          if (mi.soyAdmin)
-            ListTile(
-              leading: const Icon(Icons.rule),
-              title: const Text('Reglas de puntuación y aspectos'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/liga/reglas'),
-            ),
-          if (mi.soyAdmin)
-            ListTile(
-              leading: const Icon(Icons.storefront_outlined),
-              title: const Text('Ajustes Fantasy'),
-              subtitle: const Text('Encuesta de valoración y parámetros del mercado'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/liga/fantasy'),
-            ),
-          ListTile(
-            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-            title: Text('Abandonar la liga', style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            onTap: () async {
+          const SizedBox(height: 8),
+          _Invitar(mi: mi),
+          const SizedBox(height: 16),
+          Center(
+            child: TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              icon: const Icon(Icons.logout, size: 18),
+              label: const Text('Abandonar la liga'),
+              onPressed: () async {
               if (!await confirmar(context, 'Abandonar ${liga.nombre}',
                   'Dejarás de ver sus partidos. Tu historial y tus deudas se conservan.', accion: 'Abandonar', tipo: TipoConfirmacion.peligro)) {
                 return;
@@ -88,6 +69,7 @@ class LigaScreen extends ConsumerWidget {
                 refrescarLigas(ref);
               }
             },
+            ),
           ),
         ]),
       ),

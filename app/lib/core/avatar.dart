@@ -55,3 +55,49 @@ String? textoEdad(Miembro? m) {
   final e = m?.perfil?.edad;
   return e == null ? null : '$e años';
 }
+
+/// Fila de avatares solapados («quién va»): hasta [max] y luego «+N».
+class PilaAvatares extends StatelessWidget {
+  const PilaAvatares(this.miembros, {super.key, this.max = 7, this.radio = 14});
+  final List<Miembro?> miembros;
+  final int max;
+  final double radio;
+
+  @override
+  Widget build(BuildContext context) {
+    if (miembros.isEmpty) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    final visibles = miembros.take(max).toList();
+    final resto = miembros.length - visibles.length;
+    final paso = radio * 1.45;
+    final n = visibles.length + (resto > 0 ? 1 : 0);
+    return SizedBox(
+      height: radio * 2 + 4,
+      width: paso * (n - 1) + radio * 2 + 4,
+      child: Stack(children: [
+        for (var i = 0; i < visibles.length; i++)
+          Positioned(
+            left: i * paso,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(color: cs.surface, shape: BoxShape.circle),
+              child: AvatarMiembro(visibles[i], radio: radio),
+            ),
+          ),
+        if (resto > 0)
+          Positioned(
+            left: visibles.length * paso,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(color: cs.surface, shape: BoxShape.circle),
+              child: CircleAvatar(
+                radius: radio,
+                backgroundColor: cs.surfaceContainerHighest,
+                child: Text('+$resto', style: TextStyle(fontSize: radio * 0.75, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
+}

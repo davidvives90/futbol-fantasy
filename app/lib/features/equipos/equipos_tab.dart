@@ -150,7 +150,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
       if (mostrar == null)
         const Padding(
           padding: EdgeInsets.only(top: 32),
-          child: Vacio('Aún no se han hecho los equipos.', icono: Icons.groups_2_outlined),
+          child: Vacio('El administrador los hará equilibrados con las estadísticas de cada uno.', titulo: 'Equipos por hacer', icono: Icons.groups_2_outlined),
         )
       else ...[
         const SizedBox(height: 16),

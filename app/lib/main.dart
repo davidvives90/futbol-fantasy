@@ -91,6 +91,14 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
       title: 'Fútbol Fantasy',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _mensajes,
+      // Accesibilidad: respeta el tamaño de letra del móvil, con un tope para que nada se rompa
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 1.0, maxScaleFactor: 1.35)),
+          child: child!,
+        );
+      },
       theme: AppTheme.claro(),
       darkTheme: AppTheme.oscuro(),
       themeMode: ref.watch(temaProvider),

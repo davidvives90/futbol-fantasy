@@ -64,3 +64,13 @@ Insignias: MVP e "Invitado ×1,5" en dorado (tertiaryContainer + texto onTertiar
 - Antes la app seguía el modo del móvil: con el móvil en oscuro se veía un tema genérico. Ahora el claro es el predeterminado.
 - El oscuro usa el mismo sistema de componentes (`AppTheme._construir`) con otra paleta: fondo carbón verdoso #0F1513, tarjetas #171F1C, verde menta #86CDAD como principal, oro #E2B65E para premium, rojo suave #F2A59E para destructivo. Colores de equipo y estados aclarados (`AppColores.oscuro`).
 - Regla para pantallas nuevas: nunca colores fijos de la paleta clara; usar `Theme.of(context).colorScheme` y `AppColores.of(context)`.
+
+## Usabilidad (v0.4.2)
+- **Inicio = panel**: saludo, próximo partido (cuándo, campo con Maps, quién va con avatares, plazas, precio y Voy/Duda/No voy a un toque), «Pendiente» (votar, deuda, encuesta Fantasy, solicitudes) y calendario (próximos + 3 anteriores, «Ver todos»).
+- **Liga = jugadores**. Todo lo configurable está en **Ajustes de la liga** (icono ⚙ solo admin): datos, temporada, convocatoria y cobro, puntuación, Fantasy.
+- **Siguiente paso del admin** en cada partido (barra verde con la acción que toca).
+- **Deshacer en vez de confirmar** para lo reversible (Voy/Duda/No voy, dar de baja a otro). Diálogo de confirmación solo para lo que cuesta dinero o no se puede deshacer (cobrar, cancelar, expulsar, abandonar).
+- **Cargas con esqueleto** (`Cargando`) y **vacíos con título, explicación y acción** (`Vacio(titulo:, accion:, onAccion:)`).
+- **Avatares** (`AvatarMiembro`, `PilaAvatares`) en todas las listas de personas; anillo para equipo, podio y MVP.
+- **Tono**: tú, frases cortas, verbo primero en botones («Guardar», «Apuntarme», «Cerrar ya»); la consecuencia en el subtítulo, no en el botón. Fechas siempre con `fechaHora()`; dinero con `euros()` y `millones()`.
+- **Accesibilidad**: tamaño de letra del sistema respetado hasta ×1,35; botones de icono siempre con `tooltip`; zonas táctiles ≥ 48 px (por defecto de Material); hápticos en selecciones.

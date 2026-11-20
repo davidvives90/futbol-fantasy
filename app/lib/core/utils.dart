@@ -116,27 +116,122 @@ class ErrorVista extends StatelessWidget {
       );
 }
 
-class Cargando extends StatelessWidget {
-  const Cargando({super.key});
+/// Carga: «esqueleto» con la forma de una lista (filas con avatar y dos líneas) que late suavemente.
+/// Se percibe más rápido que un spinner y evita saltos cuando llegan los datos.
+class Cargando extends StatefulWidget {
+  const Cargando({super.key, this.filas = 6});
+  final int filas;
+
   @override
-  Widget build(BuildContext context) => const Center(child: CircularProgressIndicator());
+  State<Cargando> createState() => _CargandoState();
 }
 
-class Vacio extends StatelessWidget {
-  const Vacio(this.texto, {super.key, this.icono = Icons.inbox_outlined});
-  final String texto;
-  final IconData icono;
+class _CargandoState extends State<Cargando> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+
   @override
-  Widget build(BuildContext context) => Center(
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.surfaceContainerHighest;
+    Widget barra(double w, double h) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+        );
+    return LayoutBuilder(builder: (context, caja) {
+      // Ajusta el nº de filas al hueco disponible (nunca desborda)
+      final caben = caja.maxHeight.isFinite ? ((caja.maxHeight - 32) / 60).floor().clamp(0, widget.filas).toInt() : widget.filas;
+      if (caben == 0) {
+        return const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+      }
+      return _esqueleto(caben, barra, color);
+    });
+  }
+
+  Widget _esqueleto(int filas, Widget Function(double, double) barra, Color color) {
+    return Semantics(
+      label: 'Cargando',
+      child: FadeTransition(
+        opacity: Tween(begin: 0.45, end: 1.0).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut)),
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(16),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icono, size: 48, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 12),
-            Text(texto, textAlign: TextAlign.center),
+            for (var i = 0; i < filas; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(children: [
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      barra(i.isEven ? 160 : 120, 12),
+                      const SizedBox(height: 8),
+                      barra(i.isEven ? 90 : 140, 10),
+                    ]),
+                  ),
+                ]),
+              ),
           ]),
         ),
-      );
+      ),
+    );
+  }
+}
+
+/// Estado vacío: icono en un círculo suave, título opcional, texto y, si procede, una acción principal.
+class Vacio extends StatelessWidget {
+  const Vacio(this.texto, {super.key, this.icono = Icons.inbox_outlined, this.titulo, this.accion, this.onAccion});
+  final String texto;
+  final IconData icono;
+  final String? titulo;
+  final String? accion;
+  final VoidCallback? onAccion;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: 0.6), shape: BoxShape.circle),
+            child: Icon(icono, size: 42, color: cs.onPrimaryContainer),
+          ),
+          const SizedBox(height: 16),
+          if (titulo != null) ...[
+            Text(titulo!, textAlign: TextAlign.center, style: t.titleMedium),
+            const SizedBox(height: 6),
+          ],
+          Text(texto, textAlign: TextAlign.center, style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+          if (accion != null && onAccion != null) ...[
+            const SizedBox(height: 16),
+            FilledButton(onPressed: onAccion, child: Text(accion!)),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
+/// Aviso con «Deshacer» para acciones reversibles (en lugar de pedir confirmación antes).
+void avisoDeshacer(BuildContext context, String texto, VoidCallback deshacer) {
+  final m = ScaffoldMessenger.of(context);
+  m.hideCurrentSnackBar();
+  m.showSnackBar(SnackBar(
+    content: Text(texto),
+    duration: const Duration(seconds: 5),
+    action: SnackBarAction(label: 'Deshacer', onPressed: deshacer),
+  ));
 }
 
 /// Fecha en formato SQL `date` (AAAA-MM-DD), sin hora ni zona.

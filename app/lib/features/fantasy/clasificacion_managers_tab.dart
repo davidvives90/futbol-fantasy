@@ -25,7 +25,7 @@ class ClasificacionManagersTab extends ConsumerWidget {
       loading: () => const Cargando(),
       error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(clasificacionManagersProvider(mi.liga.id))),
       data: (lista) {
-        if (lista.isEmpty) return const Vacio('Aún no hay mánagers con puntos.', icono: Icons.emoji_events_outlined);
+        if (lista.isEmpty) return const Vacio('Los puntos llegan al cerrar cada jornada. Prepara tu alineación antes del próximo partido.', titulo: 'Aún no hay puntos', icono: Icons.emoji_events_outlined);
         return RefreshIndicator(
           onRefresh: () => ref.refresh(clasificacionManagersProvider(mi.liga.id).future),
           child: ListView.builder(

@@ -12,6 +12,7 @@ import '../features/fantasy/encuesta_screen.dart';
 import '../features/fantasy/fantasy_screen.dart';
 import '../features/fantasy/jugador_mercado_screen.dart';
 import '../features/liga/convocatoria_cobro_screen.dart';
+import '../features/liga/ajustes_liga_screen.dart';
 import '../features/master/master_screen.dart';
 import '../features/shell/notificaciones_screen.dart';
 import '../features/liga/liga_screen.dart';
@@ -64,6 +65,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
       GoRoute(path: '/crear-liga', builder: (_, __) => const CrearLigaScreen()),
       GoRoute(path: '/liga/editar', builder: (_, __) => const CrearLigaScreen(editar: true)),
+      GoRoute(path: '/liga/ajustes', builder: (_, __) => const AjustesLigaScreen()),
       GoRoute(path: '/liga/reglas', builder: (_, __) => const ReglasScreen()),
       GoRoute(path: '/liga/convocatoria', builder: (_, __) => const ConvocatoriaCobroScreen()),
       GoRoute(path: '/temporada', builder: (_, __) => const TemporadaScreen()),
