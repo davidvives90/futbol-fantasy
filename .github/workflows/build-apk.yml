@@ -200,7 +200,7 @@ jobs:
       - name: Compilar web
         run: |
           if [ -n "$WEB_DOMINIO" ]; then BASE=/; else BASE=/futbol-fantasy/; fi
-          flutter build web --release --base-href "$BASE" \
+          flutter build web --release --no-web-resources-cdn --base-href "$BASE" \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
             --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
             --dart-define=APP_VERSION=0.1.${{ github.run_number }} \

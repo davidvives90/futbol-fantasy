@@ -13,12 +13,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
+  final _codigo = TextEditingController();
   bool _enviando = false;
   bool _enviado = false;
 
   @override
   void dispose() {
     _email.dispose();
+    _codigo.dispose();
     super.dispose();
   }
 
@@ -36,6 +38,17 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  /// Entrar con el código del correo (imprescindible en la web instalada en iPhone: el enlace se abriría en Safari).
+  Future<void> _entrarConCodigo() async {
+    final codigo = _codigo.text.replaceAll(' ', '');
+    if (codigo.length < 6) {
+      mostrarError(context, 'Escribe el código del correo');
+      return;
+    }
+    await ejecutar(context,
+        () => sb.auth.verifyOTP(email: _email.text.trim(), token: codigo, type: OtpType.email));
+  }
+
   Future<void> _google() async {
     await ejecutar(
       context,
@@ -49,7 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
+          child: ConstrainedBox(
+            // En ordenador, el formulario no se estira a todo el ancho
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Icon(Icons.sports_soccer, size: 72, color: Theme.of(context).colorScheme.primary),
@@ -63,7 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      'Te hemos enviado un enlace a ${_email.text.trim()}. Ábrelo desde este móvil para entrar.',
+                      'Te hemos enviado un correo a ${_email.text.trim()}. Abre el enlace desde este dispositivo '
+                      'o escribe aquí el código que viene en el correo.',
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -94,9 +111,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: const Text('Continuar con Google'),
                 ),
               ],
-              if (_enviado)
+              if (_enviado) ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _codigo,
+                  keyboardType: TextInputType.number,
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(labelText: 'Código del correo', prefixIcon: Icon(Icons.pin_outlined)),
+                  onSubmitted: (_) => _entrarConCodigo(),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.tonal(onPressed: _entrarConCodigo, child: const Text('Entrar con el código')),
                 TextButton(onPressed: () => setState(() => _enviado = false), child: const Text('Usar otro email')),
+              ],
             ]),
+          ),
           ),
         ),
       ),
