@@ -26,13 +26,24 @@ dependencies:
   uuid: ^4.5.1
   # Push (FCM). Se activa solo si la compilación recibe --dart-define=FIREBASE_APP_ID=…
   image_picker: any
+  google_mobile_ads: any
   firebase_core: any
   firebase_messaging: any
 
 dev_dependencies:
+  flutter_launcher_icons: any
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
+
+# Icono de la app (se genera en la compilación: dart run flutter_launcher_icons)
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icono/icono.png"
+  adaptive_icon_background: "#0E4B3A"
+  adaptive_icon_foreground: "assets/icono/icono_primer_plano.png"
+  min_sdk_android: 24

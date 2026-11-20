@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'theme.dart';
+import 'errores.dart';
 
 final _euro = NumberFormat.currency(locale: 'es_ES', symbol: '€');
 final _fecha = DateFormat("EEE d MMM · HH:mm", 'es');
@@ -65,7 +66,8 @@ Future<bool> ejecutar(BuildContext context, Future<void> Function() accion, {Str
     await accion();
     if (ok != null && context.mounted) mostrarOk(context, ok);
     return true;
-  } catch (e) {
+  } catch (e, s) {
+    Errores.registrar(e, s); // solo se guardan los inesperados (no los mensajes de validación)
     if (context.mounted) mostrarError(context, e);
     return false;
   }

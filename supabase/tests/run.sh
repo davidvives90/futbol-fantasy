@@ -46,3 +46,4 @@ aplicar tests/escenario_mvp_pocos.sql
 aplicar tests/escenario_apertura.sql
 aplicar tests/escenario_reparto.sql
 aplicar tests/escenario_xg.sql
+aplicar tests/escenario_errores.sql

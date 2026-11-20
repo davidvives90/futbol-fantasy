@@ -11,6 +11,7 @@ import '../../data/repos/post_partido_repo.dart';
 import '../../core/avatar.dart';
 import '../../core/equipaciones.dart';
 import '../../core/info.dart';
+import '../../core/anuncios.dart';
 
 /// Encuentros que definió el admin (quién contra quién); cada asistente solo pone el marcador.
 final _encuentrosDefProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
@@ -229,6 +230,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       if (ok) _editando = false;
     });
     if (ok) {
+      Anuncios.instancia.pausaNatural(); // acaba de terminar: buen momento, nunca a mitad del formulario
       ref.invalidate(_miEnvioProvider(widget.partido.id));
       ref.invalidate(_numReportesProvider(widget.partido.id));
     }

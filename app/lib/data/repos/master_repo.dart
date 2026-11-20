@@ -20,6 +20,7 @@ class MasterRepo {
   static Future<List<Map<String, dynamic>>> managers(String ligaId) => _lista('master_managers', {'p_liga': ligaId});
   static Future<List<Map<String, dynamic>>> partidos(String ligaId) => _lista('master_partidos', {'p_liga': ligaId});
   static Future<List<Map<String, dynamic>>> auditoria() => _lista('master_auditoria', {'p_limite': 200});
+  static Future<List<Map<String, dynamic>>> errores() => _lista('master_errores', {'p_limite': 200});
 
   static Future<void> crearCodigo({
     required String codigo,

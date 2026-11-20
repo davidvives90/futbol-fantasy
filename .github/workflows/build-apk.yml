@@ -67,8 +67,18 @@ jobs:
           m=android/app/src/main/AndroidManifest.xml
           grep -q POST_NOTIFICATIONS "$m" || sed -i 's|<application|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application|' "$m"
           grep -n "POST_NOTIFICATIONS" "$m"
+          # AdMob: ID de la app (el de prueba de Google mientras no haya cuenta). Sin él la app se cierra al abrir.
+          ADMOB_APP_ID="${{ vars.ADMOB_APP_ID || 'ca-app-pub-3940256099942544~3347511713' }}"
+          grep -q "gms.ads.APPLICATION_ID" "$m" || sed -i "s|</application>|    <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\"/>\n    </application>|" "$m"
+          grep -n "APPLICATION_ID" "$m"
 
       - run: flutter pub get
+
+      - name: Icono y nombre de la app
+        run: |
+          dart run flutter_launcher_icons
+          sed -i 's|android:label="[^"]*"|android:label="Fútbol Fantasy"|' android/app/src/main/AndroidManifest.xml
+          grep -n 'android:label' android/app/src/main/AndroidManifest.xml
 
       - name: Análisis estático (informativo)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
@@ -80,6 +90,8 @@ jobs:
         run: >
           flutter build apk --release
           --dart-define=SUPABASE_URL=$SUPABASE_URL
+          --dart-define=APP_VERSION=0.1.${{ github.run_number }}
+          --dart-define=ADMOB_INTERSTICIAL=${{ vars.ADMOB_INTERSTICIAL || 'ca-app-pub-3940256099942544/1033173712' }}
           --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
           --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY || 'AIzaSyCg5t9gSuzifQ4FbxSqj4s3GmBtTVRK8l8' }}
           --dart-define=FIREBASE_APP_ID=${{ vars.FIREBASE_APP_ID || '1:449293148719:android:07b08fd9645abc82f55cda' }}

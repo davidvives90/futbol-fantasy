@@ -21,6 +21,7 @@ final _resumenProvider = FutureProvider.autoDispose((ref) => MasterRepo.resumen(
 final _ligasProvider = FutureProvider.autoDispose((ref) => MasterRepo.ligas());
 final _codigosProvider = FutureProvider.autoDispose((ref) => MasterRepo.codigos());
 final _auditoriaProvider = FutureProvider.autoDispose((ref) => MasterRepo.auditoria());
+final _erroresProvider = FutureProvider.autoDispose((ref) => MasterRepo.errores());
 final _usuariosProvider =
     FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, q) => MasterRepo.usuarios(q));
 
@@ -39,7 +40,7 @@ class MasterScreen extends ConsumerWidget {
       return Scaffold(appBar: AppBar(), body: const Vacio('Solo para la cuenta máster.', icono: Icons.lock_outline));
     }
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Panel máster'),
@@ -49,9 +50,10 @@ class MasterScreen extends ConsumerWidget {
             Tab(text: 'Códigos'),
             Tab(text: 'Usuarios'),
             Tab(text: 'Registro'),
+            Tab(text: 'Errores'),
           ]),
         ),
-        body: const TabBarView(children: [_Resumen(), _Ligas(), _Codigos(), _Usuarios(), _Registro()]),
+        body: const TabBarView(children: [_Resumen(), _Ligas(), _Codigos(), _Usuarios(), _Registro(), _Errores()]),
       ),
     );
   }
@@ -348,6 +350,36 @@ class _Registro extends ConsumerWidget {
               title: Text('${a['accion']}${a['liga'] == null ? '' : ' · ${a['liga']}'}'),
               subtitle: Text('${_fecha(a['creado_en'])} · ${a['quien'] ?? ''}\n${a['detalle']}'),
               isThreeLine: true,
+            ),
+        ]),
+      );
+    });
+  }
+}
+
+class _Errores extends ConsumerWidget {
+  const _Errores();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _async(ref, ref.watch(_erroresProvider), _erroresProvider, (lista) {
+      if (lista.isEmpty) return const Vacio('Sin errores registrados. ¡Bien!', icono: Icons.verified_outlined);
+      return RefreshIndicator(
+        onRefresh: () async => ref.invalidate(_erroresProvider),
+        child: ListView(padding: const EdgeInsets.all(12), children: [
+          for (final e in lista)
+            Card(
+              child: ExpansionTile(
+                leading: Icon(Icons.bug_report_outlined, color: Theme.of(context).colorScheme.error),
+                title: Text(e['mensaje'] as String, maxLines: 2, overflow: TextOverflow.ellipsis),
+                subtitle: Text('${e['veces']}× · ${_fecha(e['ultimo_en'])} · v${e['version'] ?? '?'} · '
+                    '${e['pantalla'] ?? ''} · ${e['quien'] ?? ''}'),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                children: [
+                  SelectableText('${e['mensaje']}\n\n${e['traza'] ?? ''}',
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+                ],
+              ),
             ),
         ]),
       );

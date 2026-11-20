@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/anuncios.dart';
 import '../../core/liga_activa.dart';
 import '../../core/push.dart';
 import '../../core/supabase.dart';
@@ -65,6 +66,17 @@ class PerfilScreen extends ConsumerWidget {
           title: const Text('Guía y normas'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/guia'),
+        ),
+        FutureBuilder<bool>(
+          future: Anuncios.hayOpcionesPrivacidad(),
+          builder: (_, s) => s.data == true
+              ? ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Privacidad y anuncios'),
+                  subtitle: const Text('Cambia tu consentimiento de anuncios personalizados'),
+                  onTap: Anuncios.abrirOpcionesPrivacidad,
+                )
+              : const SizedBox.shrink(),
         ),
         ListTile(
           leading: const Icon(Icons.palette_outlined),

@@ -9,7 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/liga_activa.dart';
+import 'core/anuncios.dart';
 import 'core/equipaciones.dart';
+import 'core/errores.dart';
 import 'core/push.dart';
 import 'data/providers.dart';
 import 'data/models.dart';
@@ -24,6 +26,8 @@ Future<void> main() async {
   await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
   final prefs = await SharedPreferences.getInstance();
   await Push.iniciar();
+  Errores.instalar();
+  unawaited(Anuncios.instancia.iniciar(prefs));
   runApp(ProviderScope(
     overrides: [prefsProvider.overrideWithValue(prefs)],
     child: const FutbolFantasyApp(),

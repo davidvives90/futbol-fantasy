@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/anuncios.dart';
 import '../../core/liga_activa.dart';
 import '../../core/utils.dart';
 import '../../data/providers.dart';
@@ -69,7 +70,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       body: widget.shell,
       bottomNavigationBar: NavigationBar(
         selectedIndex: visible < 0 ? 0 : visible,
-        onDestinationSelected: (i) => widget.shell.goBranch(ramas[i], initialLocation: ramas[i] == widget.shell.currentIndex),
+        onDestinationSelected: (i) {
+          widget.shell.goBranch(ramas[i], initialLocation: ramas[i] == widget.shell.currentIndex);
+          Anuncios.instancia.pausaNatural(); // cambiar de pestaña es una pausa natural
+        },
         destinations: [for (final r in ramas) destinos[r]],
       ),
     );

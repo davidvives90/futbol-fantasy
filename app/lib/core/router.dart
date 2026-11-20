@@ -13,6 +13,7 @@ import '../features/fantasy/fantasy_screen.dart';
 import '../features/fantasy/jugador_mercado_screen.dart';
 import '../features/liga/convocatoria_cobro_screen.dart';
 import '../features/liga/ajustes_liga_screen.dart';
+import 'errores.dart';
 import '../features/liga/equipaciones_screen.dart';
 import '../features/liga/guia_screen.dart';
 import '../features/master/master_screen.dart';
@@ -55,6 +56,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/partidos',
     refreshListenable: refresh,
     redirect: (context, state) {
+      Errores.pantalla = state.matchedLocation; // para saber dónde ocurre cada error
       final logueado = sb.auth.currentSession != null;
       final enLogin = state.matchedLocation == '/login';
       if (!logueado) return enLogin ? null : '/login';
