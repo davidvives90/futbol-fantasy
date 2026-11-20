@@ -23,17 +23,48 @@ import 'core/tema.dart';
 import 'core/theme.dart';
 
 Future<void> main() async {
+  // Si algo falla al arrancar, la app se abre igual y muestra el error (en vez de cerrarse).
+  await runZonedGuarded(_arrancar, (e, s) {
+    Errores.registrar(e, s);
+    _fallosArranque.add('$e');
+  });
+}
+
+final _fallosArranque = <String>[];
+
+/// Ejecuta un paso del arranque sin dejar que tumbe la app.
+Future<void> _paso(String nombre, Future<void> Function() f) async {
+  try {
+    await f().timeout(const Duration(seconds: 10));
+  } catch (e, s) {
+    _fallosArranque.add('$nombre: $e');
+    Errores.registrar(e, s);
+  }
+}
+
+Future<void> _arrancar() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting(); // todos los idiomas de la app
-  await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
-  final prefs = await SharedPreferences.getInstance();
-  await Push.iniciar();
   Errores.instalar();
-  unawaited(Anuncios.instancia.iniciar(prefs));
+  // En vez de una pantalla gris, se ve qué ha fallado (para poder enviarlo)
+  ErrorWidget.builder = (d) => Material(
+        color: const Color(0xFFFFF4F2),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Text('Error: ${d.exceptionAsString()}', style: const TextStyle(color: Color(0xFF8A1C1C), fontSize: 13)),
+        ),
+      );
+  await _paso('Fechas', () => initializeDateFormatting()); // todos los idiomas de la app
+  await _paso('Supabase', () => Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey));
+  final prefs = await SharedPreferences.getInstance();
+  await _paso('Push', Push.iniciar);
+  try {
+    unawaited(Anuncios.instancia.iniciar(prefs).catchError((_) {}));
+  } catch (_) {}
   runApp(ProviderScope(
     overrides: [prefsProvider.overrideWithValue(prefs)],
     child: const FutbolFantasyApp(),
   ));
+  if (_fallosArranque.isNotEmpty) debugPrint('Arranque: ${_fallosArranque.join(' | ')}');
 }
 
 class FutbolFantasyApp extends ConsumerStatefulWidget {
@@ -63,14 +94,20 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
         );
     if (sb.auth.currentSession != null) {
       activarPush();
-      sincronizarIdioma();
+      unawaited(sincronizarIdioma());
     }
     _auth = sb.auth.onAuthStateChange.listen((e) {
       if (e.event == AuthChangeEvent.signedIn) {
         activarPush();
-        sincronizarIdioma();
+        unawaited(sincronizarIdioma());
       }
-    });
+    }, onError: (_) {});
+    if (_fallosArranque.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _mensajes.currentState?.showSnackBar(SnackBar(
+            duration: const Duration(seconds: 12),
+            content: Text('Aviso al arrancar: ${_fallosArranque.join(' · ')}'),
+          )));
+    }
     // uriLinkStream también emite el enlace con el que se abrió la app.
     _links = AppLinks().uriLinkStream.listen(_alRecibirEnlace);
   }
