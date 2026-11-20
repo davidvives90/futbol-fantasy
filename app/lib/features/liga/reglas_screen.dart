@@ -192,6 +192,13 @@ class _ModoValoracion extends ConsumerWidget {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const SizedBox.shrink();
     final detallada = mi.liga.valoracionDetallada;
+    if (!mi.liga.valoracionAvanzada) {
+      return const ListTile(
+        title: Text('Valoración'),
+        subtitle: Text('Simple: nota del 1 al 5 por compañero y estrella MVP. Para la valoración por aspectos, '
+            'activa «Post-partido avanzado» en Ajustes de la liga.'),
+      );
+    }
     return SwitchListTile(
       title: const Text('Valoración detallada'),
       subtitle: Text(detallada

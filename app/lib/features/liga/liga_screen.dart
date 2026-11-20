@@ -47,13 +47,39 @@ class LigaScreen extends ConsumerWidget {
           _Datos(mi: mi),
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: ListTile(
-              leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('Guía y normas de la liga'),
-              subtitle: const Text('Lo acordado, cómo puntúa y cómo funciona el Fantasy'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/guia'),
-            ),
+            child: Column(children: [
+              ListTile(
+                leading: const Icon(Icons.gavel_outlined),
+                title: const Text('Reglamento'),
+                subtitle: Text('${mi.liga.nombreModalidad}: cesión, saques, cambios, calzado…'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/reglamento'),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: const Icon(Icons.how_to_vote_outlined),
+                title: const Text('Votaciones'),
+                subtitle: const Text('Lo que se decide entre todos'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/votaciones'),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: const Icon(Icons.event_busy_outlined),
+                title: const Text('Asistencia y bajas'),
+                subtitle: const Text('Quién viene, quién falta y quién está lesionado'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/asistencia'),
+              ),
+              const Divider(height: 1, indent: 56),
+              ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: const Text('Guía y normas de la liga'),
+                subtitle: const Text('Lo acordado, cómo puntúa y cómo funciona el Fantasy'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/guia'),
+              ),
+            ]),
           ),
           miembros.when(
             loading: () => const Cargando(),

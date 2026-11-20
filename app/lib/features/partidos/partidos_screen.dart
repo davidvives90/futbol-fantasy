@@ -1,3 +1,6 @@
+import '../liga/votaciones_screen.dart';
+import '../liga/asistencia_screen.dart';
+import '../../data/repos/reglamento_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -289,8 +292,41 @@ class _Pendientes extends ConsumerWidget {
             .length
         : 0;
     final cs = Theme.of(context).colorScheme;
+    // Votaciones de la liga abiertas en las que aún no he votado
+    final abiertas = (ref.watch(votacionesProvider(mi.liga.id)).valueOrNull ?? const <Votacion>[]).where((v) => v.abierta);
+    final sinVotar = abiertas.where((v) {
+      final r = ref.watch(resultadoVotacionProvider(v.id));
+      return r.hasValue && r.value!.miVoto == null;
+    }).toList();
+    final miBaja = (ref.watch(ausenciasMiembroProvider(mi.yo.id)).valueOrNull ?? const <Ausencia>[])
+        .where((a) => a.actual)
+        .firstOrNull;
 
     final tareas = <Widget>[
+      if (miBaja != null)
+        _Tarea(
+          icono: Icons.healing,
+          color: Colors.amber.shade700,
+          titulo: 'Estás de baja',
+          subtitulo: '${textoBaja(miBaja)} · Toca si ya has vuelto',
+          onTap: () async {
+            if (!await confirmar(context, '¿Has vuelto?', 'Se termina tu baja y vuelves a recibir las convocatorias.',
+                accion: 'He vuelto')) {
+              return;
+            }
+            if (!context.mounted) return;
+            final ok = await ejecutar(context, () => ReglamentoRepo.terminarAusencia(miBaja.id), ok: '¡Bienvenido de vuelta!');
+            if (ok) ref.invalidate(ausenciasMiembroProvider(mi.yo.id));
+          },
+        ),
+      for (final v in sinVotar)
+        _Tarea(
+          icono: Icons.ballot_outlined,
+          color: cs.secondary,
+          titulo: v.titulo,
+          subtitulo: 'Votación de la liga · cierra ${fechaHora(v.cierraEn)}',
+          onTap: () => context.push('/votaciones'),
+        ),
       for (final p in votar)
         _Tarea(
           icono: Icons.how_to_vote_outlined,

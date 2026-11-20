@@ -58,6 +58,18 @@ class AjustesLigaScreen extends ConsumerWidget {
           campo: 'prediccion_activa',
           ligaId: mi.liga.id,
         ),
+        _Interruptor(
+          titulo: 'Post-partido avanzado',
+          activo: mi.liga.valoracionAvanzada,
+          on: 'Además: «Destacó en», autogoles/paradas/penaltis, «No le vi» y valoración por aspectos',
+          off: 'Simple: goles y asistencias, nota del 1 al 5 a todos y estrella MVP',
+          campo: 'valoracion_avanzada',
+          ligaId: mi.liga.id,
+        ),
+        grupo('Normas y votaciones'),
+        opcion(Icons.gavel_outlined, 'Reglamento', 'Modalidad (${mi.liga.nombreModalidad}) y reglas del partido', '/reglamento'),
+        opcion(Icons.how_to_vote_outlined, 'Votaciones', 'Pregunta a la liga o somete a votación un cambio de regla', '/votaciones'),
+        opcion(Icons.event_busy_outlined, 'Asistencia y bajas', 'Historial de cada jugador y bajas temporales', '/asistencia'),
         grupo('Puntuación y Fantasy'),
         opcion(Icons.rule, 'Puntuación y valoraciones', 'Puntos por acción, valoración rápida o detallada', '/liga/reglas'),
         if (mi.liga.fantasyActivo)

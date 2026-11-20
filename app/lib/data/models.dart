@@ -151,7 +151,16 @@ class Liga {
     this.horasReservaFijos = 24,
     this.fantasyActivo = true,
     this.prediccionActiva = true,
+    this.valoracionAvanzada = false,
+    this.modalidad = 'f7',
   });
+
+  /// 0032: post-partido avanzado (destacados, más datos, valoración por aspectos, «no le vi»). Por defecto, simple.
+  final bool valoracionAvanzada;
+
+  /// 0032: 'f3' | 'sala' | 'f7' | 'f8' | 'f11' (decide qué reglas tiene el reglamento).
+  final String modalidad;
+  String get nombreModalidad => nombresModalidad[modalidad] ?? modalidad;
 
   /// 0026: 'apertura' (vacía hasta X h después del partido anterior; todos pulsan «Voy») | 'clasica'.
   final String modoConvocatoria;
@@ -185,7 +194,7 @@ class Liga {
 
   /// v0.3b: 'rapida' (una nota general por compañero) | 'detallada' (nota por aspecto).
   final String modoValoracion;
-  bool get valoracionDetallada => modoValoracion == 'detallada';
+  bool get valoracionDetallada => valoracionAvanzada && modoValoracion == 'detallada';
 
   // ---- v0.3: convocatoria con fijos y cobro ----
   /// 'prioridad' (fijos que vuelven, reservas, invitados) | 'anotacion' (por orden de apuntarse).
@@ -246,6 +255,8 @@ class Liga {
       horasReservaFijos: toInt(m['horas_reserva_fijos'], 24),
       fantasyActivo: (m['fantasy_activo'] ?? true) as bool,
       prediccionActiva: (m['prediccion_activa'] ?? true) as bool,
+      valoracionAvanzada: (m['valoracion_avanzada'] ?? false) as bool,
+      modalidad: (m['modalidad'] ?? 'f7') as String,
     );
   }
 }
@@ -842,3 +853,11 @@ class Equipacion {
 
   Map<String, dynamic> toMap() => {'nombre': nombre, 'color': colorHex};
 }
+
+const nombresModalidad = <String, String>{
+  'f3': 'Fútbol 3',
+  'sala': 'Fútbol sala',
+  'f7': 'Fútbol 7',
+  'f8': 'Fútbol 8',
+  'f11': 'Fútbol 11',
+};

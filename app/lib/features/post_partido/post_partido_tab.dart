@@ -186,6 +186,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
   Future<void> _enviar(List<Inscripcion> asistentes, List<Aspecto> listaAspectos) async {
     final b = _b!;
     final detallada = widget.mi.liga.valoracionDetallada;
+    final avanzado = widget.mi.liga.valoracionAvanzada;
+    final masDatos = avanzado && b.masDatos;
+    final sinValorar = avanzado ? b.sinValorar : const <String>{};
     setState(() => _enviando = true);
     final ok = await ejecutar(
       context,
@@ -203,24 +206,24 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 'asistencias': b.asistencias[a.miembroId] ?? 0,
                 'autogoles': b.autogoles[a.miembroId] ?? 0,
                 // Sin «Más datos» no se envían (null = no sé): no cuentan para el consenso.
-                'paradas_clave': b.masDatos ? (b.paradas[a.miembroId] ?? 0) : null,
-                'penaltis_parados': b.masDatos ? (b.penParados[a.miembroId] ?? 0) : null,
-                'penaltis_fallados': b.masDatos ? (b.penFallados[a.miembroId] ?? 0) : null,
+                'paradas_clave': masDatos ? (b.paradas[a.miembroId] ?? 0) : null,
+                'penaltis_parados': masDatos ? (b.penParados[a.miembroId] ?? 0) : null,
+                'penaltis_fallados': masDatos ? (b.penFallados[a.miembroId] ?? 0) : null,
               },
         ],
         notas: [
           for (final id in b.notas.keys)
-            if (!b.sinValorar.contains(id))
+            if (!sinValorar.contains(id))
               {
                 'votado_id': id,
                 if (detallada)
                   'aspectos': {for (final a in listaAspectos) a.clave: (b.aspectos[id]?[a.clave] ?? 3) * 2}
                 else
                   'nota': (b.notas[id] ?? 3) * 2,
-                'destacados': (b.destacados[id] ?? const <String>{}).toList(),
+                'destacados': avanzado ? (b.destacados[id] ?? const <String>{}).toList() : const <String>[],
               },
         ],
-        mvp: b.mvp != null && !b.sinValorar.contains(b.mvp) ? b.mvp : null,
+        mvp: b.mvp != null && !sinValorar.contains(b.mvp) ? b.mvp : null,
       ),
       ok: '¡Enviado! Se cruzará con lo que pongan los demás',
     );
@@ -304,6 +307,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     _inicializar(definidos.valueOrNull ?? const <Encuentro>[], asistentes, previo);
     final b = _b!;
     final detallada = widget.mi.liga.valoracionDetallada;
+    // Post-partido simple (por defecto): goles y asistencias, nota 1–5 a todos y estrella MVP. Lo demás lo activa el admin.
+    final avanzado = widget.mi.liga.valoracionAvanzada;
     final listaAspectos = (aspectos.valueOrNull ?? const <Aspecto>[]).where((a) => a.clave != 'general').toList();
     final cotejo = _cotejo();
     final cs = Theme.of(context).colorScheme;
@@ -380,7 +385,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                     asistencias: b.asistencias[a.miembroId] ?? 0,
                     onGoles: (v) => setState(() => b.goles[a.miembroId] = v),
                     onAsistencias: (v) => setState(() => b.asistencias[a.miembroId] = v),
-                    extras: b.masDatos
+                    extras: avanzado && b.masDatos
                         ? [
                             _Mini('Autogol', b.autogoles[a.miembroId] ?? 0,
                                 (v) => setState(() => b.autogoles[a.miembroId] = v)),
@@ -395,6 +400,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                   ),
               ],
             ),
+          if (avanzado)
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
@@ -410,7 +416,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           Text(
             detallada
                 ? 'Del 1 al 5 en cada aspecto (3 = normal).'
-                : 'Del 1 al 5. Todos empiezan en 3 (normal): toca solo a quien se salió de lo normal.',
+                : 'Puntúa a todos del 1 al 5 (empiezan en 3, normal) y marca con la estrella a tu MVP.',
             style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           Align(
@@ -421,7 +427,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 icon: const Icon(Icons.star_border, size: 16),
                 label: const Text('¿Cómo se elige el MVP?'),
               ),
-              if (!detallada)
+              if (avanzado && !detallada)
                 TextButton.icon(
                   onPressed: () => mostrarAyuda(context, Ayuda.destacados),
                   icon: const Icon(Icons.info_outline, size: 16),
@@ -436,11 +442,12 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
               equipo: a.equipo!,
               nota: b.notas[a.miembroId] ?? 3,
               detallada: detallada,
+              avanzado: avanzado,
               aspectos: listaAspectos,
               notasAspecto: b.aspectos.putIfAbsent(a.miembroId, () => {}),
               destacados: b.destacados.putIfAbsent(a.miembroId, () => {}),
               esMvp: b.mvp == a.miembroId,
-              sinValorar: b.sinValorar.contains(a.miembroId),
+              sinValorar: avanzado && b.sinValorar.contains(a.miembroId),
               abierto: b.abiertos.contains(a.miembroId),
               onNota: (v) => setState(() => b.notas[a.miembroId] = v),
               onMvp: () => setState(() {
@@ -750,6 +757,7 @@ class _TarjetaNota extends StatelessWidget {
     required this.equipo,
     required this.nota,
     required this.detallada,
+    required this.avanzado,
     required this.aspectos,
     required this.notasAspecto,
     required this.destacados,
@@ -765,7 +773,7 @@ class _TarjetaNota extends StatelessWidget {
   final Miembro? miembro;
   final String nombre;
   final int equipo, nota;
-  final bool detallada, esMvp, sinValorar, abierto;
+  final bool detallada, avanzado, esMvp, sinValorar, abierto;
   final List<Aspecto> aspectos;
   final Map<String, int> notasAspecto;
   final Set<String> destacados;
@@ -805,6 +813,7 @@ class _TarjetaNota extends StatelessWidget {
               icon: Icon(esMvp ? Icons.star : Icons.star_border, color: esMvp ? cs.tertiary : null),
               label: Text('MVP', style: TextStyle(fontWeight: esMvp ? FontWeight.w800 : FontWeight.w600)),
             ),
+            if (avanzado)
             PopupMenuButton<String>(
               tooltip: 'Más',
               onSelected: (v) {
@@ -845,7 +854,7 @@ class _TarjetaNota extends StatelessWidget {
                   ),
                   SizedBox(width: 24, child: Text('${notasAspecto[a.clave] ?? 3}', textAlign: TextAlign.end)),
                 ]),
-            if (!detallada)
+            if (avanzado && !detallada)
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
@@ -856,7 +865,7 @@ class _TarjetaNota extends StatelessWidget {
                       : 'Destacó en: ${destacados.map((d) => _nombresDestacado[d] ?? d).join(', ')}'),
                 ),
               ),
-            if (!detallada && abierto)
+            if (avanzado && !detallada && abierto)
               Wrap(spacing: 4, runSpacing: 4, children: [
                 for (final a in aspectos)
                   FilterChip(
