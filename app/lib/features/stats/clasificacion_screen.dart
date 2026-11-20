@@ -9,6 +9,7 @@ import '../../data/providers.dart';
 import '../shell/home_shell.dart';
 import '../../core/avatar.dart';
 import '../../core/info.dart';
+import '../../data/repos/stats_repo.dart';
 
 /// Una pestaña del ranking: cómo ordenar y qué valor mostrar.
 class _Ranking {
@@ -41,11 +42,11 @@ class ClasificacionScreen extends ConsumerWidget {
     final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
 
     return DefaultTabController(
-      length: _rankings.length,
+      length: _rankings.length + 1,
       child: Scaffold(
         appBar: LigaAppBar(
           actions: const [InfoBoton(Ayuda.puntos, tamano: 22)],
-          bottom: TabBar(isScrollable: true, tabs: [for (final r in _rankings) Tab(text: r.titulo)]),
+          bottom: TabBar(isScrollable: true, tabs: [for (final r in _rankings) Tab(text: r.titulo), const Tab(text: 'Récords')]),
         ),
         body: rend.when(
           loading: () => const Cargando(),
@@ -56,6 +57,7 @@ class ClasificacionScreen extends ConsumerWidget {
                 onRefresh: () => ref.refresh(rendimientoProvider(mi.liga.id).future),
                 child: _Lista(ranking: rk, datos: lista, miembros: miembros, yo: mi.yo.id),
               ),
+            _Records(ligaId: mi.liga.id, miembros: miembros),
           ]),
         ),
       ),
@@ -126,4 +128,82 @@ class _Lista extends StatelessWidget {
       },
     );
   }
+}
+
+final statsLigaProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+  (ref, ligaId) => StatsRepo.liga(ligaId),
+);
+
+/// Récords y curiosidades de toda la liga.
+class _Records extends ConsumerWidget {
+  const _Records({required this.ligaId, required this.miembros});
+  final String ligaId;
+  final Map<String, Miembro> miembros;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final datos = ref.watch(statsLigaProvider(ligaId));
+    final t = Theme.of(context).textTheme;
+    String n(dynamic id) => miembros[id]?.nombre ?? 'Alguien';
+    String marcador(dynamic m) => m == null ? '—' : '${m['local']}–${m['visitante']} · ${fechaCorta(DateTime.parse(m['fecha'] as String))}';
+    return datos.when(
+      loading: () => const Cargando(),
+      error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(statsLigaProvider(ligaId))),
+      data: (e) {
+        if ((e['partidos'] ?? 0) == 0) return const Vacio('Los récords aparecerán cuando se cierre el primer partido', icono: Icons.emoji_events_outlined);
+        final parejas = (e['mejores_parejas'] as List?) ?? const [];
+        final fieles = (e['mas_fieles'] as List?) ?? const [];
+        return RefreshIndicator(
+          onRefresh: () => ref.refresh(statsLigaProvider(ligaId).future),
+          child: ListView(padding: const EdgeInsets.all(16), children: [
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              _Cifra('Partidos', '${e['partidos']}'),
+              _Cifra('Goles', '${e['goles']}'),
+              _Cifra('Goles/partido', '${e['goles_partido'] ?? '—'}'),
+              _Cifra('Empates', '${e['empates_pct'] ?? 0} %'),
+            ]),
+            const SizedBox(height: 16),
+            ListTile(leading: const Icon(Icons.local_fire_department_outlined), title: const Text('Mayor goleada'),
+                subtitle: Text(marcador(e['mayor_goleada']))),
+            ListTile(leading: const Icon(Icons.sports_soccer), title: const Text('Partido con más goles'),
+                subtitle: Text(marcador(e['mas_goles']))),
+            if (parejas.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Mejores parejas', style: t.titleMedium),
+              for (final p in parejas)
+                ListTile(dense: true, leading: const Icon(Icons.handshake_outlined),
+                    title: Text('${n(p['a'])} + ${n(p['b'])}'),
+                    trailing: Text('${p['pct_victorias']} % · ${p['partidos']} PJ')),
+            ],
+            if (fieles.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Los que nunca fallan', style: t.titleMedium),
+              for (final f in fieles)
+                ListTile(dense: true, leading: AvatarMiembro(miembros[f['miembro_id']], radio: 14),
+                    title: Text(n(f['miembro_id'])), trailing: Text('${f['partidos']} partidos')),
+            ],
+          ]),
+        );
+      },
+    );
+  }
+}
+
+class _Cifra extends StatelessWidget {
+  const _Cifra(this.etiqueta, this.valor);
+  final String etiqueta, valor;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 150,
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(children: [
+              Text(valor, style: Theme.of(context).textTheme.titleLarge),
+              Text(etiqueta, style: Theme.of(context).textTheme.bodySmall),
+            ]),
+          ),
+        ),
+      );
 }

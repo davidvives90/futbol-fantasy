@@ -80,6 +80,40 @@ jobs:
           sed -i 's|android:label="[^"]*"|android:label="Fútbol Fantasy"|' android/app/src/main/AndroidManifest.xml
           grep -n 'android:label' android/app/src/main/AndroidManifest.xml
 
+      - name: Firma de publicación (solo si existe el secreto ANDROID_KEYSTORE_BASE64)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "Sin keystore: se firma con la clave de depuración (APK de pruebas)"; exit 0; fi
+          echo "$KS_B64" | base64 -d > android/app/subida.jks
+          printf 'storeFile=subida.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KS_PASS" "$KEY_ALIAS" "$KEY_PASS" > android/key.properties
+          python3 - <<'PY'
+          import re
+          p = 'android/app/build.gradle.kts'
+          s = open(p).read()
+          if 'signingConfigs {' not in s:
+              s = 'import java.util.Properties\nimport java.io.FileInputStream\n\n' + s
+              bloque = (
+                  '    signingConfigs {\n'
+                  '        create("release") {\n'
+                  '            val kp = Properties().apply { load(FileInputStream(rootProject.file("key.properties"))) }\n'
+                  '            storeFile = file(kp["storeFile"] as String)\n'
+                  '            storePassword = kp["storePassword"] as String\n'
+                  '            keyAlias = kp["keyAlias"] as String\n'
+                  '            keyPassword = kp["keyPassword"] as String\n'
+                  '        }\n'
+                  '    }\n\n'
+                  '    buildTypes {')
+              s = s.replace('    buildTypes {', bloque, 1)
+              s = s.replace('signingConfigs.getByName("debug")', 'signingConfigs.getByName("release")')
+          open(p, 'w').write(s)
+          PY
+          grep -n "signingConfig" android/app/build.gradle.kts
+          echo "FIRMA_PLAY=1" >> $GITHUB_ENV
+
       - name: Análisis estático (informativo)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
 
@@ -99,6 +133,28 @@ jobs:
           --dart-define=FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID || 'futbol-fantasy-89815' }}
           --build-name=0.1.${{ github.run_number }}
           --build-number=${{ github.run_number }}
+
+      - name: Compilar App Bundle para Google Play (solo con firma de publicación)
+        if: env.FIRMA_PLAY == '1'
+        run: >
+          flutter build appbundle --release
+          --dart-define=SUPABASE_URL=$SUPABASE_URL
+          --dart-define=APP_VERSION=0.1.${{ github.run_number }}
+          --dart-define=ADMOB_INTERSTICIAL=${{ vars.ADMOB_INTERSTICIAL || 'ca-app-pub-3940256099942544/1033173712' }}
+          --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY || 'AIzaSyCg5t9gSuzifQ4FbxSqj4s3GmBtTVRK8l8' }}
+          --dart-define=FIREBASE_APP_ID=${{ vars.FIREBASE_APP_ID || '1:449293148719:android:07b08fd9645abc82f55cda' }}
+          --dart-define=FIREBASE_SENDER_ID=${{ vars.FIREBASE_SENDER_ID || '449293148719' }}
+          --dart-define=FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID || 'futbol-fantasy-89815' }}
+          --build-name=0.1.${{ github.run_number }}
+          --build-number=${{ github.run_number }}
+
+      - name: Guardar App Bundle como artefacto
+        if: env.FIRMA_PLAY == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: futbol-fantasy-aab
+          path: app/build/app/outputs/bundle/release/app-release.aab
 
       - name: Guardar APK como artefacto
         uses: actions/upload-artifact@v4

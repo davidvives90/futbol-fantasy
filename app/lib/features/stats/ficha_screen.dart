@@ -12,6 +12,10 @@ final historialProvider = FutureProvider.autoDispose.family<List<PuntosFantasy>,
   (ref, miembroId) => StatsRepo.historial(miembroId),
 );
 
+final statsJugadorProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+  (ref, miembroId) => StatsRepo.jugador(miembroId),
+);
+
 /// Ficha de un jugador: totales y puntos por partido.
 class FichaScreen extends ConsumerWidget {
   const FichaScreen({super.key, required this.miembroId, this.conAppBar = true});
@@ -60,6 +64,10 @@ class FichaScreen extends ConsumerWidget {
             _Dato('% victorias', rend.pctVictorias == null ? '—' : '${rend.pctVictorias!.toStringAsFixed(0)} %'),
           ],
         ),
+      ...ref.watch(statsJugadorProvider(miembroId)).maybeWhen(
+            data: (e) => [const SizedBox(height: 16), _Extra(e, miembros: ref.watch(miembrosPorIdProvider(mi.liga.id)))],
+            orElse: () => const <Widget>[],
+          ),
       const SizedBox(height: 16),
       Text('Puntos por partido', style: Theme.of(context).textTheme.titleMedium),
       ...historial.when(
@@ -101,4 +109,89 @@ class _Dato extends StatelessWidget {
           Text(etiqueta, style: Theme.of(context).textTheme.bodySmall),
         ]),
       );
+}
+
+/// Forma, rachas, porcentaje de asistencia, compañeros y destacados.
+class _Extra extends StatelessWidget {
+  const _Extra(this.e, {required this.miembros});
+  final Map<String, dynamic> e;
+  final Map<String, Miembro> miembros;
+
+  String _nombre(dynamic m) => miembros[(m as Map)['miembro_id']]?.nombre ?? 'Alguien';
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final forma = (e['forma'] as String?) ?? '';
+    final destacados = Map<String, dynamic>.from((e['destacados'] as Map?) ?? const {});
+    Color colorForma(String c) => switch (c) { 'V' => Colors.green.shade600, 'D' => cs.error, _ => cs.outline };
+    final filas = <Widget>[
+      if (e['mejor_companero'] != null)
+        ListTile(
+          dense: true,
+          leading: const Icon(Icons.handshake_outlined),
+          title: Text('Mejor pareja: ${_nombre(e['mejor_companero'])}'),
+          subtitle: Text('${e['mejor_companero']['pct_victorias']} % de victorias juntos '
+              '(${e['mejor_companero']['partidos']} partidos)'),
+        ),
+      if (e['mas_juega_con'] != null)
+        ListTile(
+          dense: true,
+          leading: const Icon(Icons.groups_outlined),
+          title: Text('Más partidos con: ${_nombre(e['mas_juega_con'])}'),
+          subtitle: Text('${e['mas_juega_con']['partidos']} partidos en el mismo equipo'),
+        ),
+      if (e['bestia_negra'] != null)
+        ListTile(
+          dense: true,
+          leading: const Icon(Icons.sentiment_dissatisfied_outlined),
+          title: Text('Bestia negra: ${_nombre(e['bestia_negra'])}'),
+          subtitle: Text('Pierde el ${e['bestia_negra']['pct_derrotas']} % cuando le tiene enfrente'),
+        ),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Forma y rachas', style: t.titleMedium),
+      const SizedBox(height: 8),
+      Row(children: [
+        for (final c in forma.split(''))
+          Container(
+            margin: const EdgeInsets.only(right: 6),
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: colorForma(c), borderRadius: BorderRadius.circular(8)),
+            child: Text(c, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        if (forma.isEmpty) const Text('Sin partidos todavía'),
+        const Spacer(),
+        if (e['asistencia_pct'] != null) Text('Asistencia ${e['asistencia_pct']} %', style: t.bodySmall),
+      ]),
+      const SizedBox(height: 8),
+      GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        childAspectRatio: 1.4,
+        children: [
+          _Dato('Invicto ahora', '${e['racha_invicto_actual'] ?? 0}'),
+          _Dato('Mejor racha invicto', '${e['racha_invicto_max'] ?? 0}'),
+          _Dato('Victorias seguidas', '${e['racha_victorias_max'] ?? 0}'),
+          _Dato('Porterías a cero', '${e['porterias_cero'] ?? 0}'),
+          _Dato('Encajados/partido', '${e['goles_encajados_partido'] ?? '—'}'),
+          _Dato('Votos MVP', '${e['votos_mvp'] ?? 0}'),
+        ],
+      ),
+      if (destacados.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Text('Destacó en', style: t.titleSmall),
+        const SizedBox(height: 4),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          for (final d in destacados.entries)
+            Chip(label: Text('${nombresAspectos[d.key] ?? d.key} ×${d.value}'), visualDensity: VisualDensity.compact),
+        ]),
+      ],
+      if (filas.isNotEmpty) ...[const SizedBox(height: 8), ...filas],
+    ]);
+  }
 }

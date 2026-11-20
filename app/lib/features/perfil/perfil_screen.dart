@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/anuncios.dart';
 import '../../core/liga_activa.dart';
 import '../../core/push.dart';
 import '../../core/supabase.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show SignOutScope;
 import '../../core/tema.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
@@ -111,8 +113,69 @@ class PerfilScreen extends ConsumerWidget {
             await sb.auth.signOut();
           },
         ),
+        ListTile(
+          leading: const Icon(Icons.policy_outlined),
+          title: const Text('Política de privacidad'),
+          onTap: () => launchUrl(Uri.parse(urlPrivacidad), mode: LaunchMode.externalApplication),
+        ),
+        ListTile(
+          leading: Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
+          title: Text('Eliminar mi cuenta', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          onTap: () => _eliminarCuenta(context, ref),
+        ),
         const SizedBox(height: 24),
       ]),
     );
   }
+}
+
+const urlPrivacidad = 'https://davidvives90.github.io/futbol-fantasy/web/privacidad.html';
+
+Future<void> _eliminarCuenta(BuildContext context, WidgetRef ref) async {
+  final ctrl = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: const Text('Eliminar mi cuenta'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Se borrarán tu perfil, tu foto y tu acceso. Tus partidos se conservan como «Exjugador» '
+              'para no alterar las clasificaciones de tus compañeros. No se puede deshacer.'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: ctrl,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(labelText: 'Escribe ELIMINAR para confirmar'),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            onPressed: ctrl.text.trim() == 'ELIMINAR' ? () => Navigator.pop(ctx, true) : null,
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final uid = sb.auth.currentUser?.id;
+  await ejecutar(context, () async {
+    // primero la foto (el almacenamiento no se puede borrar desde SQL); si falla, seguimos
+    if (uid != null) {
+      try {
+        final fotos = await sb.storage.from('avatares').list(path: uid);
+        if (fotos.isNotEmpty) await sb.storage.from('avatares').remove([for (final f in fotos) '$uid/${f.name}']);
+      } catch (_) {}
+    }
+    await sb.rpc('eliminar_mi_cuenta', params: {'p_confirmacion': 'ELIMINAR'});
+    await ref.read(ligaActivaIdProvider.notifier).elegir(null);
+    try {
+      await Push.desactivar();
+    } catch (_) {}
+    try {
+      await sb.auth.signOut(scope: SignOutScope.local);
+    } catch (_) {}
+  });
 }
