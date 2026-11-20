@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
@@ -152,7 +153,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
             label: Text(mostrar == null ? 'Generar equipos' : 'Volver a generar'),
           ),
           if (_opciones.length > 1)
-            OutlinedButton.icon(onPressed: _otraOpcion, icon: const Icon(Icons.shuffle), label: const Text('Otra opción')),
+            OutlinedButton.icon(onPressed: _otraOpcion, icon: const Icon(Icons.shuffle), label: const Tx('Otra opción')),
         ]),
       if (mostrar == null)
         const Padding(
@@ -173,14 +174,14 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
           ),
         if (editable && _equipos != null) ...[
           const SizedBox(height: 8),
-          const Text('Toca un jugador para moverlo a otro equipo.'),
+          const Tx('Toca un jugador para moverlo a otro equipo.'),
           const SizedBox(height: 12),
-          FilledButton(onPressed: _guardando ? null : _confirmar, child: const Text('Confirmar equipos')),
+          FilledButton(onPressed: _guardando ? null : _confirmar, child: const Tx('Confirmar equipos')),
         ],
         if (editable && _equipos == null && hayGuardados)
           TextButton(
             onPressed: () => setState(() => _equipos = [for (final e in guardados) [...e]]),
-            child: const Text('Ajustar a mano'),
+            child: const Tx('Ajustar a mano'),
           ),
       ],
     ]);

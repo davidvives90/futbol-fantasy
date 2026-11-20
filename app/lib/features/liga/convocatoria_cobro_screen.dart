@@ -91,7 +91,7 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           contentPadding: EdgeInsets.zero,
           value: _apertura,
           onChanged: (v) => setState(() => _apertura = v),
-          title: const Text('Convocatoria vacía hasta que se abre'),
+          title: const Tx('Convocatoria vacía hasta que se abre'),
           subtitle: Text(_apertura
               ? 'Se abre después del partido anterior y todos, también los fijos, pulsan «Voy».'
               : 'Clásica: los fijos entran solos en cada partido nada más crearlo.'),
@@ -131,7 +131,7 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           value: 'prioridad',
           groupValue: _ordenEspera,
           onChanged: (v) => setState(() => _ordenEspera = v!),
-          title: const Text('Por prioridad'),
+          title: const Tx('Por prioridad'),
           subtitle: const Text('Primero los fijos que vuelven, luego reservas y después invitados; '
               'dentro de cada grupo, por orden de apuntarse.'),
         ),
@@ -139,8 +139,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           value: 'anotacion',
           groupValue: _ordenEspera,
           onChanged: (v) => setState(() => _ordenEspera = v!),
-          title: const Text('Por orden de apuntarse'),
-          subtitle: const Text('El primero que se apunta a la espera, el primero que entra.'),
+          title: const Tx('Por orden de apuntarse'),
+          subtitle: const Tx('El primero que se apunta a la espera, el primero que entra.'),
         ),
         const Divider(height: 32),
         Text('Cobro', style: t.titleMedium),
@@ -148,14 +148,14 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           value: 'por_partido',
           groupValue: _modoCobro,
           onChanged: (v) => setState(() => _modoCobro = v!),
-          title: const Text('Por partido'),
-          subtitle: const Text('El coste de cada partido se reparte entre los que juegan ese día.'),
+          title: const Tx('Por partido'),
+          subtitle: const Tx('El coste de cada partido se reparte entre los que juegan ese día.'),
         ),
         RadioListTile<String>(
           value: 'factura_mensual',
           groupValue: _modoCobro,
           onChanged: (v) => setState(() => _modoCobro = v!),
-          title: const Text('Factura mensual'),
+          title: const Tx('Factura mensual'),
           subtitle: const Text('Reservas e invitados pagan su precio al jugar. Al llegar la factura del mes, '
               'se resta lo que pagaron y el resto se reparte entre los fijos según los partidos que jugó cada uno.'),
         ),
@@ -175,7 +175,7 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
             child: TextField(
               controller: _precio,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Precio por partido', suffixText: '€'),
+              decoration:  InputDecoration(labelText: tr('Precio por partido'), suffixText: '€'),
             ),
           ),
         const SizedBox(height: 24),
@@ -185,23 +185,23 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
           child: TextField(
             controller: _bizum,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Teléfono para Bizum (opcional)',
-              helperText: 'Los jugadores verán «Pagar con Bizum» con este número, el importe y el concepto',
+            decoration:  InputDecoration(
+              labelText: tr('Teléfono para Bizum (opcional)'),
+              helperText: tr('Los jugadores verán «Pagar con Bizum» con este número, el importe y el concepto'),
             ),
           ),
         ),
         const SizedBox(height: 16),
         ListTile(
-          title: const Text('Recordatorio automático a los que deben'),
-          subtitle: const Text('Aviso con el importe que debe cada uno (entre las 10:00 y las 21:00)'),
+          title: const Tx('Recordatorio automático a los que deben'),
+          subtitle: const Tx('Aviso con el importe que debe cada uno (entre las 10:00 y las 21:00)'),
           trailing: DropdownButton<String>(
             value: _recordatorio,
             items: const [
-              DropdownMenuItem(value: 'nunca', child: Text('Nunca')),
-              DropdownMenuItem(value: 'semanal', child: Text('Semanal')),
-              DropdownMenuItem(value: 'mensual', child: Text('Mensual')),
-              DropdownMenuItem(value: 'trimestral', child: Text('Trimestral')),
+              DropdownMenuItem(value: 'nunca', child: Tx('Nunca')),
+              DropdownMenuItem(value: 'semanal', child: Tx('Semanal')),
+              DropdownMenuItem(value: 'mensual', child: Tx('Mensual')),
+              DropdownMenuItem(value: 'trimestral', child: Tx('Trimestral')),
             ],
             onChanged: (v) => setState(() => _recordatorio = v ?? _recordatorio),
           ),

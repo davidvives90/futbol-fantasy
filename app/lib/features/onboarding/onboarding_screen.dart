@@ -24,26 +24,26 @@ class OnboardingScreen extends ConsumerWidget {
         title: const Tx('Fútbol Fantasy'),
         actions: [
           IconButton(
-            tooltip: 'Actualizar',
+            tooltip: tr('Actualizar'),
             icon: const Icon(Icons.refresh),
             onPressed: () {
               refrescarLigas(ref);
               ref.invalidate(_solicitudesProvider);
             },
           ),
-          IconButton(tooltip: 'Cerrar sesión', icon: const Icon(Icons.logout), onPressed: () => sb.auth.signOut()),
+          IconButton(tooltip: tr('Cerrar sesión'), icon: const Icon(Icons.logout), onPressed: () => sb.auth.signOut()),
         ],
       ),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Text('¡Hola, $nombre!', style: t.headlineSmall),
         const SizedBox(height: 4),
-        const Text('Para empezar, crea tu liga o únete a la de tus amigos.'),
+        const Tx('Para empezar, crea tu liga o únete a la de tus amigos.'),
         if (solicitudes.isNotEmpty) ...[
           const SizedBox(height: 16),
           Card(
             child: ListTile(
               leading: const Icon(Icons.hourglass_top),
-              title: const Text('Solicitudes pendientes'),
+              title: const Tx('Solicitudes pendientes'),
               subtitle: Text('Esperando aprobación en: ${solicitudes.join(', ')}'),
             ),
           ),

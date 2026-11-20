@@ -26,7 +26,7 @@ class CampanaAvisos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final n = ref.watch(noLeidasProvider);
     return IconButton(
-      tooltip: 'Avisos',
+      tooltip: tr('Avisos'),
       onPressed: () => context.push('/avisos'),
       icon: Badge(
         isLabelVisible: n > 0,
@@ -70,7 +70,7 @@ class NotificacionesScreen extends ConsumerWidget {
           if (hayNoLeidas)
             TextButton(
               onPressed: () => ejecutar(context, () => NotificacionesRepo.marcarLeidas()),
-              child: const Text('Marcar todo leído'),
+              child: const Tx('Marcar todo leído'),
             ),
         ],
       ),

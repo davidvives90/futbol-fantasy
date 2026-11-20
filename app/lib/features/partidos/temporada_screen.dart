@@ -13,8 +13,8 @@ final temporadasProvider = FutureProvider.autoDispose.family<List<Temporada>, St
   (ref, ligaId) => PartidosRepo.temporadas(ligaId),
 );
 
-final _fmtDia = DateFormat("EEE d MMM yyyy", 'es');
-final _fmtMes = DateFormat("MMM yyyy", 'es');
+DateFormat get _fmtDia => DateFormat("EEE d MMM yyyy", idiomaActual);
+DateFormat get _fmtMes => DateFormat("MMM yyyy", idiomaActual);
 
 /// Programar los partidos de una temporada (v0.3): p. ej. todos los lunes a las 21:00 de septiembre a junio.
 class TemporadaScreen extends ConsumerStatefulWidget {
@@ -155,7 +155,7 @@ class _TemporadaScreenState extends ConsumerState<TemporadaScreen> {
       body: ListView(padding: const EdgeInsets.all(16), children: [
         TextField(
           controller: _nombre,
-          decoration: const InputDecoration(labelText: 'Nombre (opcional)', hintText: 'Temporada 2026-27'),
+          decoration:  InputDecoration(labelText: tr('Nombre (opcional)'), hintText: 'Temporada 2026-27'),
         ),
         const SizedBox(height: 12),
         Row(children: [
@@ -210,7 +210,7 @@ class _TemporadaScreenState extends ConsumerState<TemporadaScreen> {
           controller: _coste,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: 'Coste por partido',
+            labelText: tr('Coste por partido'),
             suffixText: '€',
             helperText: mi.liga.facturaMensual ? 'Con factura mensual puedes dejarlo en 0.' : null,
           ),
@@ -246,7 +246,7 @@ class _TemporadaScreenState extends ConsumerState<TemporadaScreen> {
           loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
           error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(temporadasProvider(mi.liga.id))),
           data: (lista) => lista.isEmpty
-              ? const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('Aún no hay ninguna.'))
+              ? const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Tx('Aún no hay ninguna.'))
               : Column(children: [
                   for (final tp in lista)
                     ListTile(
@@ -260,7 +260,7 @@ class _TemporadaScreenState extends ConsumerState<TemporadaScreen> {
                       ),
                       trailing: TextButton(
                         style: AppButtons.peligroTexto(context),
-                        child: const Text('Cancelar futuros'),
+                        child: const Tx('Cancelar futuros'),
                         onPressed: () async {
                           if (!await confirmar(
                             context,

@@ -1,3 +1,4 @@
+import '../../core/idioma.dart';
 import '../../core/supabase.dart';
 
 /// Una regla del reglamento con su valor en la liga (RPC reglamento_liga).
@@ -7,8 +8,8 @@ class ReglaJuego {
 
   String get clave => m['clave'] as String;
   String get grupo => m['grupo'] as String;
-  String get titulo => m['titulo'] as String;
-  String? get descripcion => m['descripcion'] as String?;
+  String get titulo => tr(m['titulo'] as String);
+  String? get descripcion => m['descripcion'] == null ? null : tr(m['descripcion'] as String);
   String get tipo => m['tipo'] as String; // si_no | opcion | numero
   String? get unidad => m['unidad'] as String?;
   int get minimo => (m['minimo'] as num?)?.toInt() ?? 0;
@@ -17,7 +18,7 @@ class ReglaJuego {
   bool get personalizada => (m['personalizada'] ?? false) as bool;
   List<({String valor, String texto})> get opciones => [
         for (final o in (m['opciones'] as List?) ?? const [])
-          (valor: (o as Map)['valor'] as String, texto: o['texto'] as String),
+          (valor: (o as Map)['valor'] as String, texto: tr(o['texto'] as String)),
       ];
 
   /// Texto de un valor cualquiera de esta regla («Sí», «Con la mano», «25 min»…).
@@ -25,7 +26,7 @@ class ReglaJuego {
     if (v == null) return '—';
     switch (tipo) {
       case 'si_no':
-        return v == true ? 'Sí' : 'No';
+        return tr(v == true ? 'Sí' : 'No');
       case 'numero':
         return '$v${unidad == null ? '' : ' $unidad'}';
       default:
@@ -47,8 +48,8 @@ class Votacion {
   Votacion(this.m);
   final Map<String, dynamic> m;
   String get id => m['id'] as String;
-  String get titulo => m['titulo'] as String;
-  String? get descripcion => m['descripcion'] as String?;
+  String get titulo => tr(m['titulo'] as String);
+  String? get descripcion => m['descripcion'] == null ? null : tr(m['descripcion'] as String);
   List<String> get opciones => [for (final o in (m['opciones'] as List)) o as String];
   String? get reglaClave => m['regla_clave'] as String?;
   bool get anonima => (m['anonima'] ?? true) as bool;

@@ -24,7 +24,7 @@ class ReglasScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Puntuación'),
+          title: const Tx('Puntuación'),
           bottom: const TabBar(tabs: [Tab(text: 'Reglas'), Tab(text: 'Aspectos')]),
         ),
         body: TabBarView(children: [
@@ -53,7 +53,7 @@ class _Reglas extends ConsumerWidget {
           controller: ctrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-          decoration: const InputDecoration(labelText: 'Puntos', helperText: 'Puede ser negativo'),
+          decoration:  InputDecoration(labelText: tr('Puntos'), helperText: tr('Puede ser negativo')),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
@@ -119,8 +119,8 @@ class _Aspectos extends ConsumerWidget {
     final nombre = await showDialog<String>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Nuevo aspecto'),
-        content: TextField(controller: ctrl, autofocus: true, decoration: const InputDecoration(labelText: 'Nombre')),
+        title: const Tx('Nuevo aspecto'),
+        content: TextField(controller: ctrl, autofocus: true, decoration:  InputDecoration(labelText: tr('Nombre'))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
           FilledButton(onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: const Tx('Añadir')),
@@ -148,7 +148,7 @@ class _Aspectos extends ConsumerWidget {
     final aspectos = ref.watch(_aspectosProvider(ligaId));
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Añadir aspecto',
+        tooltip: tr('Añadir aspecto'),
         onPressed: () => _nuevo(context, ref, (aspectos.valueOrNull?.length ?? 0) + 1),
         child: const Icon(Icons.add),
       ),
@@ -195,13 +195,13 @@ class _ModoValoracion extends ConsumerWidget {
     final detallada = mi.liga.valoracionDetallada;
     if (!mi.liga.valoracionAvanzada) {
       return const ListTile(
-        title: Text('Valoración'),
+        title: Tx('Valoración'),
         subtitle: Text('Simple: nota del 1 al 5 por compañero y estrella MVP. Para la valoración por aspectos, '
             'activa «Post-partido avanzado» en Ajustes de la liga.'),
       );
     }
     return SwitchListTile(
-      title: const Text('Valoración detallada'),
+      title: const Tx('Valoración detallada'),
       subtitle: Text(detallada
           ? 'Cada compañero se puntúa del 1 al 5 en cada aspecto (más lento).'
           : 'Rápida: una nota del 1 al 5 por compañero (3 = normal), «Destacó en…» y voto MVP. ~1 minuto.'),

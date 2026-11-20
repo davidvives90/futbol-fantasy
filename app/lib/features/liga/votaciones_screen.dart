@@ -39,13 +39,13 @@ class VotacionesScreen extends ConsumerWidget {
                       ListTile(
                         leading: const Icon(Icons.how_to_vote_outlined),
                         title: const Tx('Votación'),
-                        subtitle: const Text('Una pregunta, cada uno elige una opción'),
+                        subtitle: const Tx('Una pregunta, cada uno elige una opción'),
                         onTap: () => Navigator.pop(c, 'votacion'),
                       ),
                       ListTile(
                         leading: const Icon(Icons.event_note_outlined),
                         title: const Tx('Encuesta de día y hora'),
-                        subtitle: const Text('Propón fechas; cada uno marca todas las que le van bien'),
+                        subtitle: const Tx('Propón fechas; cada uno marca todas las que le van bien'),
                         onTap: () => Navigator.pop(c, 'fechas'),
                       ),
                     ]),
@@ -266,8 +266,8 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text(regla == null ? 'Nueva votación' : 'Votar: ${regla.titulo}', style: Theme.of(ctx).textTheme.titleLarge),
             const SizedBox(height: 12),
-            TextField(controller: titulo, maxLength: 140, decoration: const InputDecoration(labelText: 'Pregunta')),
-            TextField(controller: descripcion, maxLines: 3, minLines: 1, decoration: const InputDecoration(labelText: 'Detalle (opcional)')),
+            TextField(controller: titulo, maxLength: 140, decoration:  InputDecoration(labelText: tr('Pregunta'))),
+            TextField(controller: descripcion, maxLines: 3, minLines: 1, decoration:  InputDecoration(labelText: tr('Detalle (opcional)'))),
             const SizedBox(height: 12),
             Tx('Opciones', style: Theme.of(ctx).textTheme.labelLarge),
             if (regla != null)
@@ -276,7 +276,7 @@ Future<void> nuevaVotacion(BuildContext context, WidgetRef ref, MiLiga mi, {Regl
                   dense: true,
                   leading: const Icon(Icons.radio_button_unchecked, size: 18),
                   title: Text(regla.texto(v)),
-                  trailing: v == regla.valor ? const Text('actual') : null,
+                  trailing: v == regla.valor ? const Tx('actual') : null,
                 )
             else ...[
               for (var i = 0; i < opciones.length; i++)
@@ -368,7 +368,7 @@ Future<void> nuevaEncuestaFechas(BuildContext context, WidgetRef ref, MiLiga mi)
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Tx('Encuesta de día y hora', style: Theme.of(ctx).textTheme.titleLarge),
             const SizedBox(height: 8),
-            TextField(controller: titulo, maxLength: 140, decoration: const InputDecoration(labelText: 'Pregunta')),
+            TextField(controller: titulo, maxLength: 140, decoration:  InputDecoration(labelText: tr('Pregunta'))),
             Text('Opciones (${fechas.length}/6)', style: Theme.of(ctx).textTheme.labelLarge),
             for (var i = 0; i < fechas.length; i++)
               ListTile(

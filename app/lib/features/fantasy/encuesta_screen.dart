@@ -168,7 +168,7 @@ class _EncuestaScreenState extends ConsumerState<EncuestaScreen> {
           padding: const EdgeInsets.all(12),
           child: Row(children: [
             if (_paso > 0)
-              TextButton(onPressed: () => setState(() => _paso--), child: const Text('Anterior')),
+              TextButton(onPressed: () => setState(() => _paso--), child: const Tx('Anterior')),
             const Spacer(),
             if (_hechos.contains(a)) const Padding(padding: EdgeInsets.only(right: 8), child: Icon(Icons.check)),
             FilledButton(

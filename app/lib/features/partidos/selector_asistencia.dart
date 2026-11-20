@@ -15,12 +15,12 @@ class SelectorAsistencia extends StatelessWidget {
   final MiLiga mi;
   final EstadoInscripcion? actual;
 
-  static String _texto(EstadoInscripcion e) => switch (e) {
+  static String _texto(EstadoInscripcion e) => tr(switch (e) {
         EstadoInscripcion.confirmado => 'Te has apuntado',
         EstadoInscripcion.duda => 'Marcado como «Duda»',
         EstadoInscripcion.baja => 'Te has dado de baja',
         EstadoInscripcion.espera => 'Estás en lista de espera',
-      };
+      });
 
   @override
   Widget build(BuildContext context) {

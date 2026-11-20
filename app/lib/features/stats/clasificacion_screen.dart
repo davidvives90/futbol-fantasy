@@ -69,7 +69,7 @@ class ClasificacionScreen extends ConsumerWidget {
         appBar: LigaAppBar(
           actions: [
             IconButton(
-              tooltip: 'Palmarés y temporadas',
+              tooltip: tr('Palmarés y temporadas'),
               icon: const Icon(Icons.emoji_events_outlined),
               onPressed: () => context.push('/palmares'),
             ),

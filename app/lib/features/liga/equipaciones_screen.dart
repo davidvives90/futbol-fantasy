@@ -85,9 +85,9 @@ class _EquipacionesScreenState extends ConsumerState<EquipacionesScreen> {
                 TextField(
                   controller: _nombres[i],
                   maxLength: 20,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre que verá todo el mundo',
-                    helperText: 'Ej.: «Blancos», «De color», «Petos naranjas»',
+                  decoration:  InputDecoration(
+                    labelText: tr('Nombre que verá todo el mundo'),
+                    helperText: tr('Ej.: «Blancos», «De color», «Petos naranjas»'),
                     counterText: '',
                   ),
                 ),

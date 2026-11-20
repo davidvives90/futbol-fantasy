@@ -129,7 +129,7 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
             ),
           ListTile(
             leading: const Icon(Icons.remove_circle_outline),
-            title: const Text('Quitar de la alineación'),
+            title: const Tx('Quitar de la alineación'),
             onTap: () => Navigator.pop(c, 'quitar'),
           ),
         ]),
@@ -262,7 +262,7 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
                 style: t.labelLarge),
             const SizedBox(height: 6),
             if (widget.plantilla.isEmpty)
-              const Text('Ficha jugadores para poder alinearlos.')
+              const Tx('Ficha jugadores para poder alinearlos.')
             else
               Wrap(spacing: 8, runSpacing: 8, children: [
                 for (final j in widget.plantilla.where((j) => !s.containsKey(j.jugadorId)))

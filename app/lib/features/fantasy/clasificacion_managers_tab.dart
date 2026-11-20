@@ -122,7 +122,7 @@ class _DetalleManager extends ConsumerWidget {
             Text(miembros[managerId]?.nombre ?? 'Mánager', style: t.titleLarge),
             const SizedBox(height: 12),
             Tx('Plantilla', style: t.titleMedium),
-            if (d.plantilla.isEmpty) const Text('Sin jugadores.'),
+            if (d.plantilla.isEmpty) const Tx('Sin jugadores.'),
             for (final f in d.plantilla)
               ListTile(
                 dense: true,

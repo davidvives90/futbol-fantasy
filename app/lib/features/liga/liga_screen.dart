@@ -39,7 +39,7 @@ class LigaScreen extends ConsumerWidget {
     return Scaffold(
       appBar: LigaAppBar(actions: [
         if (mi.soyAdmin)
-          IconButton(tooltip: 'Ajustes de la liga', icon: const Icon(Icons.tune), onPressed: () => context.push('/liga/ajustes')),
+          IconButton(tooltip: tr('Ajustes de la liga'), icon: const Icon(Icons.tune), onPressed: () => context.push('/liga/ajustes')),
       ]),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -62,7 +62,7 @@ class LigaScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.how_to_vote_outlined),
                 title: const Tx('Votaciones'),
-                subtitle: const Text('Lo que se decide entre todos'),
+                subtitle: const Tx('Lo que se decide entre todos'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/votaciones'),
               ),
@@ -70,7 +70,7 @@ class LigaScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.event_busy_outlined),
                 title: const Tx('Asistencia y bajas'),
-                subtitle: const Text('Quién viene, quién falta y quién está lesionado'),
+                subtitle: const Tx('Quién viene, quién falta y quién está lesionado'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/asistencia'),
               ),
@@ -78,7 +78,7 @@ class LigaScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.menu_book_outlined),
                 title: const Tx('Guía y normas de la liga'),
-                subtitle: const Text('Lo acordado, cómo puntúa y cómo funciona el Fantasy'),
+                subtitle: const Tx('Lo acordado, cómo puntúa y cómo funciona el Fantasy'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/guia'),
               ),
@@ -141,7 +141,7 @@ class _Datos extends StatelessWidget {
               avatar: Icon(l.publica ? Icons.public : Icons.lock_outline, size: 18),
               label: Text(l.publica ? 'Pública' : 'Privada'),
             ),
-            if (l.fantasy.bonusRoles) const Chip(label: Text('Bonus por rol en la alineación')),
+            if (l.fantasy.bonusRoles) const Chip(label: Tx('Bonus por rol en la alineación')),
           ]),
           const SizedBox(height: 8),
           ListTile(
@@ -152,7 +152,7 @@ class _Datos extends StatelessWidget {
             trailing: l.campoMapsUrl == null
                 ? null
                 : IconButton(
-                    tooltip: 'Abrir en Google Maps',
+                    tooltip: tr('Abrir en Google Maps'),
                     icon: const Icon(Icons.map),
                     onPressed: () => abrirUrl(context, l.campoMapsUrl),
                   ),
@@ -172,7 +172,7 @@ class _Invitar extends ConsumerWidget {
     final nombres = await showDialog<List<String>>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Pre-crear jugadores'),
+        title: const Tx('Pre-crear jugadores'),
         content: TextField(
           controller: ctrl,
           minLines: 4,
@@ -204,8 +204,8 @@ class _Invitar extends ConsumerWidget {
         builder: (c) => SafeArea(
           child: ListView(shrinkWrap: true, children: [
             const ListTile(
-              title: Text('Envía a cada uno su enlace'),
-              subtitle: Text('Al registrarse con él heredará su ficha y su historial.'),
+              title: Tx('Envía a cada uno su enlace'),
+              subtitle: Tx('Al registrarse con él heredará su ficha y su historial.'),
             ),
             for (final f in filas)
               ListTile(
@@ -234,11 +234,11 @@ class _Invitar extends ConsumerWidget {
       child: Column(children: [
         ListTile(
           leading: const Icon(Icons.vpn_key_outlined),
-          title: const Text('Código de la liga'),
+          title: const Tx('Código de la liga'),
           subtitle: SelectableText(codigo, style: Theme.of(context).textTheme.titleLarge?.copyWith(letterSpacing: 4)),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             IconButton(
-              tooltip: 'Copiar',
+              tooltip: tr('Copiar'),
               icon: const Icon(Icons.copy),
               onPressed: () async {
                 await Clipboard.setData(ClipboardData(text: codigo));
@@ -246,7 +246,7 @@ class _Invitar extends ConsumerWidget {
               },
             ),
             IconButton(
-              tooltip: 'Compartir',
+              tooltip: tr('Compartir'),
               icon: const Icon(Icons.share),
               onPressed: () => Share.share(_textoInvitacion(mi.liga.nombre, null, codigo)),
             ),
@@ -265,12 +265,12 @@ class _Invitar extends ConsumerWidget {
                 await ejecutar(context, () => LigasRepo.regenerarCodigo(mi.liga.id), ok: 'Código regenerado');
                 refrescarLigas(ref);
               },
-              child: const Text('Regenerar código'),
+              child: const Tx('Regenerar código'),
             ),
             FilledButton.tonalIcon(
               onPressed: () => _precrear(context, ref),
               icon: const Icon(Icons.person_add_alt),
-              label: const Text('Pre-crear jugadores'),
+              label: const Tx('Pre-crear jugadores'),
             ),
           ]),
       ]),
@@ -360,7 +360,7 @@ class _Miembros extends ConsumerWidget {
             subtitle: Text([etiquetaPosicion(m.posicion), if (textoEdad(m) != null) textoEdad(m)!].join(' · ')),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(
-                tooltip: 'Rechazar',
+                tooltip: tr('Rechazar'),
                 icon: const Icon(Icons.close),
                 onPressed: () async {
                   await ejecutar(context, () => LigasRepo.aprobarSolicitud(m.id, false));
@@ -368,7 +368,7 @@ class _Miembros extends ConsumerWidget {
                 },
               ),
               IconButton(
-                tooltip: 'Aceptar',
+                tooltip: tr('Aceptar'),
                 icon: const Icon(Icons.check),
                 onPressed: () async {
                   await ejecutar(context, () => LigasRepo.aprobarSolicitud(m.id, true), ok: '${m.nombre} aceptado');
@@ -400,7 +400,7 @@ class _Miembros extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.warning_amber),
               title: Text('Hay $numFijos fijos y $plazasFijas plazas'),
-              subtitle: const Text('Los que no quepan quedarán en la lista de espera de cada partido.'),
+              subtitle: const Tx('Los que no quepan quedarán en la lista de espera de cada partido.'),
             ),
           ),
         ),
@@ -430,10 +430,10 @@ class _Miembros extends ConsumerWidget {
                       CheckedPopupMenuItem(value: 'rango_${r.name}', checked: m.rango == r, child: Text(r.etiqueta)),
                     if (m.id != mi.yo.id) ...[
                       const PopupMenuDivider(),
-                      if (!m.registrado) const PopupMenuItem(value: 'invitar', child: Text('Reenviar enlace')),
-                      if (m.registrado && !m.esAdmin) const PopupMenuItem(value: 'admin', child: Text('Nombrar administrador')),
-                      if (m.esAdmin) const PopupMenuItem(value: 'quitar_admin', child: Text('Quitar administrador')),
-                      const PopupMenuItem(value: 'expulsar', child: Text('Expulsar')),
+                      if (!m.registrado) const PopupMenuItem(value: 'invitar', child: Tx('Reenviar enlace')),
+                      if (m.registrado && !m.esAdmin) const PopupMenuItem(value: 'admin', child: Tx('Nombrar administrador')),
+                      if (m.esAdmin) const PopupMenuItem(value: 'quitar_admin', child: Tx('Quitar administrador')),
+                      const PopupMenuItem(value: 'expulsar', child: Tx('Expulsar')),
                     ],
                   ],
                 )

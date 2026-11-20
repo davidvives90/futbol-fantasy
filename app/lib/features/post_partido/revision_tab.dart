@@ -176,7 +176,7 @@ class RevisionTab extends ConsumerWidget {
             if (partido.estado == EstadoPartido.post_partido)
               FilledButton.tonalIcon(
                 icon: const Icon(Icons.compare_arrows),
-                label: const Text('Cerrar plazo y cruzar partes'),
+                label: const Tx('Cerrar plazo y cruzar partes'),
                 onPressed: () async {
                   await ejecutar(context, () => PartidosRepo.cerrarPostPartido(partido.id), ok: 'Partes cruzados');
                   _refrescar(ref);
@@ -204,7 +204,7 @@ class RevisionTab extends ConsumerWidget {
             if (pendientes.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('No hay disputas: los datos cuadran.'),
+                child: Tx('No hay disputas: los datos cuadran.'),
               ),
             for (final d in pendientes.where((d) => d.tipo == 'descuadre'))
               Card(
@@ -224,7 +224,7 @@ class RevisionTab extends ConsumerWidget {
                     const SizedBox(height: 8),
                     FilledButton.tonalIcon(
                       icon: const Icon(Icons.edit),
-                      label: const Text('Corregir datos'),
+                      label: const Tx('Corregir datos'),
                       onPressed: () => _corregirDescuadre(context, ref, d),
                     ),
                   ]),
@@ -242,7 +242,7 @@ class RevisionTab extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 4),
-                    const Text('Votos de los asistentes (toca el valor correcto):'),
+                    const Tx('Votos de los asistentes (toca el valor correcto):'),
                     const SizedBox(height: 8),
                     Wrap(spacing: 8, runSpacing: 8, children: [
                       for (final v in (d.valores.entries.toList()..sort((a, b) => b.value.compareTo(a.value))))
@@ -267,7 +267,7 @@ class RevisionTab extends ConsumerWidget {
             const SizedBox(height: 24),
             FilledButton.tonalIcon(
               icon: const Icon(Icons.emoji_events),
-              label: const Text('Cerrar partido y calcular puntos'),
+              label: const Tx('Cerrar partido y calcular puntos'),
               // Respaldo: al resolver la última disputa los puntos ya se calculan solos.
               onPressed: pendientes.isNotEmpty || encuentros.isEmpty || partido.estado != EstadoPartido.en_revision
                   ? null

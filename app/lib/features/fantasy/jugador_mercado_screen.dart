@@ -84,7 +84,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
             Chip(label: Text('${fila.fichasLibres}/${fila.fichasTotales} fichas libres')),
           if (enPlantilla != null && enPlantilla.propia)
             Chip(avatar: const Icon(Icons.gavel, size: 16), label: Text('Tu cláusula ${millones(enPlantilla.clausula)}')),
-          if (enPlantilla != null && enPlantilla.cedidaAMi) const Chip(label: Text('Cedido a ti esta jornada')),
+          if (enPlantilla != null && enPlantilla.cedidaAMi) const Chip(label: Tx('Cedido a ti esta jornada')),
         ]),
         const SizedBox(height: 16),
         Row(children: [Text('Valoración de la liga', style: t.titleMedium), const InfoBoton(Ayuda.valorMercado)]),
@@ -92,7 +92,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
           loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
           error: (e, _) => Text(mensajeError(e)),
           data: (v) => v == null
-              ? const Padding(padding: EdgeInsets.all(8), child: Text('Todavía no ha sido valorado en una encuesta.'))
+              ? const Padding(padding: EdgeInsets.all(8), child: Tx('Todavía no ha sido valorado en una encuesta.'))
               : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   for (final a in Atributo.values) BarraAtributo(etiqueta: a.etiqueta, valor: v.atributos[a]),
                   const Divider(),
@@ -136,7 +136,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
                   },
           )
         else if (fila != null) ...[
-          Row(children: [Text('Fichas', style: t.titleMedium), const InfoBoton(Ayuda.fichas)]),
+          Row(children: [Tx('Fichas', style: t.titleMedium), const InfoBoton(Ayuda.fichas)]),
           Text(
             '${fila.fichasLibres} libres de ${fila.fichasTotales}. '
             '${fila.hayLibres ? 'Puedes comprar una al precio de mercado.' : 'Están todas cogidas: paga la cláusula de un dueño o hazle una oferta.'}',
@@ -177,7 +177,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
         if (miembroId == mi.yo.id && (enPlantilla == null || !enPlantilla.propia) && fila != null)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: Text('Sí, puedes ficharte a ti mismo.'),
+            child: Tx('Sí, puedes ficharte a ti mismo.'),
           ),
       ]),
     );

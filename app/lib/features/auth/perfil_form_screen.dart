@@ -155,7 +155,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
           if (widget.inicial)
             const Padding(
               padding: EdgeInsets.only(bottom: 16),
-              child: Text('Así te verán tus compañeros en las convocatorias y en la clasificación.'),
+              child: Tx('Así te verán tus compañeros en las convocatorias y en la clasificación.'),
             ),
           Center(
             child: Stack(children: [
@@ -171,7 +171,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
                 right: 0,
                 bottom: 0,
                 child: IconButton.filled(
-                  tooltip: 'Cambiar foto',
+                  tooltip: tr('Cambiar foto'),
                   onPressed: _subiendo ? null : _cambiarFoto,
                   icon: const Icon(Icons.photo_camera_outlined),
                 ),
@@ -186,21 +186,21 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _nombre,
-            decoration: const InputDecoration(labelText: 'Nombre y apellido'),
+            decoration:  InputDecoration(labelText: tr('Nombre y apellido')),
             textCapitalization: TextCapitalization.words,
             validator: (v) => (v == null || v.trim().length < 2) ? 'Obligatorio' : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _apodo,
-            decoration: const InputDecoration(labelText: 'Apodo (opcional)', helperText: 'Se muestra en lugar del nombre'),
+            decoration:  InputDecoration(labelText: tr('Apodo (opcional)'), helperText: tr('Se muestra en lugar del nombre')),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _posicion,
-            decoration: const InputDecoration(
-              labelText: 'Posición preferida',
-              helperText: 'Solo informativa: no cambia tus puntos (todos rotáis, también en la portería)',
+            decoration:  InputDecoration(
+              labelText: tr('Posición preferida'),
+              helperText: tr('Solo informativa: no cambia tus puntos (todos rotáis, también en la portería)'),
             ),
             items: [for (final p in posiciones) DropdownMenuItem(value: p, child: Text(etiquetaPosicion(p)))],
             onChanged: (v) => setState(() => _posicion = v),
@@ -211,9 +211,9 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
             borderRadius: BorderRadius.circular(12),
             onTap: _elegirNacimiento,
             child: InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Fecha de nacimiento',
-                helperText: 'Tus compañeros solo verán tu edad',
+              decoration:  InputDecoration(
+                labelText: tr('Fecha de nacimiento'),
+                helperText: tr('Tus compañeros solo verán tu edad'),
                 suffixIcon: Icon(Icons.cake_outlined),
               ),
               isEmpty: _nacimiento == null,
@@ -227,7 +227,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
           TextFormField(
             controller: _telefono,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: 'Teléfono (opcional)'),
+            decoration:  InputDecoration(labelText: tr('Teléfono (opcional)')),
           ),
           const SizedBox(height: 24),
           FilledButton(onPressed: _guardando ? null : _guardar, child: const Tx('Guardar')),

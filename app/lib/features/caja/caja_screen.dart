@@ -66,12 +66,12 @@ class _Pagar extends ConsumerWidget {
         builder: (c, setD) => AlertDialog(
           title: const Tx('Ya he pagado'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('El administrador recibirá un aviso para confirmarlo; cuando lo haga, quedará apuntado.'),
+            const Tx('El administrador recibirá un aviso para confirmarlo; cuando lo haga, quedará apuntado.'),
             const SizedBox(height: 12),
             TextField(
               controller: importe,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Importe', suffixText: '€'),
+              decoration:  InputDecoration(labelText: tr('Importe'), suffixText: '€'),
             ),
             const SizedBox(height: 12),
             Wrap(spacing: 6, children: [
@@ -104,13 +104,13 @@ class _Pagar extends ConsumerWidget {
       builder: (c) => AlertDialog(
         title: const Tx('Pagar con Bizum'),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Abre la app de tu banco › Bizum › Enviar dinero, y usa estos datos:'),
+          const Tx('Abre la app de tu banco › Bizum › Enviar dinero, y usa estos datos:'),
           const SizedBox(height: 12),
           _DatoCopiable('Teléfono', tel),
           _DatoCopiable('Importe', '${deuda.toStringAsFixed(2).replaceAll('.', ',')} €'),
           _DatoCopiable('Concepto', texto),
           const SizedBox(height: 8),
-          const Text('Cuando lo hayas enviado, pulsa «Ya he pagado».'),
+          const Tx('Cuando lo hayas enviado, pulsa «Ya he pagado».'),
         ]),
         actions: [FilledButton(onPressed: () => Navigator.pop(c), child: const Tx('Entendido'))],
       ),
@@ -168,7 +168,7 @@ class _DatoCopiable extends StatelessWidget {
         title: Text(etiqueta),
         subtitle: Text(valor, style: Theme.of(context).textTheme.titleMedium),
         trailing: IconButton(
-          tooltip: 'Copiar',
+          tooltip: tr('Copiar'),
           icon: const Icon(Icons.copy, size: 20),
           onPressed: () {
             Clipboard.setData(ClipboardData(text: valor));
@@ -198,7 +198,7 @@ class _MiSaldo extends ConsumerWidget {
       child: ListView(children: [
         const SizedBox(height: 24),
         Center(child: Text(euros(saldo), style: AppTheme.numero(context, size: 40, color: color))),
-        Center(child: Text(saldo < 0 ? 'Debes a la caja' : (saldo > 0 ? 'A tu favor' : 'Estás al día'))),
+        Center(child: Text(tr(saldo < 0 ? 'Debes a la caja' : (saldo > 0 ? 'A tu favor' : 'Estás al día')))),
         if (saldo < -0.005) _Pagar(mi: mi, deuda: -saldo),
         const SizedBox(height: 24),
         const Divider(),
@@ -250,13 +250,13 @@ class _Deudores extends ConsumerWidget {
               controller: importe,
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               decoration: InputDecoration(
-                labelText: 'Importe',
+                labelText: tr('Importe'),
                 suffixText: '€',
                 helperText: tipo == 'ajuste' ? 'Negativo = cargo, positivo = abono' : null,
               ),
             ),
             const SizedBox(height: 12),
-            TextField(controller: concepto, decoration: const InputDecoration(labelText: 'Concepto')),
+            TextField(controller: concepto, decoration:  InputDecoration(labelText: tr('Concepto'))),
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
@@ -377,15 +377,15 @@ class _Facturas extends ConsumerWidget {
               TextField(
                 controller: importe,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Importe total', suffixText: '€'),
+                decoration:  InputDecoration(labelText: tr('Importe total'), suffixText: '€'),
               ),
               const SizedBox(height: 12),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: mensual,
                 onChanged: (v) => setD(() => mensual = v),
-                title: const Text('Factura de un periodo'),
-                subtitle: const Text('Se reparte entre los fijos según los partidos jugados'),
+                title: const Tx('Factura de un periodo'),
+                subtitle: const Tx('Se reparte entre los fijos según los partidos jugados'),
               ),
               if (mensual)
                 OutlinedButton.icon(
@@ -408,12 +408,12 @@ class _Facturas extends ConsumerWidget {
                   },
                 ),
               const SizedBox(height: 12),
-              TextField(controller: notas, decoration: const InputDecoration(labelText: 'Notas (opcional)')),
+              TextField(controller: notas, decoration:  InputDecoration(labelText: tr('Notas (opcional)'))),
             ]),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Subir')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Subir')),
           ],
         ),
       ),
@@ -457,7 +457,7 @@ class _Facturas extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Liquidar factura'),
+        title: const Tx('Liquidar factura'),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView(shrinkWrap: true, children: [
@@ -472,12 +472,12 @@ class _Facturas extends ConsumerWidget {
                 '${miembros[cg.miembroId]?.nombre ?? '…'} · ${cg.partidos} partido${cg.partidos == 1 ? '' : 's'}',
                 euros(cg.importe),
               ),
-            if (cargos.isEmpty) const Text('No hay partidos de fijos en ese periodo: no se cargará nada.'),
+            if (cargos.isEmpty) const Tx('No hay partidos de fijos en ese periodo: no se cargará nada.'),
           ]),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
-          FilledButton(onPressed: cargos.isEmpty ? null : () => Navigator.pop(c, true), child: const Text('Cargar a los fijos')),
+          FilledButton(onPressed: cargos.isEmpty ? null : () => Navigator.pop(c, true), child: const Tx('Cargar a los fijos')),
         ],
       ),
     );
@@ -533,7 +533,7 @@ class _Facturas extends ConsumerWidget {
                           child: FilledButton.tonal(
                             style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
                             onPressed: () => _liquidar(context, ref, f),
-                            child: const Text('Liquidar'),
+                            child: const Tx('Liquidar'),
                           ),
                         ),
                     ]),
@@ -581,8 +581,8 @@ class _AvisosPendientes extends ConsumerWidget {
             title: Text('${miembros[a['miembro_id']]?.nombre ?? '…'} · ${euros((a['importe'] as num).toDouble())}'),
             subtitle: Text('${a['metodo']} · ${fechaCorta(DateTime.parse(a['creado_en'] as String))}'),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              IconButton(tooltip: 'No lo encuentro', icon: const Icon(Icons.close), onPressed: () => resolver(a['id'] as String, false)),
-              IconButton.filled(tooltip: 'Confirmar', icon: const Icon(Icons.check), onPressed: () => resolver(a['id'] as String, true)),
+              IconButton(tooltip: tr('No lo encuentro'), icon: const Icon(Icons.close), onPressed: () => resolver(a['id'] as String, false)),
+              IconButton.filled(tooltip: tr('Confirmar'), icon: const Icon(Icons.check), onPressed: () => resolver(a['id'] as String, true)),
             ]),
           ),
       ]),

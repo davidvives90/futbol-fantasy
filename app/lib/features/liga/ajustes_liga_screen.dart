@@ -75,7 +75,7 @@ class AjustesLigaScreen extends ConsumerWidget {
         ListTile(
           leading: const Icon(Icons.table_view_outlined),
           title: const Tx('Exportar a Excel'),
-          subtitle: const Text('Caja, saldos, asistencia y clasificación'),
+          subtitle: const Tx('Caja, saldos, asistencia y clasificación'),
           trailing: const Icon(Icons.download_outlined),
           onTap: () => exportarLigaExcel(context, mi.liga),
         ),

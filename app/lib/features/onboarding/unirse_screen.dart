@@ -78,7 +78,7 @@ class _UnirseScreenState extends ConsumerState<UnirseScreen> {
         TextField(
           controller: _codigo,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(labelText: 'Código o enlace', prefixIcon: Icon(Icons.vpn_key_outlined)),
+          decoration:  InputDecoration(labelText: tr('Código o enlace'), prefixIcon: Icon(Icons.vpn_key_outlined)),
           onSubmitted: (_) => _unirse(),
         ),
         const SizedBox(height: 16),
@@ -87,7 +87,7 @@ class _UnirseScreenState extends ConsumerState<UnirseScreen> {
         TextButton.icon(
           onPressed: () => context.push('/buscar-ligas'),
           icon: const Icon(Icons.search),
-          label: const Text('No tengo código: buscar ligas públicas'),
+          label: const Tx('No tengo código: buscar ligas públicas'),
         ),
       ]),
     );

@@ -1,6 +1,7 @@
 // Los valores de los enums coinciden con los de Postgres (snake_case).
 // ignore_for_file: constant_identifier_names
 
+import '../core/idioma.dart';
 import '../core/utils.dart';
 
 // ---------------------------------------------------------------------------
@@ -20,11 +21,11 @@ enum EstadoMiembro { pendiente_registro, solicitud, activo, expulsado, abandonad
 enum RangoMiembro { fijo, reserva, invitado }
 
 extension RangoMiembroX on RangoMiembro {
-  String get etiqueta => switch (this) {
+  String get etiqueta => tr(switch (this) {
         RangoMiembro.fijo => 'Fijo',
         RangoMiembro.reserva => 'Reserva',
         RangoMiembro.invitado => 'Invitado',
-      };
+      });
 
   /// Inicial para mostrar junto al nombre (F / R / I).
   String get letra => switch (this) {
@@ -43,7 +44,7 @@ T _enum<T extends Enum>(List<T> valores, dynamic texto, T defecto) =>
     valores.where((v) => v.name == texto).firstOrNull ?? defecto;
 
 extension EstadoPartidoX on EstadoPartido {
-  String get etiqueta => switch (this) {
+  String get etiqueta => tr(switch (this) {
         EstadoPartido.abierto => 'Convocatoria abierta',
         EstadoPartido.completo => 'Completo',
         EstadoPartido.equipos_hechos => 'Equipos hechos',
@@ -52,7 +53,7 @@ extension EstadoPartidoX on EstadoPartido {
         EstadoPartido.en_revision => 'En revisión',
         EstadoPartido.cerrado => 'Cerrado',
         EstadoPartido.cancelado => 'Cancelado',
-      };
+      });
 
   bool get antesDeJugar =>
       this == EstadoPartido.abierto || this == EstadoPartido.completo || this == EstadoPartido.equipos_hechos;
@@ -61,13 +62,13 @@ extension EstadoPartidoX on EstadoPartido {
 const posiciones = ['portero', 'defensa', 'medio', 'delantero'];
 
 /// Posición preferida del jugador: solo informativa (desde 0.2 los puntos no dependen de ella).
-String etiquetaPosicion(String? p) => switch (p) {
+String etiquetaPosicion(String? p) => tr(switch (p) {
       'portero' => 'Portero',
       'defensa' => 'Defensa',
       'medio' => 'Centrocampista',
       'delantero' => 'Delantero',
       _ => 'Sin posición',
-    };
+    });
 
 // ---------------------------------------------------------------------------
 // Entidades
@@ -168,7 +169,7 @@ class Liga {
 
   /// 0032: 'f3' | 'sala' | 'f7' | 'f8' | 'f11' (decide qué reglas tiene el reglamento).
   final String modalidad;
-  String get nombreModalidad => nombresModalidad[modalidad] ?? modalidad;
+  String get nombreModalidad => tr(nombresModalidad[modalidad] ?? modalidad);
 
   /// 0026: 'apertura' (vacía hasta X h después del partido anterior; todos pulsan «Voy») | 'clasica'.
   final String modoConvocatoria;

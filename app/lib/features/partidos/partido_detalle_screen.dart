@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/calendario.dart';
@@ -58,18 +59,18 @@ class PartidoDetalleScreen extends ConsumerWidget {
               actions: [
                 if (e != EstadoPartido.cancelado)
                   IconButton(
-                    tooltip: 'Compartir por WhatsApp',
+                    tooltip: tr('Compartir por WhatsApp'),
                     icon: const Icon(Icons.share_outlined),
                     onPressed: () => compartirPartido(context, p, mi.liga),
                   ),
                 if (e.antesDeJugar)
                   IconButton(
-                    tooltip: 'Añadir al calendario',
+                    tooltip: tr('Añadir al calendario'),
                     icon: const Icon(Icons.event_available_outlined),
                     onPressed: () => anadirAlCalendario(context, p, mi.liga),
                   ),
                 IconButton(
-                  tooltip: 'Abrir en Maps',
+                  tooltip: tr('Abrir en Maps'),
                   icon: const Icon(Icons.map_outlined),
                   onPressed: () => abrirUrl(context, p.campoMapsUrl ?? mi.liga.campoMapsUrl),
                 ),
@@ -141,13 +142,13 @@ class _MenuAdmin extends ConsumerWidget {
         ref.invalidate(partidosProvider(ligaId));
       },
       itemBuilder: (_) => [
-        if (!partido.horaConfirmada && e.antesDeJugar) const PopupMenuItem(value: 'hora', child: Text('Confirmar hora')),
-        if (e.antesDeJugar) const PopupMenuItem(value: 'cambiar_hora', child: Text('Cambiar fecha u hora')),
+        if (!partido.horaConfirmada && e.antesDeJugar) const PopupMenuItem(value: 'hora', child: Tx('Confirmar hora')),
+        if (e.antesDeJugar) const PopupMenuItem(value: 'cambiar_hora', child: Tx('Cambiar fecha u hora')),
         if (e == EstadoPartido.equipos_hechos)
-          const PopupMenuItem(value: 'jugado', child: Text('Partido jugado: cobrar y abrir post-partido')),
+          const PopupMenuItem(value: 'jugado', child: Tx('Partido jugado: cobrar y abrir post-partido')),
         if (e == EstadoPartido.post_partido)
-          const PopupMenuItem(value: 'cerrar', child: Text('Cerrar plazo y cruzar partes')),
-        if (e.antesDeJugar) const PopupMenuItem(value: 'cancelar', child: Text('Cancelar partido')),
+          const PopupMenuItem(value: 'cerrar', child: Tx('Cerrar plazo y cruzar partes')),
+        if (e.antesDeJugar) const PopupMenuItem(value: 'cancelar', child: Tx('Cancelar partido')),
       ],
     );
   }

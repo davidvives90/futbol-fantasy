@@ -221,7 +221,7 @@ class _FormCodigoState extends State<_FormCodigo> {
           TextField(
             controller: _codigo,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(labelText: 'Código (3–24: letras, números, - _)', hintText: 'BIENVENIDA'),
+            decoration:  InputDecoration(labelText: 'Código (3–24: letras, números, - _)', hintText: tr('BIENVENIDA')),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -232,9 +232,9 @@ class _FormCodigoState extends State<_FormCodigo> {
           const SizedBox(height: 10),
           DropdownButtonFormField<String?>(
             value: _liga,
-            decoration: const InputDecoration(labelText: 'Liga'),
+            decoration:  InputDecoration(labelText: tr('Liga')),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Todas las ligas')),
+              const DropdownMenuItem(value: null, child: Tx('Todas las ligas')),
               for (final l in widget.ligas)
                 DropdownMenuItem(value: l['id'] as String, child: Text(l['nombre'] as String)),
             ],
@@ -251,10 +251,10 @@ class _FormCodigoState extends State<_FormCodigo> {
             value: _dias,
             decoration: const InputDecoration(labelText: 'Caduca'),
             items: const [
-              DropdownMenuItem(value: null, child: Text('Nunca')),
-              DropdownMenuItem(value: 1, child: Text('En 24 horas')),
-              DropdownMenuItem(value: 7, child: Text('En 7 días')),
-              DropdownMenuItem(value: 30, child: Text('En 30 días')),
+              DropdownMenuItem(value: null, child: Tx('Nunca')),
+              DropdownMenuItem(value: 1, child: Tx('En 24 horas')),
+              DropdownMenuItem(value: 7, child: Tx('En 7 días')),
+              DropdownMenuItem(value: 30, child: Tx('En 30 días')),
             ],
             onChanged: (v) => setState(() => _dias = v),
           ),
@@ -439,7 +439,7 @@ class _MasterLigaScreenState extends ConsumerState<MasterLigaScreen> {
           TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
           FilledButton(
             onPressed: () => Navigator.pop(c, importe ? '${cantidad.text}|${motivo.text}' : motivo.text),
-            child: const Text('Aplicar'),
+            child: const Tx('Aplicar'),
           ),
         ],
       ),
@@ -489,10 +489,10 @@ class _MasterLigaScreenState extends ConsumerState<MasterLigaScreen> {
                         },
                         itemBuilder: (_) => [
                           PopupMenuItem(value: 'admin', child: Text(m.esAdmin ? 'Quitar admin' : 'Hacer admin')),
-                          const PopupMenuItem(value: 'fijo', child: Text('Rango: fijo')),
-                          const PopupMenuItem(value: 'reserva', child: Text('Rango: reserva')),
-                          const PopupMenuItem(value: 'invitado', child: Text('Rango: invitado')),
-                          const PopupMenuItem(value: 'expulsar', child: Text('Expulsar')),
+                          const PopupMenuItem(value: 'fijo', child: Tx('Rango: fijo')),
+                          const PopupMenuItem(value: 'reserva', child: Tx('Rango: reserva')),
+                          const PopupMenuItem(value: 'invitado', child: Tx('Rango: invitado')),
+                          const PopupMenuItem(value: 'expulsar', child: Tx('Expulsar')),
                         ],
                       ),
                     ),

@@ -72,7 +72,7 @@ class MiEquipoTab extends ConsumerWidget {
           child: TextButton.icon(
             onPressed: () => _canjear(context, ref),
             icon: const Icon(Icons.redeem_outlined, size: 18),
-            label: const Text('Canjear código'),
+            label: const Tx('Canjear código'),
           ),
         ),
         Padding(
@@ -81,17 +81,17 @@ class MiEquipoTab extends ConsumerWidget {
             Text('Plantilla (${propias.length}/${params.maxPlantilla})', style: t.titleMedium),
             const Spacer(),
             PopupMenuButton<(String, String)>(
-              tooltip: 'Ayuda del Fantasy',
+              tooltip: tr('Ayuda del Fantasy'),
               icon: const Icon(Icons.help_outline),
               onSelected: (a) => mostrarAyuda(context, a),
               itemBuilder: (_) => const [
                 PopupMenuItem(value: Ayuda.alineacion, child: Tx('Alineación')),
-                PopupMenuItem(value: Ayuda.clausula, child: Text('Cláusula de rescisión')),
-                PopupMenuItem(value: Ayuda.cesion, child: Text('Cesión')),
+                PopupMenuItem(value: Ayuda.clausula, child: Tx('Cláusula de rescisión')),
+                PopupMenuItem(value: Ayuda.cesion, child: Tx('Cesión')),
                 PopupMenuItem(value: Ayuda.valorMercado, child: Tx('Valor de mercado')),
-                PopupMenuItem(value: Ayuda.fichas, child: Text('Fichas')),
-                PopupMenuItem(value: Ayuda.rolesBonus, child: Text('Bonus por rol')),
-                PopupMenuItem(value: Ayuda.multiplicadorInvitado, child: Text('Invitados')),
+                PopupMenuItem(value: Ayuda.fichas, child: Tx('Fichas')),
+                PopupMenuItem(value: Ayuda.rolesBonus, child: Tx('Bonus por rol')),
+                PopupMenuItem(value: Ayuda.multiplicadorInvitado, child: Tx('Invitados')),
               ],
             ),
             if (!abierto) const Chip(avatar: Icon(Icons.lock_clock, size: 16), label: Tx('Mercado cerrado')),
@@ -100,7 +100,7 @@ class MiEquipoTab extends ConsumerWidget {
         if (propias.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16),
-            child: Text('Aún no tienes jugadores. Ficha en la pestaña Mercado.'),
+            child: Tx('Aún no tienes jugadores. Ficha en la pestaña Mercado.'),
           ),
         for (final j in propias)
           Card(
@@ -130,7 +130,7 @@ class MiEquipoTab extends ConsumerWidget {
                     PopupMenuItem(
                       value: _Accion.clausula,
                       enabled: abierto && !j.cedidaAOtro,
-                      child: const ListTile(leading: Icon(Icons.gavel), title: Text('Cambiar cláusula')),
+                      child: const ListTile(leading: Icon(Icons.gavel), title: Tx('Cambiar cláusula')),
                     ),
                     PopupMenuItem(
                       value: _Accion.vender,
@@ -140,17 +140,17 @@ class MiEquipoTab extends ConsumerWidget {
                     if (j.enCesionOfrecida)
                       const PopupMenuItem(
                         value: _Accion.retirarCesion,
-                        child: ListTile(leading: Icon(Icons.undo), title: Text('Retirar cesión')),
+                        child: ListTile(leading: Icon(Icons.undo), title: Tx('Retirar cesión')),
                       )
                     else
                       PopupMenuItem(
                         value: _Accion.ceder,
                         enabled: !j.cedidaAOtro && proximo != null,
-                        child: const ListTile(leading: Icon(Icons.swap_horiz), title: Text('Ofrecer en cesión')),
+                        child: const ListTile(leading: Icon(Icons.swap_horiz), title: Tx('Ofrecer en cesión')),
                       ),
                     const PopupMenuItem(
                       value: _Accion.ficha,
-                      child: ListTile(leading: Icon(Icons.insights), title: Text('Ver ficha de mercado')),
+                      child: ListTile(leading: Icon(Icons.insights), title: Tx('Ver ficha de mercado')),
                     ),
                   ],
                 ),
@@ -171,7 +171,7 @@ class MiEquipoTab extends ConsumerWidget {
                   Flexible(child: Text(miembros[j.jugadorId]?.nombre ?? '…', overflow: TextOverflow.ellipsis)),
                   if (j.noHabitual) ...[const SizedBox(width: 6), InsigniaNoHabitual(bonus: params.bonusNoHabitual)],
                 ]),
-                subtitle: const Text('Solo para alinearlo en el próximo partido; luego vuelve a su dueño.'),
+                subtitle: const Tx('Solo para alinearlo en el próximo partido; luego vuelve a su dueño.'),
                 trailing: Text(millones(j.precio), style: t.titleSmall),
                 onTap: () => context.push('/fantasy/jugador/${j.jugadorId}'),
               ),
@@ -179,7 +179,7 @@ class MiEquipoTab extends ConsumerWidget {
         ],
         const SizedBox(height: 16),
         if (proximo == null)
-          const Card(child: ListTile(leading: Icon(Icons.event_busy), title: Text('No hay ningún partido convocado para alinear.')))
+          const Card(child: ListTile(leading: Icon(Icons.event_busy), title: Tx('No hay ningún partido convocado para alinear.')))
         else
           AlineacionCampo(mi: mi, partido: proximo, plantilla: lista),
       ]),
@@ -191,19 +191,19 @@ class MiEquipoTab extends ConsumerWidget {
     final codigo = await showDialog<String>(
       context: context,
       builder: (d) => AlertDialog(
-        title: const Text('Canjear código'),
+        title: const Tx('Canjear código'),
         content: TextField(
           controller: c,
           autofocus: true,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(labelText: 'Código promocional'),
+          decoration:  InputDecoration(labelText: tr('Código promocional')),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(d), child: const Tx('Cancelar')),
           FilledButton(
             style: AppButtons.premium(d),
             onPressed: () => Navigator.pop(d, c.text.trim()),
-            child: const Text('Canjear'),
+            child: const Tx('Canjear'),
           ),
         ],
       ),

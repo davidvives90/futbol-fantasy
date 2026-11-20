@@ -80,7 +80,7 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
             controller: _nombres,
             minLines: 5,
             maxLines: 12,
-            decoration: const InputDecoration(labelText: 'Nombres de los fijos', hintText: 'Juan\nPedro\nLuis', alignLabelWithHint: true),
+            decoration:  InputDecoration(labelText: tr('Nombres de los fijos'), hintText: 'Juan\nPedro\nLuis', alignLabelWithHint: true),
           ),
           const SizedBox(height: 8),
           Text('Los demás (reservas e invitados) pueden unirse luego con el código de la liga.',
@@ -165,7 +165,7 @@ class _PasoModalidad extends ConsumerWidget {
       'f11': 'Campo grande',
     };
     return ListView(padding: const EdgeInsets.all(16), children: [
-      const Text('Según la modalidad, la app propone las reglas estándar (cesión, saques, cambios…).'),
+      const Tx('Según la modalidad, la app propone las reglas estándar (cesión, saques, cambios…).'),
       const SizedBox(height: 12),
       for (final e in nombresModalidad.entries)
         Card(
@@ -173,7 +173,7 @@ class _PasoModalidad extends ConsumerWidget {
           child: RadioListTile<String>(
             value: e.key,
             groupValue: mi.liga.modalidad,
-            title: Text(e.value),
+            title: Text(tr(e.value)),
             subtitle: Text(descripciones[e.key] ?? ''),
             onChanged: (v) async {
               if (v == null) return;

@@ -48,7 +48,7 @@ class ReglamentoScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(
-                      label: Text(e.value),
+                      label: Text(tr(e.value)),
                       selected: mi.liga.modalidad == e.key,
                       onSelected: !mi.soyAdmin || mi.liga.modalidad == e.key
                           ? null
@@ -81,7 +81,7 @@ class ReglamentoScreen extends ConsumerWidget {
               if (lista.any((r) => r.grupo == g.key)) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-                  child: Text(g.value.toUpperCase(),
+                  child: Text(tr(g.value).toUpperCase(),
                       style: t.labelMedium?.copyWith(letterSpacing: 1, color: cs.onSurfaceVariant)),
                 ),
                 for (final r in lista.where((r) => r.grupo == g.key))

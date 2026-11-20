@@ -50,7 +50,7 @@ void mostrarError(BuildContext context, Object e) {
     ..clearSnackBars()
     ..showSnackBar(
     SnackBar(
-      content: Text(e is String ? e : mensajeError(e)),
+      content: Text(tr(e is String ? e : mensajeError(e))),
       backgroundColor: Theme.of(context).colorScheme.error,
     ),
   );
@@ -60,7 +60,7 @@ void mostrarError(BuildContext context, Object e) {
 void mostrarOk(BuildContext context, String texto) {
   ScaffoldMessenger.of(context)
     ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text(texto), duration: const Duration(milliseconds: 2500)));
+    ..showSnackBar(SnackBar(content: Text(tr(texto)), duration: const Duration(milliseconds: 2500)));
 }
 
 /// Ejecuta una acción mostrando el error si falla. Devuelve true si fue bien.
@@ -84,8 +84,8 @@ Future<bool> confirmar(BuildContext context, String titulo, String texto,
   final r = await showDialog<bool>(
     context: context,
     builder: (c) => AlertDialog(
-      title: Text(titulo),
-      content: Text(texto),
+      title: Text(tr(titulo)),
+      content: Text(tr(texto)),
       actions: [
         TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
         FilledButton(
@@ -95,7 +95,7 @@ Future<bool> confirmar(BuildContext context, String titulo, String texto,
             TipoConfirmacion.normal => null,
           },
           onPressed: () => Navigator.pop(c, true),
-          child: Text(accion),
+          child: Text(tr(accion)),
         ),
       ],
     ),
@@ -219,13 +219,13 @@ class Vacio extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (titulo != null) ...[
-            Text(titulo!, textAlign: TextAlign.center, style: t.titleMedium),
+            Text(tr(titulo!), textAlign: TextAlign.center, style: t.titleMedium),
             const SizedBox(height: 6),
           ],
-          Text(texto, textAlign: TextAlign.center, style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+          Text(tr(texto), textAlign: TextAlign.center, style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
           if (accion != null && onAccion != null) ...[
             const SizedBox(height: 16),
-            FilledButton(onPressed: onAccion, child: Text(accion!)),
+            FilledButton(onPressed: onAccion, child: Text(tr(accion!))),
           ],
         ]),
       ),

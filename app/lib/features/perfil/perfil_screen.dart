@@ -29,7 +29,7 @@ class PerfilScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: LigaAppBar(mostrarPerfil: false, actions: [
-        IconButton(tooltip: 'Editar perfil', icon: const Icon(Icons.edit_outlined), onPressed: () => context.push('/perfil/editar')),
+        IconButton(tooltip: tr('Editar perfil'), icon: const Icon(Icons.edit_outlined), onPressed: () => context.push('/perfil/editar')),
       ]),
       body: ListView(children: [
         // Mis estadísticas en la liga activa (misma vista que la ficha).
@@ -48,7 +48,7 @@ class PerfilScreen extends ConsumerWidget {
           ),
         ListTile(
           leading: const Icon(Icons.add),
-          title: const Text('Crear o unirse a otra liga'),
+          title: const Tx('Crear o unirse a otra liga'),
           onTap: () => context.push('/onboarding'),
         ),
         const Divider(),
@@ -76,7 +76,7 @@ class PerfilScreen extends ConsumerWidget {
               ? ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
                   title: const Tx('Privacidad y anuncios'),
-                  subtitle: const Text('Cambia tu consentimiento de anuncios personalizados'),
+                  subtitle: const Tx('Cambia tu consentimiento de anuncios personalizados'),
                   onTap: Anuncios.abrirOpcionesPrivacidad,
                 )
               : const SizedBox.shrink(),
@@ -170,7 +170,7 @@ Future<void> _eliminarCuenta(BuildContext context, WidgetRef ref) async {
           TextField(
             controller: ctrl,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(labelText: 'Escribe ELIMINAR para confirmar'),
+            decoration:  InputDecoration(labelText: tr('Escribe ELIMINAR para confirmar')),
           ),
         ]),
         actions: [

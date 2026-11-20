@@ -61,9 +61,15 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
                 : SnackBarAction(label: 'Ver', onPressed: () => ref.read(routerProvider).go(ruta)),
           )),
         );
-    if (sb.auth.currentSession != null) activarPush();
+    if (sb.auth.currentSession != null) {
+      activarPush();
+      sincronizarIdioma();
+    }
     _auth = sb.auth.onAuthStateChange.listen((e) {
-      if (e.event == AuthChangeEvent.signedIn) activarPush();
+      if (e.event == AuthChangeEvent.signedIn) {
+        activarPush();
+        sincronizarIdioma();
+      }
     });
     // uriLinkStream también emite el enlace con el que se abrió la app.
     _links = AppLinks().uriLinkStream.listen(_alRecibirEnlace);

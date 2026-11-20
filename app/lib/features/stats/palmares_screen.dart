@@ -79,12 +79,12 @@ class PalmaresScreen extends ConsumerWidget {
           TextField(
             controller: nombre,
             maxLength: 60,
-            decoration: const InputDecoration(labelText: 'Nombre', hintText: 'p. ej. Temporada 25/26'),
+            decoration:  InputDecoration(labelText: tr('Nombre'), hintText: tr('p. ej. Temporada 25/26')),
           ),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Cerrar y dar premios')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Cerrar y dar premios')),
         ],
       ),
     );
@@ -124,7 +124,7 @@ class _TarjetaTemporada extends StatelessWidget {
       final ps = t.premios.where((p) => p.tipo == tipo).toList();
       if (ps.isEmpty) continue;
       final i = premiosInfo[tipo]!;
-      b.writeln('${i.icono} ${i.titulo}: ${ps.map((p) => miembros[p.miembroId]?.nombre ?? '…').join(', ')} (${i.dato(ps.first.valor)})');
+      b.writeln('${i.icono} ${tr(i.titulo)}: ${ps.map((p) => miembros[p.miembroId]?.nombre ?? '…').join(', ')} (${i.dato(ps.first.valor)})');
     }
     return b.toString().trimRight();
   }
@@ -148,7 +148,7 @@ class _TarjetaTemporada extends StatelessWidget {
               ]),
             ),
             IconButton(
-              tooltip: 'Compartir premios',
+              tooltip: tr('Compartir premios'),
               icon: const Icon(Icons.share_outlined),
               onPressed: () => compartirTexto(context, _texto()),
             ),
@@ -196,7 +196,7 @@ class _FilaPremio extends StatelessWidget {
           SizedBox(width: 32, child: Text(info.icono, style: const TextStyle(fontSize: 22))),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(info.titulo, style: Theme.of(context).textTheme.labelMedium),
+              Text(tr(info.titulo), style: Theme.of(context).textTheme.labelMedium),
               Text(premios.map((p) => miembros[p.miembroId]?.nombre ?? 'Exjugador').join(', '),
                   style: Theme.of(context).textTheme.titleSmall),
             ]),

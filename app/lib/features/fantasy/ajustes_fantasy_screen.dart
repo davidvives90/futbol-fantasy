@@ -136,7 +136,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     final elegido = await showDialog<Miembro>(
       context: context,
       builder: (c) => SimpleDialog(
-        title: const Text('¿A quién hay que colocar?'),
+        title: const Tx('¿A quién hay que colocar?'),
         children: [
           for (final m in miembros) SimpleDialogOption(onPressed: () => Navigator.pop(c, m), child: Text(m.nombre)),
         ],
@@ -162,7 +162,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes Fantasy')),
+      appBar: AppBar(title: const Tx('Ajustes Fantasy')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Text('Encuestas de valoración', style: t.titleMedium),
         const SizedBox(height: 4),
@@ -178,7 +178,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
               ListTile(
                 leading: const Icon(Icons.how_to_vote_outlined),
                 title: const Tx('Abrir encuesta general'),
-                subtitle: const Text('Antes de empezar la liga Fantasy, o para recalibrar valoraciones'),
+                subtitle: const Tx('Antes de empezar la liga Fantasy, o para recalibrar valoraciones'),
                 onTap: () async {
                   if (!await confirmar(context, 'Abrir encuesta', 'Todos los miembros verán la encuesta en la app.')) return;
                   if (!context.mounted) return;
@@ -188,8 +188,8 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
               ),
             ListTile(
               leading: const Icon(Icons.person_add_alt),
-              title: const Text('Mini-encuesta para un jugador nuevo'),
-              subtitle: const Text('Hasta entonces empieza con valoración 50'),
+              title: const Tx('Mini-encuesta para un jugador nuevo'),
+              subtitle: const Tx('Hasta entonces empieza con valoración 50'),
               onTap: () => _miniEncuesta(mi),
             ),
           ]),
@@ -201,7 +201,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Row(children: [
-            Flexible(child: Text('Multiplicador de invitados')),
+            Flexible(child: Tx('Multiplicador de invitados')),
             InfoBoton(Ayuda.multiplicadorInvitado),
           ]),
           subtitle: Text(_multActivo ? 'Los puntos del invitado alineado se multiplican' : 'Desactivado: el invitado puntúa como todos'),
@@ -215,13 +215,13 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
               controller: _mult,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-              decoration: const InputDecoration(labelText: 'Multiplicador', prefixText: '×', helperText: 'Entre 1,05 y 3 (p. ej. 1,5)'),
+              decoration:  InputDecoration(labelText: tr('Multiplicador'), prefixText: '×', helperText: tr('Entre 1,05 y 3 (p. ej. 1,5)')),
             ),
           ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Row(children: [
-            Flexible(child: Text('Bonus por rol en la alineación')),
+            Flexible(child: Tx('Bonus por rol en la alineación')),
             InfoBoton(Ayuda.rolesBonus),
           ]),
           subtitle: Text((_bonusRoles ?? true)
@@ -255,7 +255,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         const SizedBox(height: 12),
         FilledButton(
           onPressed: _guardando ? null : () => _guardar(mi),
-          child: const Text('Guardar parámetros'),
+          child: const Tx('Guardar parámetros'),
         ),
         const Divider(height: 40),
         Text('Empezar de cero', style: t.titleMedium),
@@ -331,7 +331,7 @@ class _FilaEncuestaState extends ConsumerState<_FilaEncuesta> {
             const SizedBox(height: 4),
             LinearProgressIndicator(value: pct.clamp(0.0, 1.0)),
           ] else if (_sinDato)
-            const Text('Progreso no disponible'),
+            const Tx('Progreso no disponible'),
         ]),
         trailing: FilledButton.tonal(
           style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),

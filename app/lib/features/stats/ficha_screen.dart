@@ -56,7 +56,7 @@ class FichaScreen extends ConsumerWidget {
       ]),
       const SizedBox(height: 16),
       if (rend == null)
-        const Text('Aún no ha jugado ningún partido cerrado.')
+        const Tx('Aún no ha jugado ningún partido cerrado.')
       else
         GridView.count(
           crossAxisCount: 3,
@@ -89,7 +89,7 @@ class FichaScreen extends ConsumerWidget {
                 message: 'Conseguido el ${fechaCorta(DateTime.parse(l['conseguido_en'] as String))}',
                 child: Chip(
                   avatar: Text(logrosInfo[l['tipo']]?.$1 ?? '🏅'),
-                  label: Text(logrosInfo[l['tipo']]?.$2 ?? '${l['tipo']}'),
+                  label: Text(tr(logrosInfo[l['tipo']]?.$2 ?? '${l['tipo']}')),
                   visualDensity: VisualDensity.compact,
                 ),
               ),
@@ -108,7 +108,7 @@ class FichaScreen extends ConsumerWidget {
             for (final p in premios)
               Chip(
                 avatar: Text(p.info.icono),
-                label: Text('${p.info.titulo}${p.temporada == null ? '' : ' · ${p.temporada}'}'),
+                label: Text('${tr(p.info.titulo)}${p.temporada == null ? '' : ' · ${p.temporada}'}'),
                 visualDensity: VisualDensity.compact,
               ),
           ]),
@@ -153,7 +153,7 @@ class FichaScreen extends ConsumerWidget {
         loading: () => [const Padding(padding: EdgeInsets.all(24), child: Cargando())],
         error: (e, _) => [ErrorVista(e)],
         data: (lista) {
-          if (lista.isEmpty) return [const Padding(padding: EdgeInsets.all(16), child: Text('Sin partidos todavía.'))];
+          if (lista.isEmpty) return [const Padding(padding: EdgeInsets.all(16), child: Tx('Sin partidos todavía.'))];
           final maximo = lista.map((p) => p.total.abs()).fold<double>(1, (a, b) => b > a ? b : a);
           return [
             for (final p in lista)
@@ -242,7 +242,7 @@ class _Extra extends StatelessWidget {
             decoration: BoxDecoration(color: colorForma(c), borderRadius: BorderRadius.circular(8)),
             child: Text(c, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
-        if (forma.isEmpty) const Text('Sin partidos todavía'),
+        if (forma.isEmpty) const Tx('Sin partidos todavía'),
         const Spacer(),
         if (e['asistencia_pct'] != null) Text('Asistencia ${e['asistencia_pct']} %', style: t.bodySmall),
       ]),

@@ -72,7 +72,7 @@ class _BuscarLigasScreenState extends ConsumerState<BuscarLigasScreen> {
             autofocus: true,
             onChanged: _alEscribir,
             decoration: InputDecoration(
-              labelText: 'Nombre o ciudad',
+              labelText: tr('Nombre o ciudad'),
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _buscando ? const Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)) : null,
             ),
@@ -97,8 +97,8 @@ class _BuscarLigasScreenState extends ConsumerState<BuscarLigasScreen> {
                         '${l['num_miembros'] ?? 0} miembros',
                       ].join(' · ')),
                       trailing: enviada
-                          ? const Chip(label: Text('Enviada'))
-                          : FilledButton.tonal(onPressed: () => _solicitar(id), child: const Text('Solicitar')),
+                          ? const Chip(label: Tx('Enviada'))
+                          : FilledButton.tonal(onPressed: () => _solicitar(id), child: const Tx('Solicitar')),
                     );
                   },
                 ),

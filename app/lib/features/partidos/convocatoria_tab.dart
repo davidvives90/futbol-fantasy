@@ -49,7 +49,7 @@ class ConvocatoriaTab extends ConsumerWidget {
 
         return ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           ListTile(
-            title: Text('${conf.length}/${partido.plazas} confirmados'),
+            title: Text(trf('{n}/{p} confirmados', {'n': conf.length, 'p': partido.plazas})),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 8),
               child: LinearProgressIndicator(
@@ -110,7 +110,7 @@ class ConvocatoriaTab extends ConsumerWidget {
                 color: Theme.of(context).colorScheme.tertiaryContainer,
                 child: ListTile(
                   leading: const Icon(Icons.hourglass_top),
-                  title: Text('Estás en lista de espera (puesto ${espera.indexWhere((i) => i.miembroId == mi.yo.id) + 1})'),
+                  title: Text(trf('Estás en lista de espera (puesto {n})', {'n': espera.indexWhere((i) => i.miembroId == mi.yo.id) + 1})),
                   subtitle: const Tx('Entrarás automáticamente si alguien se da de baja.'),
                 ),
               ),
@@ -215,7 +215,7 @@ class _Seccion extends StatelessWidget {
               ? null
               : ins.estado == EstadoInscripcion.baja
                   ? IconButton(
-                      tooltip: 'Volver a apuntar',
+                      tooltip: tr('Volver a apuntar'),
                       icon: Icon(Icons.person_add_alt_1_outlined, color: Theme.of(context).colorScheme.primary),
                       onPressed: () => ejecutar(
                         context,
@@ -224,7 +224,7 @@ class _Seccion extends StatelessWidget {
                       ),
                     )
                   : IconButton(
-                      tooltip: 'Dar de baja',
+                      tooltip: tr('Dar de baja'),
                       icon: const Icon(Icons.person_remove_outlined),
                       onPressed: () async {
                         final antes = ins.estado;
@@ -265,7 +265,7 @@ class _AnadirJugador extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: OutlinedButton.icon(
         icon: const Icon(Icons.person_add_alt),
-        label: const Text('Apuntar a otro jugador'),
+        label: const Tx('Apuntar a otro jugador'),
         onPressed: () async {
           final elegido = await showModalBottomSheet<Miembro>(
             context: context,
@@ -273,7 +273,7 @@ class _AnadirJugador extends ConsumerWidget {
               for (final m in disponibles)
                 ListTile(
                   title: Text(m.nombre),
-                  subtitle: m.registrado ? null : const Text('Sin registrar'),
+                  subtitle: m.registrado ? null : const Tx('Sin registrar'),
                   onTap: () => Navigator.pop(c, m),
                 ),
             ]),

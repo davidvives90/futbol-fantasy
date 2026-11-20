@@ -88,7 +88,7 @@ class _DialogoClausulaState extends State<_DialogoClausula> {
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-          decoration: InputDecoration(labelText: 'Nueva cláusula (M)', errorText: error),
+          decoration: InputDecoration(labelText: tr('Nueva cláusula (M)'), errorText: error),
           onChanged: (_) => setState(() {}),
         ),
         if (info.isNotEmpty) ...[const SizedBox(height: 8), Text(info)],
@@ -177,7 +177,7 @@ class _DialogoOfertaState extends State<_DialogoOferta> {
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-          decoration: InputDecoration(labelText: 'Tu oferta (M)', errorText: error),
+          decoration: InputDecoration(labelText: tr('Tu oferta (M)'), errorText: error),
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
@@ -192,7 +192,7 @@ class _DialogoOfertaState extends State<_DialogoOferta> {
         FilledButton(
           style: AppButtons.premium(context),
           onPressed: v == null || v <= 0 ? null : () => Navigator.pop(context, v),
-          child: const Text('Enviar oferta'),
+          child: const Tx('Enviar oferta'),
         ),
       ],
     );
@@ -256,7 +256,7 @@ class _DialogoCesionState extends State<_DialogoCesion> {
         FilledButton(
           style: AppButtons.premium(context),
           onPressed: () => Navigator.pop(context, (_pct * 1000).round() / 1000),
-          child: const Text('Ofrecer en cesión'),
+          child: const Tx('Ofrecer en cesión'),
         ),
       ],
     );

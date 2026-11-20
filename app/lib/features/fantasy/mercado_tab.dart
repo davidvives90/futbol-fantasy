@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -53,7 +54,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
       Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
         child: TextField(
-          decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Buscar jugador', isDense: true),
+          decoration:  InputDecoration(prefixIcon: Icon(Icons.search), hintText: tr('Buscar jugador'), isDense: true),
           onChanged: (v) => setState(() => _texto = v.trim().toLowerCase()),
         ),
       ),
@@ -67,7 +68,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
               child: ChoiceChip(label: Text(o.etiqueta), selected: _orden == o, onSelected: (_) => setState(() => _orden = o)),
             ),
           FilterChip(
-            label: const Text('Invitados ×1,5'),
+            label: const Tx('Invitados ×1,5'),
             selected: _soloNoHabituales,
             onSelected: (v) => setState(() => _soloNoHabituales = v),
           ),

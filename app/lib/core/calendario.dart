@@ -97,7 +97,7 @@ Future<void> anadirAlCalendario(BuildContext context, Partido p, Liga l) async {
         ListTile(
           leading: const Icon(Icons.calendar_month_outlined),
           title: const Tx('Otro calendario (archivo .ics)'),
-          subtitle: const Text('Samsung, Outlook, Apple…'),
+          subtitle: const Tx('Samsung, Outlook, Apple…'),
           onTap: () {
             Navigator.pop(ctx);
             _compartirIcs(context, icsDePartidos([p], l), 'partido.ics');
@@ -143,12 +143,12 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const ListTile(
             title: Tx('Partidos en tu calendario'),
-            subtitle: Text('Suscríbete una vez y se actualiza solo: partidos nuevos, cambios de hora y cancelaciones.'),
+            subtitle: Tx('Suscríbete una vez y se actualiza solo: partidos nuevos, cambios de hora y cancelaciones.'),
           ),
           ListTile(
             leading: const Icon(Icons.event),
             title: const Tx('Google Calendar'),
-            subtitle: const Text('Android y web'),
+            subtitle: const Tx('Android y web'),
             onTap: () {
               Navigator.pop(ctx);
               launchUrl(Uri.parse('https://calendar.google.com/calendar/r?cid=${Uri.encodeComponent(webcal)}'),
@@ -166,7 +166,7 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
           ListTile(
             leading: const Icon(Icons.link),
             title: const Tx('Copiar enlace'),
-            subtitle: const Text('Para otros calendarios: «Añadir calendario desde URL». Es personal, no lo compartas.'),
+            subtitle: const Tx('Para otros calendarios: «Añadir calendario desde URL». Es personal, no lo compartas.'),
             onTap: () {
               Clipboard.setData(ClipboardData(text: url));
               Navigator.pop(ctx);
@@ -177,7 +177,7 @@ Future<void> suscribirCalendario(BuildContext context, Liga l, List<Partido> tod
           ListTile(
             leading: const Icon(Icons.download_outlined),
             title: const Tx('Solo descargar los próximos (.ics)'),
-            subtitle: const Text('No se actualiza si cambia algo'),
+            subtitle: const Tx('No se actualiza si cambia algo'),
             onTap: () {
               Navigator.pop(ctx);
               exportarProximos(context, todos, l);

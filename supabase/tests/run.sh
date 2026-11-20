@@ -52,3 +52,4 @@ aplicar tests/escenario_eliminar.sql
 aplicar tests/escenario_reglamento.sql
 aplicar tests/escenario_temporadas.sql
 aplicar tests/escenario_extras.sql
+aplicar tests/escenario_idioma.sql

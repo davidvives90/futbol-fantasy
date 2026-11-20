@@ -46,7 +46,7 @@ class OfertasTab extends ConsumerWidget {
             return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Tx('Ofertas recibidas', style: t.titleMedium),
               if (recibidas.isEmpty)
-                const Padding(padding: EdgeInsets.all(12), child: Text('Nadie ha pujado por tus jugadores.')),
+                const Padding(padding: EdgeInsets.all(12), child: Tx('Nadie ha pujado por tus jugadores.')),
               for (final o in recibidas) _TarjetaOferta(oferta: o, mi: mi, saldo: saldo),
               const SizedBox(height: 16),
               Tx('Ofertas enviadas', style: t.titleMedium),
@@ -78,7 +78,7 @@ class OfertasTab extends ConsumerWidget {
             if (lista.isEmpty) {
               return const Padding(
                 padding: EdgeInsets.all(12),
-                child: Text('No hay cesiones ofrecidas. Para ceder una ficha tuya, usa su menú en Mi equipo.'),
+                child: Tx('No hay cesiones ofrecidas. Para ceder una ficha tuya, usa su menú en Mi equipo.'),
               );
             }
             return Column(children: [
@@ -110,7 +110,7 @@ class OfertasTab extends ConsumerWidget {
                                   ok: 'Cesión retirada');
                               if (ok) refrescarFantasy(ref, k);
                             },
-                            child: const Text('Retirar'),
+                            child: const Tx('Retirar'),
                           )
                         : FilledButton(
                             style: AppButtons.premium(context),
@@ -216,7 +216,7 @@ class _TarjetaOferta extends ConsumerWidget {
                     final ok = await ejecutar(context, () => FantasyRepo.cancelarOferta(o.id), ok: 'Oferta cancelada');
                     if (ok) refrescarFantasy(ref, k);
                   },
-                  child: const Text('Cancelar oferta'),
+                  child: const Tx('Cancelar oferta'),
                 ),
             ]),
         ]),

@@ -62,7 +62,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
     return Scaffold(
       appBar: LigaAppBar(actions: [
         IconButton(
-          tooltip: 'Partidos en mi calendario',
+          tooltip: tr('Partidos en mi calendario'),
           icon: const Icon(Icons.calendar_month_outlined),
           onPressed: () => suscribirCalendario(context, mi.liga, partidos.valueOrNull ?? const <Partido>[]),
         ),
@@ -145,7 +145,7 @@ class _Saludo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final h = DateTime.now().hour;
-    final saludo = h < 6 ? 'Buenas noches' : (h < 14 ? 'Buenos días' : (h < 21 ? 'Buenas tardes' : 'Buenas noches'));
+    final saludo = tr(h < 6 ? 'Buenas noches' : (h < 14 ? 'Buenos días' : (h < 21 ? 'Buenas tardes' : 'Buenas noches')));
     final nombre = mi.yo.nombre.split(' ').first;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
@@ -316,7 +316,7 @@ class _Pendientes extends ConsumerWidget {
           icono: Icons.healing,
           color: Colors.amber.shade700,
           titulo: 'Estás de baja',
-          subtitulo: '${textoBaja(miBaja)} · Toca si ya has vuelto',
+          subtitulo: trf('{x} · Toca si ya has vuelto', {'x': textoBaja(miBaja)}),
           onTap: () async {
             if (!await confirmar(context, '¿Has vuelto?', 'Se termina tu baja y vuelves a recibir las convocatorias.',
                 accion: 'He vuelto')) {
@@ -332,14 +332,14 @@ class _Pendientes extends ConsumerWidget {
           icono: Icons.ballot_outlined,
           color: cs.secondary,
           titulo: v.titulo,
-          subtitulo: 'Votación de la liga · cierra ${fechaHora(v.cierraEn)}',
+          subtitulo: trf('Votación de la liga · cierra {f}', {'f': fechaHora(v.cierraEn)}),
           onTap: () => context.push('/votaciones'),
         ),
       for (final p in votar)
         _Tarea(
           icono: Icons.how_to_vote_outlined,
           color: cs.primary,
-          titulo: 'Vota el partido del ${fechaHora(p.fechaHora)}',
+          titulo: trf('Vota el partido del {f}', {'f': fechaHora(p.fechaHora)}),
           subtitulo: 'Resultado y notas · 1 minuto',
           onTap: () => context.push('/partidos/${p.id}'),
         ),
@@ -347,7 +347,7 @@ class _Pendientes extends ConsumerWidget {
         _Tarea(
           icono: Icons.account_balance_wallet_outlined,
           color: cs.error,
-          titulo: 'Debes ${euros(-miSaldo)}',
+          titulo: trf('Debes {x}', {'x': euros(-miSaldo)}),
           subtitulo: 'Págaselo al administrador; él lo marca en Caja',
           onTap: () => context.go('/caja'),
         ),
@@ -355,7 +355,7 @@ class _Pendientes extends ConsumerWidget {
         _Tarea(
           icono: Icons.person_add_alt_1_outlined,
           color: cs.tertiary,
-          titulo: solicitudes == 1 ? '1 solicitud para unirse' : '$solicitudes solicitudes para unirse',
+          titulo: solicitudes == 1 ? tr('1 solicitud para unirse') : trf('{n} solicitudes para unirse', {'n': solicitudes}),
           subtitulo: 'Acéptalas o recházalas en Liga',
           onTap: () => context.go('/liga'),
         ),
@@ -387,8 +387,8 @@ class _Tarea extends StatelessWidget {
             decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
             child: Icon(icono, color: color),
           ),
-          title: Text(titulo),
-          subtitle: Text(subtitulo),
+          title: Text(tr(titulo)),
+          subtitle: Text(tr(subtitulo)),
           trailing: const Icon(Icons.chevron_right),
           onTap: onTap,
         ),

@@ -332,7 +332,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
 
           // ───── 1. Resultado
           _Titulo('1', 'Resultado'),
-          if (b.encuentros.isEmpty) const Text('El administrador aún no ha definido los equipos de este partido.'),
+          if (b.encuentros.isEmpty) const Tx('El administrador aún no ha definido los equipos de este partido.'),
           for (final e in b.encuentros)
             Card(
               child: Padding(
@@ -432,7 +432,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 TextButton.icon(
                   onPressed: () => mostrarAyuda(context, Ayuda.destacados),
                   icon: const Icon(Icons.info_outline, size: 16),
-                  label: const Text('«Destacó en»'),
+                  label: const Tx('«Destacó en»'),
                 ),
             ]),
           ),
@@ -816,7 +816,7 @@ class _TarjetaNota extends StatelessWidget {
             ),
             if (avanzado)
             PopupMenuButton<String>(
-              tooltip: 'Más',
+              tooltip: tr('Más'),
               onSelected: (v) {
                 if (v == 'novi') onSinValorar(!sinValorar);
               },

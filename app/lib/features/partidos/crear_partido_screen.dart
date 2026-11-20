@@ -110,13 +110,13 @@ class _CrearPartidoScreenState extends ConsumerState<CrearPartidoScreen> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Tx('Hora confirmada'),
-            subtitle: const Text('Desactívalo si aún falta cerrar la reserva'),
+            subtitle: const Tx('Desactívalo si aún falta cerrar la reserva'),
             value: _horaConfirmada,
             onChanged: (v) => setState(() => _horaConfirmada = v),
           ),
           const SizedBox(height: 8),
           Row(children: [
-            const Expanded(child: Text('Plazas')),
+            const Expanded(child: Tx('Plazas')),
             IconButton(onPressed: _plazas > 6 ? () => setState(() => _plazas--) : null, icon: const Icon(Icons.remove)),
             Text('$_plazas', style: Theme.of(context).textTheme.titleLarge),
             IconButton(onPressed: _plazas < 44 ? () => setState(() => _plazas++) : null, icon: const Icon(Icons.add)),
@@ -137,7 +137,7 @@ class _CrearPartidoScreenState extends ConsumerState<CrearPartidoScreen> {
           TextFormField(
             controller: _coste,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Coste total del campo', suffixText: '€'),
+            decoration:  InputDecoration(labelText: tr('Coste total del campo'), suffixText: '€'),
             validator: (v) {
               final d = double.tryParse((v ?? '').replaceAll(',', '.'));
               return (d == null || d < 0) ? 'Importe no válido' : null;
@@ -148,13 +148,13 @@ class _CrearPartidoScreenState extends ConsumerState<CrearPartidoScreen> {
             controller: _maps,
             keyboardType: TextInputType.url,
             decoration: InputDecoration(
-              labelText: 'Otro campo (enlace de Maps, opcional)',
+              labelText: tr('Otro campo (enlace de Maps, opcional)'),
               helperText: 'Vacío = ${liga.campoNombre ?? 'el campo de la liga'}',
             ),
             validator: (v) => (v == null || v.trim().isEmpty || esEnlaceMaps(v)) ? null : 'No parece un enlace de Google Maps',
           ),
           const SizedBox(height: 24),
-          FilledButton(onPressed: _guardando ? null : _guardar, child: const Text('Crear convocatoria')),
+          FilledButton(onPressed: _guardando ? null : _guardar, child: const Tx('Crear convocatoria')),
         ]),
       ),
     );

@@ -20,9 +20,9 @@ final bajasLigaProvider = FutureProvider.autoDispose.family<List<Ausencia>, Stri
   (ref, ligaId) => ReglamentoRepo.bajasLiga(ligaId),
 );
 
-final _dia = DateFormat('d MMM', 'es');
+DateFormat get _dia => DateFormat('d MMM', idiomaActual);
 String textoBaja(Ausencia a) =>
-    '${motivosAusencia[a.motivo] ?? a.motivo} · ${a.hasta == null ? 'desde el ${_dia.format(a.desde)}, sin fecha de vuelta' : 'del ${_dia.format(a.desde)} al ${_dia.format(a.hasta!)}'}';
+    '${tr(motivosAusencia[a.motivo] ?? a.motivo)} · ${a.hasta == null ? trf('desde el {d}, sin fecha de vuelta', {'d': _dia.format(a.desde)}) : trf('del {a} al {b}', {'a': _dia.format(a.desde), 'b': _dia.format(a.hasta!)})}';
 
 /// Historial de asistencia (últimos 12 partidos) y bajas temporales (lesión, viaje…).
 class AsistenciaScreen extends ConsumerWidget {
@@ -63,7 +63,7 @@ class AsistenciaScreen extends ConsumerWidget {
                   ListTile(
                     leading: AvatarMiembro(miembros[b.miembroId], radio: 18),
                     title: Text(miembros[b.miembroId]?.nombre ?? '…'),
-                    subtitle: Text([textoBaja(b.a), if (!b.a.actual) 'próximamente', if (b.a.nota != null) b.a.nota!].join(' · ')),
+                    subtitle: Text([textoBaja(b.a), if (!b.a.actual) tr('próximamente'), if (b.a.nota != null) b.a.nota!].join(' · ')),
                     trailing: (mi.soyAdmin || b.miembroId == mi.yo.id) && b.a.actual
                         ? TextButton(
                             onPressed: () async {
@@ -89,12 +89,12 @@ class AsistenciaScreen extends ConsumerWidget {
                     Row(mainAxisSize: MainAxisSize.min, children: [
                       _Punto(e.key, cs),
                       const SizedBox(width: 4),
-                      Text(e.value, style: t.bodySmall),
+                      Text(tr(e.value ?? ''), style: t.bodySmall),
                     ]),
                 ]),
               ),
               if (partidos.isEmpty)
-                const Padding(padding: EdgeInsets.all(16), child: Text('Aún no se ha jugado ningún partido.')),
+                const Padding(padding: EdgeInsets.all(16), child: Tx('Aún no se ha jugado ningún partido.')),
               for (final f in filas)
                 InkWell(
                   onTap: () => _detalle(context, ref, mi, f['miembro_id'] as String),
@@ -205,7 +205,7 @@ class _DetalleBajas extends ConsumerWidget {
                         subtitle: a.nota == null ? null : Text(a.nota!),
                         trailing: puedo
                             ? IconButton(
-                                tooltip: 'Borrar',
+                                tooltip: tr('Borrar'),
                                 icon: const Icon(Icons.delete_outline),
                                 onPressed: () async {
                                   final ok = await ejecutar(context, () => ReglamentoRepo.borrarAusencia(a.id));
@@ -269,14 +269,14 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
               if (mi.soyAdmin)
                 DropdownButtonFormField<String>(
                   value: quien,
-                  decoration: const InputDecoration(labelText: 'Jugador'),
+                  decoration:  InputDecoration(labelText: tr('Jugador')),
                   items: [for (final m in todos) DropdownMenuItem(value: m.id, child: Text(m.nombre))],
                   onChanged: (v) => setState(() => quien = v ?? quien),
                 ),
               const SizedBox(height: 8),
               Wrap(spacing: 6, children: [
                 for (final e in motivosAusencia.entries)
-                  ChoiceChip(label: Text(e.value), selected: motivo == e.key, onSelected: (_) => setState(() => motivo = e.key)),
+                  ChoiceChip(label: Text(tr(e.value)), selected: motivo == e.key, onSelected: (_) => setState(() => motivo = e.key)),
               ]),
               const SizedBox(height: 8),
               ListTile(
@@ -307,7 +307,7 @@ Future<void> registrarBaja(BuildContext context, WidgetRef ref, MiLiga mi, {Stri
                   ),
                 ActionChip(label: const Tx('Sin fecha'), onPressed: () => setState(() => hasta = null)),
               ]),
-              TextField(controller: nota, maxLength: 200, decoration: const InputDecoration(labelText: 'Nota (opcional)')),
+              TextField(controller: nota, maxLength: 200, decoration:  InputDecoration(labelText: tr('Nota (opcional)'))),
               FilledButton(
                 onPressed: () async {
                   final r = await ejecutar(

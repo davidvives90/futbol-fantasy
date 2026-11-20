@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -106,31 +107,31 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
         child: ListView(padding: const EdgeInsets.all(16), children: [
           TextFormField(
             controller: _nombre,
-            decoration: const InputDecoration(labelText: 'Nombre de la liga'),
+            decoration:  InputDecoration(labelText: tr('Nombre de la liga')),
             textCapitalization: TextCapitalization.sentences,
             validator: (v) => (v == null || v.trim().length < 3) ? 'Mínimo 3 caracteres' : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _descripcion,
-            decoration: const InputDecoration(labelText: 'Descripción (opcional)'),
+            decoration:  InputDecoration(labelText: tr('Descripción (opcional)')),
             maxLines: 2,
           ),
           const SizedBox(height: 12),
-          TextFormField(controller: _ciudad, decoration: const InputDecoration(labelText: 'Ciudad')),
+          TextFormField(controller: _ciudad, decoration:  InputDecoration(labelText: tr('Ciudad'))),
           const SizedBox(height: 24),
           Text('Campo', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          TextFormField(controller: _campo, decoration: const InputDecoration(labelText: 'Nombre del campo')),
+          TextFormField(controller: _campo, decoration:  InputDecoration(labelText: tr('Nombre del campo'))),
           const SizedBox(height: 12),
           TextFormField(
             controller: _maps,
             keyboardType: TextInputType.url,
             decoration: InputDecoration(
-              labelText: 'Enlace de Google Maps',
-              helperText: 'En Maps: Compartir → Copiar enlace',
+              labelText: tr('Enlace de Google Maps'),
+              helperText: tr('En Maps: Compartir → Copiar enlace'),
               suffixIcon: IconButton(
-                tooltip: 'Abrir en Maps',
+                tooltip: tr('Abrir en Maps'),
                 icon: const Icon(Icons.map_outlined),
                 onPressed: () => abrirUrl(context, _nulo(_maps)),
               ),
@@ -144,7 +145,7 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
           TextFormField(
             controller: _precio,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Precio estimado por jugador y partido', suffixText: '€'),
+            decoration:  InputDecoration(labelText: tr('Precio estimado por jugador y partido'), suffixText: '€'),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return null;
               final d = double.tryParse(v.replaceAll(',', '.'));
@@ -164,7 +165,7 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
               ),
           ]),
           const SizedBox(height: 16),
-          const Text('Número de equipos'),
+          const Tx('Número de equipos'),
           const SizedBox(height: 8),
           SegmentedButton<int>(
             segments: const [
@@ -181,15 +182,15 @@ class _CrearLigaScreenState extends ConsumerState<CrearLigaScreen> {
           Text('Reglas', style: Theme.of(context).textTheme.titleMedium),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Liga pública'),
-            subtitle: const Text('Aparece en el buscador'),
+            title: const Tx('Liga pública'),
+            subtitle: const Tx('Aparece en el buscador'),
             value: _publica,
             onChanged: (v) => setState(() => _publica = v),
           ),
           if (_publica)
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Aprobar a quien llegue del buscador'),
+              title: const Tx('Aprobar a quien llegue del buscador'),
               value: _requiereAprobacion,
               onChanged: (v) => setState(() => _requiereAprobacion = v),
             ),
