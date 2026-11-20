@@ -99,10 +99,10 @@ class MiEquipoTab extends ConsumerWidget {
               onSelected: (a) => mostrarAyuda(context, a),
               itemBuilder: (_) => [
                 const PopupMenuItem(value: Ayuda.alineacion, child: Tx('Alineación')),
-                PopupMenuItem(value: Ayuda.clausula, child: Tx('Cláusula de rescisión')),
+                PopupMenuItem(value: Ayuda.clausula, child: Tx('Cláusula')),
                 if (mi.liga.fantasy.cesionesActivas) const PopupMenuItem(value: Ayuda.cesion, child: Tx('Cesión')),
                 PopupMenuItem(value: Ayuda.valorMercado, child: Tx('Valor de mercado')),
-                PopupMenuItem(value: Ayuda.fichas, child: Tx('Fichas')),
+                PopupMenuItem(value: Ayuda.fichas, child: Tx('Copias de cada jugador')),
                 PopupMenuItem(value: Ayuda.rolesBonus, child: Tx('Bonus por rol')),
                 PopupMenuItem(value: Ayuda.multiplicadorInvitado, child: Tx('Invitados')),
               ],
@@ -165,7 +165,7 @@ class MiEquipoTab extends ConsumerWidget {
                       ),
                     const PopupMenuItem(
                       value: _Accion.ficha,
-                      child: ListTile(leading: Icon(Icons.insights), title: Tx('Ver ficha de mercado')),
+                      child: ListTile(leading: Icon(Icons.insights), title: Tx('Ver jugador')),
                     ),
                   ],
                 ),

@@ -91,10 +91,10 @@ abstract final class Ayuda {
       'Todos empiezan con un valor parecido. Después de cada partido sube o baja según cómo ha jugado (goles, notas, MVP) '
           'y cuántos mánagers lo tienen: como mucho ±15 % por jornada. Si el admin hace la encuesta de valoración (opcional), '
           'también se tiene en cuenta.');
-  static const fichas = ('Fichas',
+  static const fichas = ('Copias de cada jugador',
       'Cada jugador tiene un número limitado de fichas (copias) para que no todo el mundo tenga al mismo. '
           'Si no quedan, solo puedes conseguirlo comprándoselo a otro mánager o pagando su cláusula.');
-  static const clausula = ('Cláusula de rescisión',
+  static const clausula = ('Cláusula',
       'Precio al que cualquiera puede quitarte un jugador sin preguntarte. Tú la fijas: subirla cuesta un porcentaje de la subida; '
           'bajarla es gratis, pero será más fácil que te lo quiten. Recién fichado está protegido 7 días (lo fija el admin).');
   static const cesion = ('Cesión',

@@ -48,6 +48,7 @@ class LigaScreen extends ConsumerWidget {
         },
         child: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           _Datos(mi: mi),
+          _Accesos(mi: mi),
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Column(children: [
@@ -448,3 +449,52 @@ class _Miembros extends ConsumerWidget {
   }
 }
 
+
+
+/// Clasificación y Caja (antes pestañas propias): dos accesos grandes arriba de Liga.
+/// Caja solo aparece si la liga mueve dinero (precio, saldo o admin).
+class _Accesos extends ConsumerWidget {
+  const _Accesos({required this.mi});
+  final MiLiga mi;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saldos = ref.watch(saldosProvider(mi.liga.id)).valueOrNull ?? const [];
+    final miSaldo = saldos.where((s) => s.miembroId == mi.yo.id).firstOrNull?.saldo ?? 0;
+    final usaCaja = mi.soyAdmin || mi.liga.precioEstimado != null || miSaldo.abs() > 0.005;
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    Widget acceso(IconData icono, String titulo, String sub, String ruta, {Color? color}) => Expanded(
+          child: Card(
+            margin: const EdgeInsets.all(4),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => context.go(ruta),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Icon(icono, color: color ?? cs.primary),
+                  const SizedBox(height: 8),
+                  Text(tr(titulo), style: t.titleMedium),
+                  Text(sub, style: t.bodySmall?.copyWith(color: color ?? cs.onSurfaceVariant)),
+                ]),
+              ),
+            ),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Row(children: [
+        acceso(Icons.leaderboard_outlined, 'Clasificación', tr('Puntos, goles y récords'), '/clasificacion'),
+        if (usaCaja)
+          acceso(
+            Icons.account_balance_wallet_outlined,
+            'Caja',
+            miSaldo < -0.005 ? trf('Debes {x}', {'x': euros(-miSaldo)}) : tr('Al día'),
+            '/caja',
+            color: miSaldo < -0.005 ? cs.error : null,
+          ),
+      ]),
+    );
+  }
+}

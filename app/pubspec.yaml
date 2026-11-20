@@ -33,6 +33,9 @@ dependencies:
   web: any
   # Exportar a Excel (.xlsx) sin servidor
   excel: ^4.0.6
+  # Notificaciones con botones «Voy / No voy» (0040)
+  flutter_local_notifications: ^18.0.1
+  http: any
 
 dev_dependencies:
   flutter_launcher_icons: any

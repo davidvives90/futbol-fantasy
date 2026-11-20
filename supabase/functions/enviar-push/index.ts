@@ -33,7 +33,7 @@ Deno.serve(async () => {
 
   const { data: pendientes, error } = await sb
     .from("notificaciones")
-    .select("id, perfil_id, titulo, cuerpo, ruta, liga_id")
+    .select("id, perfil_id, titulo, cuerpo, ruta, liga_id, tipo")
     .eq("push_estado", "pendiente")
     .order("id")
     .limit(200);
@@ -41,9 +41,32 @@ Deno.serve(async () => {
   if (!pendientes?.length) return Response.json({ ok: true, enviadas: 0 });
 
   const perfiles = [...new Set(pendientes.map((n) => n.perfil_id))];
-  const { data: disp } = await sb.from("dispositivos").select("token, perfil_id").in("perfil_id", perfiles);
+  const { data: disp } = await sb.from("dispositivos").select("token, perfil_id, plataforma").in("perfil_id", perfiles);
   const porPerfil = new Map<string, string[]>();
-  for (const d of disp ?? []) porPerfil.set(d.perfil_id, [...(porPerfil.get(d.perfil_id) ?? []), d.token]);
+  const conBotones = new Set<string>();
+  for (const d of disp ?? []) {
+    porPerfil.set(d.perfil_id, [...(porPerfil.get(d.perfil_id) ?? []), d.token]);
+    if (d.plataforma === "android_botones") conBotones.add(d.token);
+  }
+
+  // Avisos de convocatoria: llevan los enlaces para responder «Voy / No voy» desde la propia notificación
+  const base = `${Deno.env.get("SUPABASE_URL")}/functions/v1/responder`;
+  const tokenDe = new Map<string, string>();
+  async function enlaces(n: { perfil_id: string; liga_id: string | null; ruta: string | null; tipo: string | null }) {
+    const m = /^\/partidos\/([0-9a-f-]{36})$/i.exec(n.ruta ?? "");
+    if (n.tipo !== "recordatorio_convocatoria" || !m || !n.liga_id) return null;
+    const clave = `${n.perfil_id}|${n.liga_id}`;
+    if (!tokenDe.has(clave)) {
+      const { data: mi } = await sb.from("miembros").select("id").eq("perfil_id", n.perfil_id)
+        .eq("liga_id", n.liga_id).eq("estado", "activo").maybeSingle();
+      if (!mi) return null;
+      const { data: tok } = await sb.rpc("token_aviso_de", { p_miembro: mi.id });
+      if (!tok) return null;
+      tokenDe.set(clave, tok as string);
+    }
+    const q = `t=${tokenDe.get(clave)}&p=${m[1]}`;
+    return { url_voy: `${base}?${q}&r=voy`, url_no: `${base}?${q}&r=no`, partido: m[1] };
+  }
 
   const acceso = await tokenGoogle(sa);
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
@@ -52,18 +75,27 @@ Deno.serve(async () => {
   for (const n of pendientes) {
     const tokens = porPerfil.get(n.perfil_id) ?? [];
     let estado = tokens.length ? "error" : "sin_dispositivo";
+    const acc = tokens.length ? await enlaces(n) : null;
     for (const token of tokens) {
+      const datos = { ruta: n.ruta ?? "", liga_id: n.liga_id ?? "", id: String(n.id) };
+      // Con botones: mensaje solo de datos; la app pinta la notificación con «Voy» y «No voy»
+      // Solo a móviles con una versión que sabe pintar los botones; las antiguas reciben el aviso normal
+      const message = acc && conBotones.has(token)
+        ? {
+          token,
+          data: { ...datos, ...acc, accion: "asistencia", titulo: n.titulo ?? "", cuerpo: n.cuerpo ?? "" },
+          android: { priority: "HIGH" },
+        }
+        : {
+          token,
+          notification: { title: n.titulo, body: n.cuerpo },
+          data: datos,
+          android: { priority: "HIGH", notification: { tag: String(n.id) } },
+        };
       const r = await fetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${acceso}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: {
-            token,
-            notification: { title: n.titulo, body: n.cuerpo },
-            data: { ruta: n.ruta ?? "", liga_id: n.liga_id ?? "", id: String(n.id) },
-            android: { priority: "HIGH", notification: { tag: String(n.id) } },
-          },
-        }),
+        body: JSON.stringify({ message }),
       });
       if (r.ok) {
         estado = "enviada";

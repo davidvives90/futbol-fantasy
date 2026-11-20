@@ -1,4 +1,6 @@
 import '../../core/calendario.dart';
+import '../../core/liga_activa.dart';
+import '../../core/widget_inicio.dart';
 import '../liga/votaciones_screen.dart';
 import '../liga/asistencia_screen.dart';
 import '../../data/repos/reglamento_repo.dart';
@@ -192,6 +194,18 @@ class _ProximoPartido extends ConsumerWidget {
         .difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))
         .inDays;
     final cuando = switch (dias) { 0 => 'Hoy', 1 => 'Mañana', _ when dias < 7 => 'En $dias días', _ => 'Próximo partido' };
+    // Widget del móvil: el mismo resumen que esta tarjeta
+    WidgetInicio.actualizar(
+      ref.read(prefsProvider),
+      titulo: '${tr(cuando)} · ${fechaHora(partido.fechaHora)}',
+      linea: '${confirmados.length}/${partido.plazas} · ${mi.liga.nombre}',
+      estado: switch (mia) {
+        EstadoInscripcion.confirmado => tr('Vas ✅'),
+        EstadoInscripcion.espera => tr('En lista de espera'),
+        EstadoInscripcion.baja => tr('No vas'),
+        _ => tr('¿Vas? Toca para responder'),
+      },
+    );
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -217,7 +231,7 @@ class _ProximoPartido extends ConsumerWidget {
                 ]),
             ]),
             const SizedBox(height: 10),
-            Text(fechaHora(partido.fechaHora), style: t.headlineSmall),
+            Text(fechaHora(partido.fechaHora), style: t.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 2),
             InkWell(
               onTap: () => abrirUrl(context, partido.campoMapsUrl ?? mi.liga.campoMapsUrl),
@@ -240,7 +254,7 @@ class _ProximoPartido extends ConsumerWidget {
               Expanded(
                 child: Text(
                   faltan > 0 ? '${confirmados.length}/${partido.plazas} · faltan $faltan' : '¡Completo! ${confirmados.length}/${partido.plazas}',
-                  style: t.labelLarge,
+                  style: t.titleMedium,
                 ),
               ),
               if (importe != null)

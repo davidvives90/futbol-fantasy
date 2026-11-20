@@ -5,13 +5,13 @@ import 'liga_activa.dart';
 
 const _clave = 'tema_app';
 
-/// Apariencia elegida en Perfil → Opciones. Por defecto, claro (el diseño principal de la app).
+/// Apariencia elegida en Perfil → Opciones. Por defecto, la del móvil (claro u oscuro automático).
 class TemaNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() => switch (ref.watch(prefsProvider).getString(_clave)) {
         'oscuro' => ThemeMode.dark,
-        'sistema' => ThemeMode.system,
-        _ => ThemeMode.light,
+        'claro' => ThemeMode.light,
+        _ => ThemeMode.system,
       };
 
   Future<void> elegir(ThemeMode modo) async {

@@ -8,6 +8,7 @@ import '../../core/liga_activa.dart';
 import '../../core/utils.dart';
 import '../../data/providers.dart';
 import '../auth/perfil_form_screen.dart';
+import '../onboarding/bienvenida.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'notificaciones_screen.dart';
 
@@ -53,17 +54,31 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     }
     if (ligas.value!.isEmpty) return const OnboardingScreen();
 
-    // Con el Fantasy desactivado en la liga, su pestaña desaparece (rama 1 del shell)
+    // Primer uso: 3 pantallas de bienvenida, una sola vez por móvil
+    final prefs = ref.read(prefsProvider);
+    if (!(prefs.getBool(claveBienvenida) ?? false)) {
+      prefs.setBool(claveBienvenida, true);
+      final conFantasy = ref.read(ligaActualProvider)?.liga.fantasyActivo ?? true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => Bienvenida(fantasy: conFantasy)));
+      });
+    }
+
+    // Solo 3 pestañas: Inicio · Fantasy · Liga. Clasificación (rama 2) y Caja (rama 3) se abren desde Liga.
+    // Con el Fantasy desactivado en la liga, su pestaña desaparece (rama 1 del shell).
     final fantasy = ref.watch(ligaActualProvider)?.liga.fantasyActivo ?? true;
-    final ramas = [0, if (fantasy) 1, 2, 3, 4];
+    final ramas = [0, if (fantasy) 1, 4];
     const destinos = [
-      (Icons.sports_soccer_outlined, Icons.sports_soccer, 'Partidos'),
+      (Icons.home_outlined, Icons.home, 'Inicio'),
       (Icons.shield_outlined, Icons.shield, 'Fantasy'),
       (Icons.leaderboard_outlined, Icons.leaderboard, 'Clasificación'),
       (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Caja'),
       (Icons.groups_outlined, Icons.groups, 'Liga'),
     ];
-    final visible = ramas.indexOf(widget.shell.currentIndex);
+    final actual = widget.shell.currentIndex;
+    // Clasificación y Caja cuelgan de Liga: se marca Liga
+    final visible = (actual == 2 || actual == 3) ? ramas.indexOf(4) : ramas.indexOf(actual);
     if (visible < 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => widget.shell.goBranch(0));
     }

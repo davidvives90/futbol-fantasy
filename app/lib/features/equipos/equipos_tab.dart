@@ -32,6 +32,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
   /// Equipos en edición (copia mutable del reparto elegido).
   List<List<JugadorBalanceo>>? _equipos;
   bool _guardando = false;
+  bool _propuestaAuto = false;
 
   int get _k => widget.partido.numEquipos;
 
@@ -144,7 +145,27 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
           icono: Icons.group_off);
     }
 
+    // Lista completa y sin equipos: la app propone unos equilibrados sola; el admin solo confirma
+    if (editable && mostrar == null && !_propuestaAuto && conf.length >= widget.partido.plazas) {
+      _propuestaAuto = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _equipos == null) _generar(js);
+      });
+    }
+
     return ListView(padding: const EdgeInsets.all(16), children: [
+      if (editable && _equipos != null && !hayGuardados)
+        Card(
+          color: Theme.of(context).colorScheme.secondaryContainer,
+          child: const Padding(
+            padding: EdgeInsets.all(12),
+            child: Row(children: [
+              Icon(Icons.auto_awesome),
+              SizedBox(width: 10),
+              Expanded(child: Tx('Propuesta de equipos equilibrados. Si te parecen bien, pulsa «Confirmar equipos».')),
+            ]),
+          ),
+        ),
       if (editable)
         Wrap(spacing: 8, runSpacing: 8, children: [
           FilledButton.tonalIcon(

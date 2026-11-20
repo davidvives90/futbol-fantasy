@@ -177,8 +177,10 @@ class _SiguientePaso extends ConsumerWidget {
     final (IconData icono, String texto, String boton, Future<void> Function() accion)? paso = switch (e) {
       EstadoPartido.abierto || EstadoPartido.completo => (
           Icons.groups_2_outlined,
-          e == EstadoPartido.completo ? 'Lista completa: ya puedes hacer los equipos' : 'Cuando esté la lista, haz los equipos',
-          'Equipos',
+          e == EstadoPartido.completo
+              ? 'Lista completa: tienes una propuesta de equipos equilibrados lista para confirmar'
+              : 'Cuando esté la lista, haz los equipos',
+          e == EstadoPartido.completo ? 'Ver propuesta' : 'Equipos',
           () async => irA('Equipos'),
         ),
       EstadoPartido.equipos_hechos when yaEmpezo => (
@@ -226,14 +228,14 @@ class _SiguientePaso extends ConsumerWidget {
         child: Row(children: [
           Icon(paso.$1, color: cs.onPrimaryContainer),
           const SizedBox(width: 12),
-          Expanded(child: Text(paso.$2, style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.w600))),
+          Expanded(child: Text(tr(paso.$2), style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.w600))),
           FilledButton.tonal(
             style: FilledButton.styleFrom(minimumSize: const Size(0, 40), backgroundColor: cs.surface),
             onPressed: () async {
               await paso.$4();
               ref.invalidate(partidosProvider(partido.ligaId));
             },
-            child: Text(paso.$3),
+            child: Text(tr(paso.$3)),
           ),
         ]),
       ),

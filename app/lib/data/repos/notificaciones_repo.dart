@@ -37,7 +37,8 @@ class NotificacionesRepo {
   }
 
   static Future<void> registrarDispositivo(String token) async {
-    await sb.rpc('registrar_dispositivo', params: {'p_token': token, 'p_plataforma': 'android'});
+    // 'android_botones': esta versión pinta las notificaciones de convocatoria con «Voy / No voy» (0040)
+    await sb.rpc('registrar_dispositivo', params: {'p_token': token, 'p_plataforma': 'android_botones'});
   }
 
   static Future<void> borrarDispositivo(String token) async {

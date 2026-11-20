@@ -55,3 +55,4 @@ aplicar tests/escenario_extras.sql
 aplicar tests/escenario_idioma.sql
 aplicar tests/escenario_fantasy_sencillo.sql
 aplicar tests/escenario_mas_sencillo.sql
+aplicar tests/escenario_responder_aviso.sql
