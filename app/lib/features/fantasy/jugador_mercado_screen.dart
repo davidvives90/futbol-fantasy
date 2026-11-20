@@ -92,7 +92,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
           loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
           error: (e, _) => Text(mensajeError(e)),
           data: (v) => v == null
-              ? const Padding(padding: EdgeInsets.all(8), child: Tx('Todavía no ha sido valorado en una encuesta.'))
+              ? const Padding(padding: EdgeInsets.all(8), child: Tx('Su valor depende de cómo juegue en los partidos.'))
               : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   for (final a in Atributo.values) BarraAtributo(etiqueta: a.etiqueta, valor: v.atributos[a]),
                   const Divider(),

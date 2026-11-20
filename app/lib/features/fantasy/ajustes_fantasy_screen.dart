@@ -84,7 +84,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
   double? _num(String clave) => double.tryParse(_c[clave]!.text.trim().replaceAll(',', '.'));
 
   Future<void> _guardar(MiLiga mi) async {
-    if (!_form.currentState!.validate()) return;
+    if (!(_form.currentState?.validate() ?? true)) return;
     final datos = {
       'precio_min': _num('precio_min'),
       'precio_max': _num('precio_max'),
@@ -164,36 +164,20 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
     return Scaffold(
       appBar: AppBar(title: const Tx('Ajustes Fantasy')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        Text('Encuestas de valoración', style: t.titleMedium),
-        const SizedBox(height: 4),
-        const Text('Cada mánager ordena a todos los jugadores en 6 rankings. Al cerrar la encuesta general se fijan '
-            'las valoraciones, los precios iniciales y el presupuesto de cada mánager. Se recomienda cerrarla con al '
-            'menos el 60 % de respuestas.'),
-        encuestas.when(
-          loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
-          error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(encuestasAbiertasProvider(mi.liga.id))),
-          data: (lista) => Column(children: [
-            for (final e in lista) _FilaEncuesta(encuesta: e, mi: mi, activos: activos, miembros: miembros),
-            if (lista.where((e) => !e.esMini).isEmpty)
-              ListTile(
-                leading: const Icon(Icons.how_to_vote_outlined),
-                title: const Tx('Abrir encuesta general'),
-                subtitle: const Tx('Antes de empezar la liga Fantasy, o para recalibrar valoraciones'),
-                onTap: () async {
-                  if (!await confirmar(context, 'Abrir encuesta', 'Todos los miembros verán la encuesta en la app.')) return;
-                  if (!context.mounted) return;
-                  final ok = await ejecutar(context, () => FantasyRepo.abrirEncuesta(mi.liga.id), ok: 'Encuesta abierta');
-                  if (ok) ref.invalidate(encuestasAbiertasProvider(mi.liga.id));
-                },
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(children: [
+              Icon(Icons.bolt_outlined, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Tx('El Fantasy funciona solo: cada jugador empieza con un valor parecido y los precios '
+                    'cambian después de cada partido. No hace falta configurar nada.'),
               ),
-            ListTile(
-              leading: const Icon(Icons.person_add_alt),
-              title: const Tx('Mini-encuesta para un jugador nuevo'),
-              subtitle: const Tx('Hasta entonces empieza con valoración 50'),
-              onTap: () => _miniEncuesta(mi),
-            ),
-          ]),
+            ]),
+          ),
         ),
+        const SizedBox(height: 8),
         const Divider(height: 32),
         Text('Bonus y multiplicadores', style: t.titleMedium),
         const SizedBox(height: 4),
@@ -230,9 +214,13 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           value: _bonusRoles ?? true,
           onChanged: (v) => setState(() => _bonusRoles = v),
         ),
-        const Divider(height: 32),
-        Text('Parámetros del mercado', style: t.titleMedium),
-        const SizedBox(height: 12),
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          leading: const Icon(Icons.tune),
+          title: const Tx('Opciones avanzadas'),
+          subtitle: const Tx('Precios, plantillas, cláusulas, cesiones… Los valores por defecto funcionan bien.'),
+          childrenPadding: const EdgeInsets.only(top: 8),
+          children: [
         Form(
           key: _form,
           child: Column(children: [
@@ -253,11 +241,51 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
             'Los bonus de cada rol se editan en Reglas de puntuación.',
             style: TextStyle(fontSize: 12)),
         const SizedBox(height: 12),
+          ],
+        ),
+        const SizedBox(height: 12),
         FilledButton(
           onPressed: _guardando ? null : () => _guardar(mi),
           child: const Tx('Guardar parámetros'),
         ),
-        const Divider(height: 40),
+        const Divider(height: 32),
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          leading: const Icon(Icons.how_to_vote_outlined),
+          title: const Tx('Encuesta de valoración (opcional)'),
+          childrenPadding: const EdgeInsets.only(bottom: 8),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+        const Tx('Cada mánager ordena a los jugadores en 6 rankings. Sirve para afinar las valoraciones (equipos '
+            'equilibrados y evolución del precio). Si se cierra antes de empezar el Fantasy, también fija los precios iniciales.'),
+        encuestas.when(
+          loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
+          error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(encuestasAbiertasProvider(mi.liga.id))),
+          data: (lista) => Column(children: [
+            for (final e in lista) _FilaEncuesta(encuesta: e, mi: mi, activos: activos, miembros: miembros),
+            if (lista.where((e) => !e.esMini).isEmpty)
+              ListTile(
+                leading: const Icon(Icons.how_to_vote_outlined),
+                title: const Tx('Abrir encuesta general'),
+                subtitle: const Tx('Para afinar las valoraciones de todos'),
+                onTap: () async {
+                  if (!await confirmar(context, 'Abrir encuesta', 'Todos los miembros verán la encuesta en la app.')) return;
+                  if (!context.mounted) return;
+                  final ok = await ejecutar(context, () => FantasyRepo.abrirEncuesta(mi.liga.id), ok: 'Encuesta abierta');
+                  if (ok) ref.invalidate(encuestasAbiertasProvider(mi.liga.id));
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.person_add_alt),
+              title: const Tx('Mini-encuesta para un jugador nuevo'),
+              subtitle: const Tx('Hasta entonces empieza con un valor parecido al resto'),
+              onTap: () => _miniEncuesta(mi),
+            ),
+          ]),
+        ),
+          ],
+        ),
+        const Divider(height: 32),
         Text('Empezar de cero', style: t.titleMedium),
         const SizedBox(height: 4),
         const Text('Vacía todas las plantillas, saldos, ofertas y cesiones. Cada mánager recibe de nuevo 5 jugadores '
@@ -268,13 +296,21 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           icon: const Icon(Icons.restart_alt),
           label: const Tx('Reiniciar Fantasy'),
           onPressed: () async {
-            if (!await confirmar(context, 'Reiniciar Fantasy',
-                'Todos pierden sus jugadores y su dinero y reciben un equipo nuevo. No se puede deshacer.',
-                accion: 'Reiniciar', tipo: TipoConfirmacion.peligro)) {
-              return;
-            }
-            if (!context.mounted) return;
-            if (await ejecutar(context, () => FantasyRepo.reiniciar(mi.liga.id), ok: 'Fantasy reiniciado: equipos repartidos')) {
+            final igualar = await showDialog<bool>(
+              context: context,
+              builder: (c) => AlertDialog(
+                title: const Tx('Reiniciar Fantasy'),
+                content: const Tx('Todos pierden sus jugadores y su dinero y reciben un equipo nuevo. No se puede deshacer.'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(c), child: const Tx('Cancelar')),
+                  TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Mantener precios')),
+                  FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Precios parecidos para todos')),
+                ],
+              ),
+            );
+            if (igualar == null || !context.mounted) return;
+            if (await ejecutar(context, () => FantasyRepo.reiniciar(mi.liga.id, igualar: igualar),
+                ok: 'Fantasy reiniciado: equipos repartidos')) {
               refrescarLigas(ref);
             }
           },

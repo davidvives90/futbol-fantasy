@@ -88,8 +88,9 @@ abstract final class Ayuda {
           'Penalti fallado: −2 · Autogol: −2 · Nota de los compañeros: hasta 4 · MVP: 3.\n\n'
           'El administrador puede cambiar estos valores en Ajustes → Puntuación.');
   static const valorMercado = ('Valor de mercado',
-      'Parte de la encuesta inicial (6 rankings: calidad, velocidad, resistencia, defensa, regate y portería) y, '
-          'a partir del 3.er partido, se mueve con el rendimiento real y con la demanda: como mucho ±15 % por jornada.');
+      'Todos empiezan con un valor parecido. Después de cada partido sube o baja según cómo ha jugado (goles, notas, MVP) '
+          'y cuántos mánagers lo tienen: como mucho ±15 % por jornada. Si el admin hace la encuesta de valoración (opcional), '
+          'también se tiene en cuenta.');
   static const fichas = ('Fichas',
       'Cada jugador tiene un número limitado de fichas (copias) para que no todo el mundo tenga al mismo. '
           'Si no quedan, solo puedes conseguirlo comprándoselo a otro mánager o pagando su cláusula.');

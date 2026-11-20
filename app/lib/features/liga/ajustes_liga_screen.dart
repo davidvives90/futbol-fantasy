@@ -82,7 +82,7 @@ class AjustesLigaScreen extends ConsumerWidget {
         grupo('Puntuación y Fantasy'),
         opcion(Icons.rule, 'Puntuación y valoraciones', 'Puntos por acción, valoración rápida o detallada', '/liga/reglas'),
         if (mi.liga.fantasyActivo)
-          opcion(Icons.storefront_outlined, 'Fantasy', 'Encuesta, mercado, multiplicador de invitados y bonus por rol', '/liga/fantasy'),
+          opcion(Icons.storefront_outlined, 'Fantasy', 'Bonus, opciones avanzadas y reiniciar', '/liga/fantasy'),
       ]),
     );
   }

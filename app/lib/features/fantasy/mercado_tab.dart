@@ -97,7 +97,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
                 };
             filtrada.sort((a, b) => clave(b).compareTo(clave(a)));
             if (filtrada.isEmpty) {
-              return Vacio(lista.isEmpty ? 'El mercado se abre al cerrar la encuesta inicial.' : 'Ningún jugador coincide.');
+              return Vacio(lista.isEmpty ? 'Todavía no hay jugadores en el mercado.' : 'Ningún jugador coincide.');
             }
             return RefreshIndicator(
               onRefresh: () async => refrescarFantasy(ref, k),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../shell/home_shell.dart';
+import '../../core/idioma.dart';
 import '../../core/utils.dart';
 import 'clasificacion_managers_tab.dart';
 import 'fantasy_providers.dart';
@@ -80,9 +81,9 @@ class EncuestaPendienteCard extends ConsumerWidget {
         title: Text(e.esMini ? 'Coloca a ${miembros[e.sujetoId]?.nombre ?? 'un jugador nuevo'}' : 'Valora a los jugadores de la liga',
             style: TextStyle(color: cs.onTertiaryContainer, fontWeight: FontWeight.w600)),
         subtitle: Text(
-          e.esMini
+          tr(e.esMini
               ? 'Mini-encuesta: indica dónde lo pondrías en cada ranking.'
-              : 'Ordénalos en 6 rankings. Con esto se fijan los precios iniciales del mercado.',
+              : 'Opcional: ordénalos en 6 rankings para afinar las valoraciones.'),
           style: TextStyle(color: cs.onTertiaryContainer),
         ),
         trailing: Icon(Icons.chevron_right, color: cs.onTertiaryContainer),

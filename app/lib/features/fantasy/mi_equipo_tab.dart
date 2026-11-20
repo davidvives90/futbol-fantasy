@@ -39,10 +39,11 @@ class MiEquipoTab extends ConsumerWidget {
     if (manager.isLoading || plantilla.isLoading) return const Cargando();
     if (manager.hasError) return ErrorVista(manager.error!, onRetry: () => refrescarFantasy(ref, k));
     if (manager.value == null) {
-      return const Vacio(
-        'El Fantasy empieza cuando un admin cierre la encuesta inicial de valoración: '
-        'entonces se fijan los precios y recibes tu presupuesto.',
-        icono: Icons.hourglass_empty,
+      return Vacio(
+        'No se ha podido preparar tu equipo. Desliza hacia abajo para reintentarlo.',
+        icono: Icons.sports_soccer,
+        accion: 'Reintentar',
+        onAccion: () => refrescarFantasy(ref, k),
       );
     }
     final m = manager.value!;
@@ -67,6 +68,18 @@ class MiEquipoTab extends ConsumerWidget {
             ]),
           ),
         ),
+        if (m.puntosTotales == 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+            child: Row(children: [
+              Icon(Icons.lightbulb_outline, size: 18, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Tx('Todos empiezan con un valor parecido. Después de cada partido, quien juega bien sube '
+                    'de precio y quien no, baja. Alinea a tus jugadores antes del partido para sumar puntos.'),
+              ),
+            ]),
+          ),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(

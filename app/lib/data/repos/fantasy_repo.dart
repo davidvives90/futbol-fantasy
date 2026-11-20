@@ -6,8 +6,14 @@ import '../models_fantasy.dart';
 /// Contrato: docs/mercado_fantasy.md §8–10 y docs/contrato_app_backend.md (migraciones 0008–0014).
 class FantasyRepo {
   /// Admin: empieza el Fantasy de cero con reparto de equipos compensados (0027). Devuelve nº de mánagers.
-  static Future<int> reiniciar(String ligaId) async =>
-      ((await sb.rpc('reiniciar_fantasy', params: {'p_liga': ligaId})) as num).toInt();
+  /// [igualar]: todos vuelven a empezar con un valor parecido (como al principio).
+  static Future<int> reiniciar(String ligaId, {bool igualar = false}) async =>
+      ((await sb.rpc('reiniciar_fantasy', params: {'p_liga': ligaId, 'p_igualar': igualar})) as num).toInt();
+
+  /// Entra al Fantasy (0038): si la liga aún no había empezado, empieza ya (sin encuesta, todos con un valor
+  /// parecido) y me crea el equipo con dinero y jugadores. Se puede llamar siempre.
+  static Future<bool> entrar(String ligaId) async =>
+      (await sb.rpc('entrar_fantasy', params: {'p_liga': ligaId})) as bool? ?? false;
 
   /// Resultado esperado (xG) de un partido con equipos hechos (0028). null si está desactivado.
   static Future<Map<String, dynamic>?> prediccion(String partidoId) async {
@@ -29,6 +35,13 @@ class FantasyRepo {
         .eq('miembro_id', miembroId)
         .maybeSingle();
     if (r != null) return Manager.fromMap(r);
+    // Sin equipo todavía: se entra (y si hace falta arranca el Fantasy) sin esperar a nadie
+    try {
+      if (await entrar(ligaId)) {
+        final r2 = await sb.from('fantasy_managers').select().eq('liga_id', ligaId).eq('miembro_id', miembroId).maybeSingle();
+        if (r2 != null) return Manager.fromMap(r2);
+      }
+    } catch (_) {}
     final l = await sb.from('ligas').select('presupuesto_inicial').eq('id', ligaId).maybeSingle();
     final presu = toDouble(l?['presupuesto_inicial']);
     return presu == null ? null : Manager(miembroId: miembroId, saldo: presu, puntosTotales: 0);
