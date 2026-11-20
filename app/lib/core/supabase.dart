@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Configuración inyectada al compilar con --dart-define.
@@ -7,7 +8,9 @@ class Env {
 
   /// Esquema propio de la app para deep links.
   static const scheme = 'io.futbolfantasy';
-  static const loginRedirect = '$scheme://login';
+  /// Vuelta del enlace mágico / Google: en la web, la propia página (sin el #/ruta); en el móvil, el esquema propio.
+  static String get loginRedirect =>
+      kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : '$scheme://login';
 
   /// Página web pública que redirige a la descarga del APK y a la app.
   static const webInvitacion = 'https://futbolfantasy.app/i';

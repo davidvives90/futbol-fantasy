@@ -3,13 +3,13 @@
 ## Qué ya está hecho
 - Identificador de la app: `com.futbolfantasy.futbol_fantasy` (válido para Play; no se puede cambiar después de publicar).
 - Icono adaptativo, nombre «Fútbol Fantasy», minSdk 24, targetSdk el de Flutter estable.
-- Política de privacidad: `docs/web/privacidad.html` (hay que publicarla en una URL pública, ver abajo).
+- Política de privacidad: `docs/web/privacidad.html`, publicada con la web.
 - CI: si existen los secretos de firma, además del APK genera el **App Bundle (.aab)** firmado, que es lo que pide Play.
 - Consentimiento de anuncios (UMP) y opción «Privacidad y anuncios» en el perfil.
 
 ## Lo que tiene que hacer David
 1. **Cuenta de desarrollador de Google Play** (pago único de 25 $). Las cuentas personales nuevas deben hacer una prueba cerrada con al menos 12 testers durante 14 días antes de poder publicar en producción.
-2. **Publicar la política de privacidad**: en GitHub › Settings › Pages › «Deploy from a branch» › `main` / `/docs`. Quedará en `https://davidvives90.github.io/futbol-fantasy/web/privacidad.html`.
+2. **Política de privacidad**: se publica sola junto a la versión web en `https://davidvives90.github.io/futbol-fantasy/privacidad.html` (o `https://<tu dominio>/privacidad.html`).
 3. **Crear la clave de subida** (una vez, en tu ordenador con Java instalado):
    ```
    keytool -genkey -v -keystore subida.jks -keyalg RSA -keysize 2048 -validity 10000 -alias subida

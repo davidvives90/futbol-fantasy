@@ -29,6 +29,8 @@ dependencies:
   google_mobile_ads: any
   firebase_core: any
   firebase_messaging: any
+  # Web: banners de AdSense (HtmlElementView)
+  web: any
 
 dev_dependencies:
   flutter_launcher_icons: any

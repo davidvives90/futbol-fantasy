@@ -169,3 +169,58 @@ jobs:
           name: Fútbol Fantasy 0.1.${{ github.run_number }}
           files: app/build/app/outputs/flutter-apk/app-release.apk
           prerelease: true
+
+  web:
+    # Versión web (para iPhone/iPad y ordenador). Se publica en GitHub Pages (rama gh-pages).
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://wyybdsxnmxgfntyrzjmq.supabase.co' }}
+      SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_nbc_WP9tz7KfkMSKioXptg_QQNtjTlu' }}
+      # Con dominio propio (variable WEB_DOMINIO, p. ej. app.midominio.es) la web vive en la raíz; si no, en /futbol-fantasy/
+      WEB_DOMINIO: ${{ vars.WEB_DOMINIO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Carpetas web que falten (no toca index.html ni manifest.json)
+        run: flutter create . --platforms web --org com.futbolfantasy --project-name futbol_fantasy
+
+      - run: flutter pub get
+
+      - name: Iconos web
+        run: dart run flutter_launcher_icons -f flutter_launcher_icons_web.yaml
+
+      - name: Compilar web
+        run: |
+          if [ -n "$WEB_DOMINIO" ]; then BASE=/; else BASE=/futbol-fantasy/; fi
+          flutter build web --release --base-href "$BASE" \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+            --dart-define=APP_VERSION=0.1.${{ github.run_number }} \
+            --dart-define=ADSENSE_CLIENT=${{ vars.ADSENSE_CLIENT }} \
+            --dart-define=ADSENSE_SLOT_SUPERIOR=${{ vars.ADSENSE_SLOT_SUPERIOR }} \
+            --dart-define=ADSENSE_SLOT_LATERAL=${{ vars.ADSENSE_SLOT_LATERAL }}
+          cp ../docs/web/privacidad.html build/web/privacidad.html
+          if [ -n "$WEB_DOMINIO" ]; then echo "$WEB_DOMINIO" > build/web/CNAME; fi
+          # AdSense exige ads.txt en la raíz del dominio
+          if [ -n "${{ vars.ADSENSE_CLIENT }}" ]; then
+            echo "google.com, $(echo '${{ vars.ADSENSE_CLIENT }}' | sed 's/^ca-//'), DIRECT, f08c47fec0942fa0" > build/web/ads.txt
+          fi
+          touch build/web/.nojekyll
+          ls build/web
+
+      - name: Publicar en GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: app/build/web
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: Web ${{ github.sha }}

@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/liga_activa.dart';
 import 'core/anuncios.dart';
 import 'core/equipaciones.dart';
+import 'core/marco_web.dart';
 import 'core/errores.dart';
 import 'core/push.dart';
 import 'data/providers.dart';
@@ -105,7 +106,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 1.0, maxScaleFactor: 1.35)),
           child: EquipacionesScope(
             equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
-            child: child!,
+            child: MarcoWeb(child: child!),
           ),
         );
       },

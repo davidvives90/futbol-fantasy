@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../data/repos/notificaciones_repo.dart';
@@ -15,7 +16,8 @@ class Push {
   static const _senderId = String.fromEnvironment('FIREBASE_SENDER_ID');
   static const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
 
-  static bool get configurado => _appId.isNotEmpty && _apiKey.isNotEmpty && _projectId.isNotEmpty;
+  // En la web aún no hay push (falta registrar la app web en Firebase); los avisos se ven en la campana.
+  static bool get configurado => !kIsWeb && _appId.isNotEmpty && _apiKey.isNotEmpty && _projectId.isNotEmpty;
 
   static bool _iniciado = false;
   static String? _token;

@@ -38,7 +38,7 @@ class Errores {
         'p_traza': s?.toString(),
         'p_pantalla': pantalla,
         'p_version': version,
-        'p_plataforma': defaultTargetPlatform.name,
+        'p_plataforma': kIsWeb ? 'web-${defaultTargetPlatform.name}' : defaultTargetPlatform.name,
       }).catchError((_) => null);
     } catch (_) {}
   }

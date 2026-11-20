@@ -129,7 +129,7 @@ class PerfilScreen extends ConsumerWidget {
   }
 }
 
-const urlPrivacidad = 'https://davidvives90.github.io/futbol-fantasy/web/privacidad.html';
+const urlPrivacidad = 'https://davidvives90.github.io/futbol-fantasy/privacidad.html';
 
 Future<void> _eliminarCuenta(BuildContext context, WidgetRef ref) async {
   final ctrl = TextEditingController();

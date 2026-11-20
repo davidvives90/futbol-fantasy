@@ -56,27 +56,57 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final fantasy = ref.watch(ligaActualProvider)?.liga.fantasyActivo ?? true;
     final ramas = [0, if (fantasy) 1, 2, 3, 4];
     const destinos = [
-      NavigationDestination(icon: Icon(Icons.sports_soccer_outlined), selectedIcon: Icon(Icons.sports_soccer), label: 'Partidos'),
-      NavigationDestination(icon: Icon(Icons.shield_outlined), selectedIcon: Icon(Icons.shield), label: 'Fantasy'),
-      NavigationDestination(icon: Icon(Icons.leaderboard_outlined), selectedIcon: Icon(Icons.leaderboard), label: 'Clasificación'),
-      NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Caja'),
-      NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'Liga'),
+      (Icons.sports_soccer_outlined, Icons.sports_soccer, 'Partidos'),
+      (Icons.shield_outlined, Icons.shield, 'Fantasy'),
+      (Icons.leaderboard_outlined, Icons.leaderboard, 'Clasificación'),
+      (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Caja'),
+      (Icons.groups_outlined, Icons.groups, 'Liga'),
     ];
     final visible = ramas.indexOf(widget.shell.currentIndex);
     if (visible < 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => widget.shell.goBranch(0));
     }
-    return Scaffold(
-      body: widget.shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: visible < 0 ? 0 : visible,
-        onDestinationSelected: (i) {
-          widget.shell.goBranch(ramas[i], initialLocation: ramas[i] == widget.shell.currentIndex);
-          Anuncios.instancia.pausaNatural(); // cambiar de pestaña es una pausa natural
-        },
-        destinations: [for (final r in ramas) destinos[r]],
-      ),
-    );
+    void ir(int i) {
+      widget.shell.goBranch(ramas[i], initialLocation: ramas[i] == widget.shell.currentIndex);
+      Anuncios.instancia.pausaNatural(); // cambiar de pestaña es una pausa natural
+    }
+
+    // Pantallas anchas (tableta horizontal, ordenador): menú lateral en vez de barra inferior.
+    return LayoutBuilder(builder: (context, c) {
+      if (c.maxWidth >= 720) {
+        return Scaffold(
+          body: Row(children: [
+            NavigationRail(
+              selectedIndex: visible < 0 ? 0 : visible,
+              onDestinationSelected: ir,
+              labelType: NavigationRailLabelType.all,
+              groupAlignment: -0.9,
+              destinations: [
+                for (final r in ramas)
+                  NavigationRailDestination(
+                    icon: Icon(destinos[r].$1),
+                    selectedIcon: Icon(destinos[r].$2),
+                    label: Text(destinos[r].$3),
+                  ),
+              ],
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: widget.shell),
+          ]),
+        );
+      }
+      return Scaffold(
+        body: widget.shell,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: visible < 0 ? 0 : visible,
+          onDestinationSelected: ir,
+          destinations: [
+            for (final r in ramas)
+              NavigationDestination(icon: Icon(destinos[r].$1), selectedIcon: Icon(destinos[r].$2), label: destinos[r].$3),
+          ],
+        ),
+      );
+    });
   }
 }
 
