@@ -58,7 +58,8 @@ Color colorPuntos(BuildContext context, double p) {
   return Theme.of(context).colorScheme.error;
 }
 
-String _num(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+/// Número con la coma del idioma (7,2) y sin decimales si es entero.
+String _num(double v) => NumberFormat('#0.#', idiomaActual).format(v);
 
 /// Las 5 últimas puntuaciones en mini barras (la más reciente a la derecha).
 class MiniUltimos extends StatelessWidget {
@@ -279,7 +280,7 @@ class CartaJugador extends StatelessWidget {
           dato('${r?.goles ?? 0}', 'Goles'),
           dato('${r?.asistencias ?? 0}', 'Asist.'),
           dato('${r?.mvps ?? 0}', 'MVP'),
-          dato(r?.nota == null ? '–' : '${r!.nota!.toStringAsFixed(1)}★', 'Nota'),
+          dato(r?.nota == null ? '–' : _num(r!.nota!), 'Estrellas'),
         ]),
       ]),
     );
@@ -329,7 +330,7 @@ class UltimasPuntuaciones extends StatelessWidget {
                 child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Text(_num(u.total), style: t.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                    if (u.mvp) const Text(' ⭐', style: TextStyle(fontSize: 12)),
+                    if (u.mvp) const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF9A825)),
                   ]),
                   const SizedBox(height: 2),
                   Container(

@@ -11,16 +11,17 @@ import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
 import 'tarjetas_jugador.dart';
 
-enum _Orden { precio, variacion, rating, fichado, libres }
+enum _Orden { media, precio, variacion, forma, fichado, libres }
 
 extension on _Orden {
-  String get etiqueta => switch (this) {
+  String get etiqueta => tr(switch (this) {
+        _Orden.media => 'Media',
         _Orden.precio => 'Precio',
         _Orden.variacion => 'Variación',
-        _Orden.rating => 'Valoración',
+        _Orden.forma => 'En forma',
         _Orden.fichado => '% fichado',
-        _Orden.libres => 'Fichas libres',
-      };
+        _Orden.libres => 'Copias libres',
+      });
 }
 
 /// Lista del mercado (v_mercado) con búsqueda, orden y filtro de no habituales.
@@ -34,7 +35,7 @@ class MercadoTab extends ConsumerStatefulWidget {
 
 class _MercadoTabState extends ConsumerState<MercadoTab> {
   String _texto = '';
-  _Orden _orden = _Orden.precio;
+  _Orden _orden = _Orden.media;
   bool _soloNoHabituales = false;
 
   @override
@@ -93,7 +94,14 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
             double clave(JugadorMercado j) => switch (_orden) {
                   _Orden.precio => j.precio,
                   _Orden.variacion => j.variacion ?? 0,
-                  _Orden.rating => j.rating ?? 0,
+                  _Orden.media => resumen[j.miembroId]?.media ?? -1,
+                  // En forma: media de sus 3 últimos partidos
+                  _Orden.forma => () {
+                      final u = resumen[j.miembroId]?.ultimos ?? const [];
+                      if (u.isEmpty) return -1.0;
+                      final t = u.take(3).toList();
+                      return t.fold<double>(0, (a, x) => a + x.total) / t.length;
+                    }(),
                   _Orden.fichado => j.pctFichado ?? 0,
                   _Orden.libres => j.fichasLibres.toDouble(),
                 };

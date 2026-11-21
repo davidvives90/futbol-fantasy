@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -323,7 +324,7 @@ class _Rendimiento extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [
-        Text(trf('{m} pts/partido', {'m': r.media.toStringAsFixed(1)}),
+        Text(trf('{m} pts/partido', {'m': NumberFormat('#0.#', idiomaActual).format(r.media)}),
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w800, color: colorPuntos(context, r.media))),
         const SizedBox(width: 8),

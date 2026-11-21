@@ -89,6 +89,10 @@ final idiomaProvider = NotifierProvider<IdiomaNotifier, String>(IdiomaNotifier.n
 
 /// Traducciones (orden: català, galego, euskara, English, Deutsch, italiano, Nederlands, français).
 const _textos = <String, List<String>>{
+  'Media': ['Mitjana', 'Media', 'Batez bestekoa', 'Average', 'Schnitt', 'Media', 'Gemiddelde', 'Moyenne'],
+  'En forma': ['En forma', 'En forma', 'Sasoian', 'In form', 'In Form', 'In forma', 'In vorm', 'En forme'],
+  'Copias libres': ['Còpies lliures', 'Copias libres', 'Kopia libreak', 'Free copies', 'Freie Kopien', 'Copie libere', 'Vrije exemplaren', 'Exemplaires libres'],
+  'Estrellas': ['Estrelles', 'Estrelas', 'Izarrak', 'Stars', 'Sterne', 'Stelle', 'Sterren', 'Étoiles'],
   'Sin partidos': ['Sense partits', 'Sen partidos', 'Partidarik ez', 'No matches', 'Keine Spiele', 'Nessuna partita', 'Geen wedstrijden', 'Aucun match'],
   '{m} pts/partido': ['{m} pts/partit', '{m} pts/partido', '{m} pt/partida', '{m} pts/match', '{m} Pkt./Spiel', '{m} pt/partita', '{m} ptn/wedstrijd', '{m} pts/match'],
   'pts/partido': ['pts/partit', 'pts/partido', 'pt/partida', 'pts/match', 'Pkt./Spiel', 'pt/partita', 'ptn/wedstrijd', 'pts/match'],

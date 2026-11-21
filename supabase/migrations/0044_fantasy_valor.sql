@@ -33,7 +33,6 @@ begin
       on h.jugador_id = mj.miembro_id
    where mj.liga_id = p_liga;
 
-  -- Rendimiento: percentil (0–100) de la media de los últimos 5 partidos jugados
   -- Rendimiento reciente (últimos 8 partidos cerrados, los más recientes pesan más: 1, 0,75, 0,56…)
   --   pts  = media ponderada de los puntos Fantasy (goles, asistencias, resultado, notas, MVP…)
   --   nota = media ponderada de la nota de los compañeros (estrellas ×2 o valoración avanzada), si la hay
@@ -70,8 +69,8 @@ begin
     select partidos, pct into v_n, v_rend from tmp_rend where miembro_id = r.miembro_id;
     v_n := coalesce(v_n, 0);
     if not r.con_encuesta then
-      -- Sin encuesta: todos parten de su valor inicial (45–55) y cada partido cuenta desde el primero
-      v_w := 2.0 / (2 + v_n);
+      -- Contracción bayesiana hacia el valor inicial: con 3 partidos cuenta la mitad su rendimiento; con 9, el 75 %
+      v_w := 3.0 / (3 + v_n);
     elsif v_n < l.partidos_min_rendimiento then
       v_w := 1;                                    -- con pocos partidos solo cuenta la encuesta
     else
