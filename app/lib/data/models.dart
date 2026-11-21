@@ -644,7 +644,11 @@ class Disputa {
     required this.valores,
     required this.resuelta,
     this.valorFinal,
+    this.valorPropuesto,
   });
+
+  /// 0047: lo que propone la app (lo más probable ponderando los partes).
+  final int? valorPropuesto;
 
   final String id, tipo;
   final String? sujetoId, campo;
@@ -666,6 +670,7 @@ class Disputa {
       valores: {for (final e in raw.entries) e.key.toString(): toInt(e.value)},
       resuelta: (m['resuelta'] ?? false) as bool,
       valorFinal: m['valor_final'] as num?,
+      valorPropuesto: m['valor_propuesto'] == null ? null : toInt(m['valor_propuesto']),
     );
   }
 }

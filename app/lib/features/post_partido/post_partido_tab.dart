@@ -157,6 +157,11 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
         final suma = (fijado ? golesDe(eq) : 0) + autogolesDe(rival);
         final exigido = fijado && !b.noMeFije.contains(rival);
         equipos.add(_EstadoEquipo(eq, suma, resultado, fijado));
+        final asist = _equipoDe.entries.where((x) => x.value == eq).fold<int>(0, (s, x) => s + (b.asistencias[x.key] ?? 0));
+        if (fijado && asist > resultado - autogolesDe(rival)) {
+          error ??= trf('{e}: hay más asistencias ({a}) que goles ({g}). Cada asistencia es de un gol.',
+              {'e': nombreEquipo(context, eq), 'a': asist, 'g': resultado - autogolesDe(rival)});
+        }
         if (suma > resultado) {
           error ??= '${nombreEquipo(context, eq)}: hay $suma goles asignados y el resultado dice $resultado.';
         } else if (exigido && suma < resultado) {
@@ -174,6 +179,10 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
         equipos.add(_EstadoEquipo(eq, b.noMeFije.contains(eq) ? 0 : golesDe(eq), null, !b.noMeFije.contains(eq)));
       }
       final todos = eqs.every((eq) => !b.noMeFije.contains(eq));
+      final asist = b.asistencias.values.fold<int>(0, (s, v) => s + v);
+      if (asist > total) {
+        error ??= trf('Hay más asistencias ({a}) que goles ({g}). Cada asistencia es de un gol.', {'a': asist, 'g': total});
+      }
       if (suma > total) {
         error = 'Hay $suma goles asignados y los marcadores suman $total.';
       } else if (todos && suma < total) {
@@ -181,6 +190,23 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       }
     }
     return (equipos: equipos, error: error);
+  }
+
+  /// Goles que marcó el equipo [eq] según el resultado que has puesto (null si hay varios encuentros: tope total).
+  int? _topeAsistencias(int eq) {
+    final b = _b!;
+    final enc = b.encuentros;
+    if (enc.isEmpty) return null;
+    if (enc.length > 1) {
+      return enc.fold<int>(0, (s, e) => s + e.golesLocal + e.golesVisitante);
+    }
+    final e = enc.first;
+    final rival = eq == e.equipoLocal ? e.equipoVisitante : e.equipoLocal;
+    final aFavor = eq == e.equipoLocal ? e.golesLocal : e.golesVisitante;
+    final autogolesRival = _equipoDe.entries
+        .where((x) => x.value == rival)
+        .fold<int>(0, (s, x) => s + (b.autogoles[x.key] ?? 0));
+    return aFavor - autogolesRival;
   }
 
   // ---------------------------------------------------------------- envío
@@ -388,7 +414,20 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                     goles: b.goles[a.miembroId] ?? 0,
                     asistencias: b.asistencias[a.miembroId] ?? 0,
                     onGoles: (v) => setState(() => b.goles[a.miembroId] = v),
-                    onAsistencias: (v) => setState(() => b.asistencias[a.miembroId] = v),
+                    onAsistencias: (v) {
+                      // Cada asistencia es de un gol: no deja pasar de los goles del equipo
+                      if (v > (b.asistencias[a.miembroId] ?? 0) && v > 0) {
+                        final tope = _topeAsistencias(a.equipo!);
+                        final usadas = _equipoDe.entries
+                            .where((x) => x.value == a.equipo)
+                            .fold<int>(0, (s, x) => s + (b.asistencias[x.key] ?? 0));
+                        if (tope != null && usadas >= tope) {
+                          mostrarError(context, trf('Tu equipo marcó {g} y ya hay {g} asistencias. Cada asistencia es de un gol.', {'g': tope}));
+                          return;
+                        }
+                      }
+                      setState(() => b.asistencias[a.miembroId] = v);
+                    },
                     extras: avanzado && b.masDatos
                         ? [
                             _Mini('Autogol', b.autogoles[a.miembroId] ?? 0,

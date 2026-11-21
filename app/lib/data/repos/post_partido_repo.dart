@@ -76,6 +76,10 @@ class PostPartidoRepo {
     return [for (final r in rows) Disputa.fromMap(r)];
   }
 
+  /// 0047: el admin acepta de una vez todo lo que propone la app. Devuelve el estado del partido.
+  static Future<String> aceptarPropuestas(String partidoId) async =>
+      (await sb.rpc('aceptar_propuestas', params: {'p_partido': partidoId})).toString();
+
   /// Devuelve el nuevo estado del partido (`cerrado` si era la última disputa).
   static Future<String> resolverDisputa(String disputaId, int valor) async =>
       (await sb.rpc('resolver_disputa', params: {'p_disputa': disputaId, 'p_valor': valor})).toString();

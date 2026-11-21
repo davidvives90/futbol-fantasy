@@ -167,10 +167,8 @@ class RevisionTab extends ConsumerWidget {
         data: (lista) {
           final pendientes = lista.where((d) => !d.resuelta).toList();
           return ListView(padding: const EdgeInsets.all(16), children: [
-            const Text(
-              'Cada asistente ha enviado su parte. Al cruzarlos, lo que coincide en la mayoría se da por bueno '
-              'y lo que no, aparece aquí como disputa para que lo decidas.',
-            ),
+            const Tx('La app cruza los partes y pondera lo que dice cada uno: lo que está claro se da por bueno y '
+                'los goles y asistencias siempre cuadran con el resultado. Solo te pregunta lo que de verdad no está claro.'),
             const SizedBox(height: 12),
             // Solo durante el plazo: cierra la ventana, consolida y, si no hay disputas, puntúa.
             if (partido.estado == EstadoPartido.post_partido)
@@ -200,11 +198,35 @@ class RevisionTab extends ConsumerWidget {
                 ),
             ],
             const SizedBox(height: 16),
-            Text('Disputas pendientes (${pendientes.length})', style: Theme.of(context).textTheme.titleSmall),
+            Text(trf('Por confirmar ({n})', {'n': pendientes.length}), style: Theme.of(context).textTheme.titleSmall),
             if (pendientes.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Tx('No hay disputas: los datos cuadran.'),
+                child: Tx('Nada que confirmar: todo está claro.'),
+              ),
+            // Un toque: aceptar lo más probable en todo lo que está en conflicto
+            if (pendientes.any((d) => d.tipo != 'descuadre'))
+              Card(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    const Tx('La app propone lo más probable en cada caso. Acéptalo todo o elige otro valor abajo.'),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.done_all),
+                      label: const Tx('Aceptar todo lo propuesto'),
+                      onPressed: () async {
+                        final ok = await ejecutar(context, () => PostPartidoRepo.aceptarPropuestas(partido.id),
+                            ok: tr('Confirmado. Puntos calculados.'));
+                        if (ok) {
+                          _refrescar(ref);
+                          ref.invalidate(rendimientoProvider(mi.liga.id));
+                        }
+                      },
+                    ),
+                  ]),
+                ),
               ),
             for (final d in pendientes.where((d) => d.tipo == 'descuadre'))
               Card(
@@ -242,12 +264,16 @@ class RevisionTab extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 4),
-                    const Tx('Votos de los asistentes (toca el valor correcto):'),
+                    if (d.valorPropuesto != null)
+                      Text(trf('Propuesta: {v}', {'v': d.valorPropuesto}),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                    const Tx('Lo que dijo cada uno (toca el valor correcto):'),
                     const SizedBox(height: 8),
                     Wrap(spacing: 8, runSpacing: 8, children: [
                       for (final v in (d.valores.entries.toList()..sort((a, b) => b.value.compareTo(a.value))))
                         ActionChip(
-                          label: Text('${_verValor(d.campo ?? '', v.key)}  ·  ${v.value} voto${v.value == 1 ? '' : 's'}'),
+                          avatar: _aNumero(v.key) == d.valorPropuesto ? const Icon(Icons.star, size: 16) : null,
+                          label: Text('${_verValor(d.campo ?? '', v.key)}  ·  ${v.value} ${v.value == 1 ? tr('parte') : tr('partes')}'),
                           onPressed: () async {
                             final ok = await ejecutar(
                               context,
@@ -285,7 +311,7 @@ class RevisionTab extends ConsumerWidget {
             if (pendientes.isNotEmpty || encuentros.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: Text('Primero cruza los partes y resuelve las disputas.', textAlign: TextAlign.center),
+                child: Tx('Primero cruza los partes y confirma lo pendiente.', textAlign: TextAlign.center),
               ),
           ]);
         },

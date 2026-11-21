@@ -66,3 +66,4 @@ aplicar tests/escenario_convocatoria_sencilla.sql
 aplicar tests/escenario_agenda.sql
 aplicar tests/escenario_fantasy_valor.sql
 aplicar tests/escenario_tienda.sql
+aplicar tests/escenario_postpartido_ponderado.sql

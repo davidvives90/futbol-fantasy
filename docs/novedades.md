@@ -14,6 +14,8 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Post-partido sin líos: la app cruza y pondera los partes, cuadra goles y asistencias con el resultado y solo pregunta lo que está en conflicto (con «Aceptar todo lo propuesto»).
+- No puede haber más asistencias que goles.
 - Crear liga en modo Básico, Medio o Avanzado.
 - Bienvenida en 3 tarjetas (Perfil › Cómo funciona para volver a verla).
 - Inicio con los partidos y lo pendiente de todas tus ligas.

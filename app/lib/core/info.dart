@@ -68,7 +68,8 @@ abstract final class Ayuda {
           'así que no pasa nada: es mejor que inventarse un gol.');
   static const cotejo = ('Goles asignados',
       'La suma de goles de los jugadores (más los autogoles del rival) tiene que coincidir con el resultado. '
-          'Verde: cuadra. Ámbar: faltan goles por asignar. Rojo: sobran.');
+          'Verde: cuadra. Ámbar: faltan goles por asignar. Rojo: sobran. Cada asistencia es de un gol: no puede haber más '
+          'asistencias que goles.');
   static const notas = ('Notas del 1 al 5',
       '3 es un partido normal; empiezan todos ahí, así que solo tienes que tocar a quien se salió de lo normal.\n\n'
           'Las notas son anónimas. Cuentan cuando valoran al menos 3 compañeros: la media da hasta 4 puntos en la clasificación.');
@@ -78,10 +79,12 @@ abstract final class Ayuda {
   static const destacados = ('«Destacó en…»',
       'Opcional: marca en qué destacó un compañero (hasta 2 cosas). No suma puntos, pero alimenta sus estadísticas '
           '(«Destacó en defensa ×5») y ayuda a hacer equipos equilibrados.');
-  static const disputas = ('Datos en disputa',
-      'Cada jugador envía su parte y la app se queda con lo que dice la mayoría. Si no hay mayoría clara (o no hay '
-          'suficientes partes), el dato queda en disputa y el administrador decide el valor correcto.\n\n'
-          'Un descuadre es cuando los goles de los jugadores no suman el resultado: se arregla corrigiendo los goles o el resultado.');
+  static const disputas = ('Cómo se cruzan los partes',
+      'Cada jugador envía su parte y la app los pondera (el del admin pesa un poco más). Si la mayoría dice lo mismo, '
+          'vale eso. Si no, se queda con el valor del medio y reparte goles y asistencias para que siempre cuadren con '
+          'el resultado: un equipo no puede tener más goles que los que marcó ni más asistencias que goles.\n\n'
+          'Solo se pregunta al administrador lo que de verdad no está claro (por ejemplo, si no se ponen de acuerdo en '
+          'quién ganó). La app propone lo más probable y basta con un toque para aceptarlo.');
   static const puntos = ('Cómo se puntúa',
       'Jugar: 2 · Victoria: 3 · Empate: 1 · Gol: 5 · Asistencia: 3 · Cada 2 paradas clave: 1 · Penalti parado: 3 · '
           'Penalti fallado: −2 · Autogol: −2 · Nota de los compañeros: hasta 4 · MVP: 3.\n\n'
