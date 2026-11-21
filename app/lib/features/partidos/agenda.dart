@@ -229,7 +229,9 @@ class _TarjetaCita extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final conv = ref.watch(convocatoriaProvider(cita.partidoId)).valueOrNull;
+    // Mientras llega el tiempo real (o si viene vacío), vale lo que dijo el servidor
+    final vivo = ref.watch(convocatoriaProvider(cita.partidoId)).valueOrNull;
+    final conv = (vivo == null || vivo.isEmpty) ? null : vivo;
     final mia = conv?.where((i) => i.miembroId == cita.miembroId).firstOrNull;
     final estado = conv == null ? cita.miEstado : mia?.estado;
     final ocupadas = conv == null ? cita.ocupadas : conv.where((i) => i.estado.ocupaPlaza).length;
@@ -366,7 +368,11 @@ class _TarjetaCita extends ConsumerWidget {
                     ]),
                   ]),
                   if ((cita.campo ?? '').isNotEmpty)
-                    Text('📍 ${cita.campo}', style: t.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Row(children: [
+                      Icon(Icons.place_outlined, size: 14, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 2),
+                      Expanded(child: Text(cita.campo!, style: t.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ]),
                   const SizedBox(height: 8),
                   acciones,
                 ]),
