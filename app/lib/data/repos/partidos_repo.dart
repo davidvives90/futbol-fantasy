@@ -122,6 +122,22 @@ class PartidosRepo {
     }
   }
 
+  // ---- Capitanes y equipos automáticos (0042) -------------------------------
+
+  /// {miembro: equipo} de los capitanes elegidos por el admin (les llega un aviso).
+  static Future<void> asignarCapitanes(String partidoId, Map<String, int> capitanes) async {
+    await sb.rpc('asignar_capitanes', params: {'p_partido': partidoId, 'p_capitanes': capitanes});
+  }
+
+  static Future<void> sortearCapitanes(String partidoId) async {
+    await sb.rpc('sortear_capitanes', params: {'p_partido': partidoId});
+  }
+
+  /// Equipos equilibrados hechos por el servidor (reparto en serpiente por nivel).
+  static Future<void> equiposAutomaticos(String partidoId) async {
+    await sb.rpc('equipos_automaticos', params: {'p_partido': partidoId});
+  }
+
   /// Enfrentamientos para 3-4 equipos: [[1, 2], [3, 1], ...].
   static Future<void> definirEncuentros(String partidoId, List<List<int>> lista) async {
     await sb.rpc('definir_encuentros', params: {'p_partido': partidoId, 'p_lista': lista});

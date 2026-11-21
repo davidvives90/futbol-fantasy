@@ -277,7 +277,7 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
                   ),
               ]),
             for (final id in s.keys)
-              if (estado[id] != EstadoInscripcion.confirmado)
+              if (estado[id] != EstadoInscripcion.confirmado && estado[id] != EstadoInscripcion.pendiente)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
@@ -285,7 +285,7 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
                     '${switch (estado[id]) {
                       EstadoInscripcion.duda => 'está en duda',
                       EstadoInscripcion.baja => 'se ha dado de baja',
-                      EstadoInscripcion.espera => 'está en lista de espera',
+                      EstadoInscripcion.espera => 'es suplente',
                       _ => 'no está apuntado',
                     }}: si no juega, puntúa 0.',
                     style: t.bodySmall?.copyWith(color: cs.error),

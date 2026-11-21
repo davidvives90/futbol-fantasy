@@ -183,8 +183,12 @@ class _ProximoPartido extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final conv = ref.watch(convocatoriaProvider(partido.id)).valueOrNull ?? const [];
     final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
-    final confirmados = conv.where((i) => i.estado == EstadoInscripcion.confirmado).toList();
+    // 0042: van = confirmados + fijos sin confirmar + en duda (ocupan plaza)
+    final confirmados = conv.where((i) => i.estado.ocupaPlaza).toList();
     final mia = conv.where((i) => i.miembroId == mi.yo.id).firstOrNull?.estado;
+    final suplentes = ordenarEspera(conv.where((i) => i.estado == EstadoInscripcion.espera).toList(), miembros,
+        porPrioridad: false);
+    final puesto = mia == EstadoInscripcion.espera ? suplentes.indexWhere((i) => i.miembroId == mi.yo.id) + 1 : null;
     final importe = confirmados.isEmpty ? null : partido.costeTotal / confirmados.length;
     final faltan = partido.plazas - confirmados.length;
     final abreEn = mi.liga.abreConvocatoria(partido, ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const []);
@@ -201,7 +205,9 @@ class _ProximoPartido extends ConsumerWidget {
       linea: '${confirmados.length}/${partido.plazas} · ${mi.liga.nombre}',
       estado: switch (mia) {
         EstadoInscripcion.confirmado => tr('Vas ✅'),
-        EstadoInscripcion.espera => tr('En lista de espera'),
+        EstadoInscripcion.pendiente => tr('Estás en la lista: confirma si vas'),
+        EstadoInscripcion.duda => tr('Marcado como «Duda»'),
+        EstadoInscripcion.espera => tr('Eres suplente: entras si queda sitio'),
         EstadoInscripcion.baja => tr('No vas'),
         _ => tr('¿Vas? Toca para responder'),
       },
@@ -271,7 +277,7 @@ class _ProximoPartido extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
-            if (abreEn != null)
+            if (abreEn != null && mi.yo.rango != RangoMiembro.fijo)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -279,17 +285,11 @@ class _ProximoPartido extends ConsumerWidget {
                 child: Row(children: [
                   Icon(Icons.lock_clock, color: cs.onSurfaceVariant),
                   const SizedBox(width: 10),
-                  Expanded(child: Text('La convocatoria se abre el ${fechaHora(abreEn)}', style: t.labelLarge)),
+                  Expanded(child: Text(trf('Podrás apuntarte de suplente el {f}', {'f': fechaHora(abreEn)}), style: t.labelLarge)),
                 ]),
               )
             else
-              SizedBox(width: double.infinity, child: SelectorAsistencia(partido: partido, mi: mi, actual: mia)),
-            if (mia == EstadoInscripcion.espera)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text('Estás en lista de espera: entrarás solo si se libera una plaza.',
-                    style: t.bodySmall?.copyWith(color: AppColores.of(context).aviso)),
-              ),
+              SizedBox(width: double.infinity, child: SelectorAsistencia(partido: partido, mi: mi, actual: mia, puesto: puesto)),
           ]),
         ),
       ),

@@ -8,7 +8,14 @@ import '../core/utils.dart';
 // Enumeraciones (se guardan como texto en Postgres)
 // ---------------------------------------------------------------------------
 
-enum EstadoInscripcion { confirmado, duda, baja, espera }
+/// 0042: «pendiente» = fijo apuntado solo que aún no ha confirmado (ocupa plaza). «espera» = suplente.
+enum EstadoInscripcion { confirmado, pendiente, duda, baja, espera }
+
+extension EstadoInscripcionX on EstadoInscripcion {
+  /// Ocupa plaza en la convocatoria (confirmado, fijo pendiente o en duda).
+  bool get ocupaPlaza =>
+      this == EstadoInscripcion.confirmado || this == EstadoInscripcion.pendiente || this == EstadoInscripcion.duda;
+}
 
 enum EstadoPartido { abierto, completo, equipos_hechos, jugado, post_partido, en_revision, cerrado, cancelado }
 
@@ -156,7 +163,14 @@ class Liga {
     this.modalidad = 'f7',
     this.recordatorioDeudas = 'mensual',
     this.bizumTelefono,
+    this.modoEquipos = 'admin',
+    this.capitanesPorEquipo = 1,
   });
+
+  /// 0042: quién hace los equipos: 'admin' | 'automatico' | 'capitanes' (1 o 2 por equipo).
+  final String modoEquipos;
+  final int capitanesPorEquipo;
+  bool get conCapitanes => modoEquipos == 'capitanes';
 
   /// 0036: 'nunca' | 'semanal' | 'mensual' | 'trimestral'.
   final String recordatorioDeudas;
@@ -268,6 +282,8 @@ class Liga {
       modalidad: (m['modalidad'] ?? 'f7') as String,
       recordatorioDeudas: (m['recordatorio_deudas'] ?? 'mensual') as String,
       bizumTelefono: m['bizum_telefono'] as String?,
+      modoEquipos: (m['modo_equipos'] ?? 'admin') as String,
+      capitanesPorEquipo: toInt(m['capitanes_por_equipo'], 1),
     );
   }
 }
@@ -478,8 +494,12 @@ class Partido {
 }
 
 class Inscripcion {
-  Inscripcion({required this.miembroId, required this.estado, required this.inscritoEn, this.equipo, this.rango});
+  Inscripcion({required this.miembroId, required this.estado, required this.inscritoEn, this.equipo, this.rango,
+      this.capitan = false});
   final String miembroId;
+
+  /// 0042: capitán de su equipo en este partido (forma los equipos).
+  final bool capitan;
   final EstadoInscripcion estado;
   final DateTime inscritoEn;
   final int? equipo;
@@ -494,6 +514,7 @@ class Inscripcion {
         inscritoEn: DateTime.parse(m['inscrito_en'] as String),
         equipo: m['equipo'] == null ? null : toInt(m['equipo']),
         rango: rangoDe(m['rango']),
+        capitan: (m['capitan'] ?? false) as bool,
       );
 }
 
@@ -505,13 +526,12 @@ List<Inscripcion> ordenarEspera(
   Map<String, Miembro> miembros, {
   required bool porPrioridad,
 }) {
+  // 0042 (como `rellenar_plazas`): primero un fijo que esperaba; luego, por orden de apuntarse.
   RangoMiembro rango(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
   final lista = [...espera];
   lista.sort((a, b) {
-    if (porPrioridad) {
-      final c = rango(a).prioridad.compareTo(rango(b).prioridad);
-      if (c != 0) return c;
-    }
+    final fa = rango(a) == RangoMiembro.fijo ? 0 : 1, fb = rango(b) == RangoMiembro.fijo ? 0 : 1;
+    if (fa != fb) return fa.compareTo(fb);
     return a.inscritoEn.compareTo(b.inscritoEn);
   });
   return lista;

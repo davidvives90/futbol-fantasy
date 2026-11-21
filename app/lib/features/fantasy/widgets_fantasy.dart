@@ -64,6 +64,7 @@ class IconoConvocatoria extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final (icono, color, tip) = switch (estado) {
       EstadoInscripcion.confirmado => (Icons.check_circle, AppColores.of(context).exito, 'Confirmado'),
+      EstadoInscripcion.pendiente => (Icons.schedule, AppColores.of(context).aviso, 'Sin confirmar'),
       EstadoInscripcion.duda => (Icons.help, AppColores.of(context).aviso, 'En duda'),
       EstadoInscripcion.baja => (Icons.cancel, cs.error, 'Baja'),
       EstadoInscripcion.espera => (Icons.hourglass_bottom, cs.outline, 'En espera'),

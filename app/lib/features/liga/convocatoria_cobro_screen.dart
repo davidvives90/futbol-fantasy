@@ -24,6 +24,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
   bool _apertura = true;
   int _duracion = 60, _horasApertura = 2, _horasReserva = 24;
   String _recordatorio = 'mensual';
+  String _modoEquipos = 'admin';
+  int _capitanes = 1;
   final _bizum = TextEditingController();
 
   @override
@@ -54,6 +56,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
         'modo_cobro': _modoCobro,
         'precio_invitado': precio,
         'recordatorio_deudas': _recordatorio,
+        'modo_equipos': _modoEquipos,
+        'capitanes_por_equipo': _capitanes,
         'bizum_telefono': _bizum.text.trim().isEmpty ? null : _bizum.text.trim(),
       }),
       ok: 'Ajustes guardados',
@@ -79,6 +83,8 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
       _horasReserva = l.horasReservaFijos;
       if (l.precioInvitado != null) _precio.text = l.precioInvitado!.toStringAsFixed(2);
       _recordatorio = l.recordatorioDeudas;
+      _modoEquipos = l.modoEquipos;
+      _capitanes = l.capitanesPorEquipo;
       _bizum.text = l.bizumTelefono ?? '';
     }
     final t = Theme.of(context).textTheme;
@@ -86,15 +92,18 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
     return Scaffold(
       appBar: AppBar(title: const Tx('Convocatoria y cobro')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        Text('Apertura de la convocatoria', style: t.titleMedium),
+        Tx('Convocatoria', style: t.titleMedium),
+        const SizedBox(height: 4),
+        Tx('Los fijos están siempre en la lista (pendientes de confirmar). Si un fijo dice «No voy», '
+            'entra el primer suplente, por orden de apuntarse.', style: t.bodySmall),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: _apertura,
           onChanged: (v) => setState(() => _apertura = v),
-          title: const Tx('Convocatoria vacía hasta que se abre'),
-          subtitle: Text(_apertura
-              ? 'Se abre después del partido anterior y todos, también los fijos, pulsan «Voy».'
-              : 'Clásica: los fijos entran solos en cada partido nada más crearlo.'),
+          title: const Tx('Los suplentes se apuntan cuando se abre'),
+          subtitle: Tx(_apertura
+              ? 'Pueden apuntarse un rato después de acabar el partido anterior.'
+              : 'Pueden apuntarse en cuanto se crea el partido.'),
         ),
         if (_apertura) ...[
           _Selector(
@@ -108,40 +117,33 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
             titulo: 'Se abre después de acabar el anterior',
             valor: _horasApertura,
             opciones: const [0, 1, 2, 3, 6, 12, 24],
-            texto: (v) => v == 0 ? 'Al acabar' : '$v h',
+            texto: (v) => v == 0 ? tr('Al acabar') : '$v h',
             onCambio: (v) => setState(() => _horasApertura = v),
-          ),
-          _Selector(
-            titulo: 'Plaza guardada a los fijos hasta',
-            valor: _horasReserva,
-            opciones: const [0, 12, 24, 48, 72],
-            texto: (v) => v == 0 ? 'Sin reserva' : '$v h antes',
-            onCambio: (v) => setState(() => _horasReserva = v),
           ),
         ],
         const Divider(height: 32),
-        Tx('Lista de espera', style: t.titleMedium),
-        const SizedBox(height: 4),
-        Text(_apertura
-            ? 'Cuando no queda plaza (sin contar las guardadas a fijos), los que pulsan «Voy» esperan aquí. '
-                'Si alguien se da de baja o se acaba la reserva de los fijos, entra el primero.'
-            : 'Los fijos entran solos en cada partido. Cuando un fijo marca "No voy", entra automáticamente '
-                'el primero de la lista de espera.'),
-        RadioListTile<String>(
-          value: 'prioridad',
-          groupValue: _ordenEspera,
-          onChanged: (v) => setState(() => _ordenEspera = v!),
-          title: const Tx('Por prioridad'),
-          subtitle: const Text('Primero los fijos que vuelven, luego reservas y después invitados; '
-              'dentro de cada grupo, por orden de apuntarse.'),
-        ),
-        RadioListTile<String>(
-          value: 'anotacion',
-          groupValue: _ordenEspera,
-          onChanged: (v) => setState(() => _ordenEspera = v!),
-          title: const Tx('Por orden de apuntarse'),
-          subtitle: const Tx('El primero que se apunta a la espera, el primero que entra.'),
-        ),
+        Tx('Quién hace los equipos', style: t.titleMedium),
+        for (final (v, titulo, sub) in const [
+          ('admin', 'El administrador', 'La app le propone equipos equilibrados y él los confirma.'),
+          ('automatico', 'La app, automáticamente', 'Equilibrados por nivel en cuanto la lista está cerrada.'),
+          ('capitanes', 'Capitanes', 'Se sortean entre los que van; ellos hacen los equipos y los pasan al grupo.'),
+        ])
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(_modoEquipos == v ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: _modoEquipos == v ? Theme.of(context).colorScheme.primary : null),
+            title: Text(tr(titulo)),
+            subtitle: Text(tr(sub)),
+            onTap: () => setState(() => _modoEquipos = v),
+          ),
+        if (_modoEquipos == 'capitanes')
+          _Selector(
+            titulo: 'Capitanes por equipo',
+            valor: _capitanes,
+            opciones: const [1, 2],
+            texto: (v) => '$v',
+            onCambio: (v) => setState(() => _capitanes = v),
+          ),
         const Divider(height: 32),
         Text('Cobro', style: t.titleMedium),
         RadioListTile<String>(

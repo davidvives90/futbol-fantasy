@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../core/compartir.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -128,10 +130,15 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     final mercado = ref.watch(ratingsMercadoProvider(widget.mi.liga.id));
     if (conv == null || rend.isLoading || mercado.isLoading) return const Cargando();
 
-    final conf = conv.where((i) => i.estado == EstadoInscripcion.confirmado).toList();
+    // 0042: juegan los que ocupan plaza (confirmados, fijos sin confirmar y en duda)
+    final conf = conv.where((i) => i.estado.ocupaPlaza).toList();
+    final liga = widget.mi.liga;
+    final capitanes = conf.where((i) => i.capitan).toList();
+    final soyCapitan = capitanes.any((i) => i.miembroId == widget.mi.yo.id);
     final porteria = ref.watch(habilidadPorteriaProvider(widget.mi.liga.id)).valueOrNull ?? const <String, double>{};
     final js = _jugadores(conf, miembros, rend.valueOrNull ?? const [], mercado.valueOrNull ?? const {}, porteria);
-    final editable = widget.mi.soyAdmin && widget.partido.estado.antesDeJugar;
+    // Hace los equipos el admin o, en ligas con capitanes, los capitanes del partido
+    final editable = widget.partido.estado.antesDeJugar && (widget.mi.soyAdmin || (liga.conCapitanes && soyCapitan));
 
     // Equipos ya guardados en la base de datos.
     final guardados = <List<JugadorBalanceo>>[
@@ -146,14 +153,60 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     }
 
     // Lista completa y sin equipos: la app propone unos equilibrados sola; el admin solo confirma
-    if (editable && mostrar == null && !_propuestaAuto && conf.length >= widget.partido.plazas) {
+    if (editable && widget.mi.soyAdmin && liga.modoEquipos == 'admin' && mostrar == null && !_propuestaAuto &&
+        conf.length >= widget.partido.plazas) {
       _propuestaAuto = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _equipos == null) _generar(js);
       });
     }
 
+    String nombre(String id) => miembros[id]?.nombre ?? '…';
+    final cs = Theme.of(context).colorScheme;
     return ListView(padding: const EdgeInsets.all(16), children: [
+      // Capitanes (ligas con capitanes): quiénes son y, para el admin, sortearlos o elegirlos
+      if (liga.conCapitanes)
+        Card(
+          color: soyCapitan ? cs.primaryContainer : null,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                const Icon(Icons.military_tech_outlined),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    capitanes.isEmpty
+                        ? tr('Aún no hay capitanes')
+                        : trf('Capitanes: {c}', {
+                            'c': capitanes.map((i) => '${nombre(i.miembroId)} (${nombreEquipo(context, i.equipo ?? 1)})').join(', ')
+                          }),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+              ]),
+              if (soyCapitan && widget.partido.estado.antesDeJugar)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Tx('Eres capitán: haz los equipos, confírmalos y pásalos al grupo.', style: Theme.of(context).textTheme.bodySmall),
+                ),
+              if (widget.mi.soyAdmin && widget.partido.estado.antesDeJugar)
+                Wrap(spacing: 8, children: [
+                  TextButton.icon(
+                    icon: const Icon(Icons.casino_outlined),
+                    label: Tx(capitanes.isEmpty ? 'Sortear capitanes' : 'Volver a sortear'),
+                    onPressed: () => ejecutar(context, () => PartidosRepo.sortearCapitanes(widget.partido.id),
+                        ok: 'Capitanes avisados'),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.how_to_reg_outlined),
+                    label: const Tx('Elegir capitanes'),
+                    onPressed: () => _elegirCapitanes(context, conf, nombre),
+                  ),
+                ]),
+            ]),
+          ),
+        ),
       if (editable && _equipos != null && !hayGuardados)
         Card(
           color: Theme.of(context).colorScheme.secondaryContainer,
@@ -177,11 +230,45 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
             OutlinedButton.icon(onPressed: _otraOpcion, icon: const Icon(Icons.shuffle), label: const Tx('Otra opción')),
         ]),
       if (mostrar == null)
-        const Padding(
-          padding: EdgeInsets.only(top: 32),
-          child: Vacio('El administrador los hará equilibrados con las estadísticas de cada uno.', titulo: 'Equipos por hacer', icono: Icons.groups_2_outlined),
+        Padding(
+          padding: const EdgeInsets.only(top: 32),
+          child: Vacio(
+            switch (liga.modoEquipos) {
+              'capitanes' => 'Los capitanes harán los equipos cuando la lista esté cerrada.',
+              'automatico' => 'Se harán solos, equilibrados, cuando la lista esté cerrada.',
+              _ => 'El administrador los hará equilibrados con las estadísticas de cada uno.',
+            },
+            titulo: 'Equipos por hacer',
+            icono: Icons.groups_2_outlined,
+          ),
         )
       else ...[
+        if (hayGuardados && _equipos == null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(children: [
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  icon: const Icon(Icons.copy),
+                  label: const Tx('Copiar equipos'),
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(
+                        text: textoEquipos(liga: liga, partido: widget.partido, lista: conv, nombre: nombre)));
+                    if (context.mounted) mostrarOk(context, 'Copiados: pégalos en el grupo');
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.share),
+                  label: const Tx('WhatsApp'),
+                  onPressed: () => compartirTexto(
+                      context, textoEquipos(liga: liga, partido: widget.partido, lista: conv, nombre: nombre)),
+                ),
+              ),
+            ]),
+          ),
         const SizedBox(height: 16),
         if (hayGuardados && _equipos == null) PrediccionCard(partido: widget.partido, mi: widget.mi),
         _BarraEquilibrio(equipos: mostrar),
@@ -206,6 +293,66 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
           ),
       ],
     ]);
+  }
+}
+
+/// El admin elige a los capitanes: se reparten por equipos en el orden en que se marcan.
+extension _Capitanes on _EquiposTabState {
+  Future<void> _elegirCapitanes(BuildContext context, List<Inscripcion> conf, String Function(String) nombre) async {
+    final n = widget.partido.numEquipos * widget.mi.liga.capitanesPorEquipo;
+    final elegidos = <String>[for (final i in conf) if (i.capitan) i.miembroId];
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (c) => StatefulBuilder(
+        builder: (c, set) => SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(trf('Marca {n} capitanes', {'n': n}), style: Theme.of(c).textTheme.titleMedium),
+            ),
+            Flexible(
+              child: ListView(shrinkWrap: true, children: [
+                for (final i in conf)
+                  CheckboxListTile(
+                    value: elegidos.contains(i.miembroId),
+                    title: Text(nombre(i.miembroId)),
+                    subtitle: elegidos.contains(i.miembroId)
+                        ? Text(nombreEquipo(context, elegidos.indexOf(i.miembroId) % widget.partido.numEquipos + 1))
+                        : null,
+                    onChanged: (v) => set(() {
+                      if (v == true && elegidos.length < n) {
+                        elegidos.add(i.miembroId);
+                      } else {
+                        elegidos.remove(i.miembroId);
+                      }
+                    }),
+                  ),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: elegidos.isEmpty ? null : () => Navigator.pop(c, true),
+                  child: const Tx('Guardar capitanes'),
+                ),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    await ejecutar(
+      context,
+      () => PartidosRepo.asignarCapitanes(widget.partido.id, {
+        for (var k = 0; k < elegidos.length; k++) elegidos[k]: k % widget.partido.numEquipos + 1,
+      }),
+      ok: 'Capitanes avisados',
+    );
   }
 }
 

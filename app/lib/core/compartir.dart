@@ -71,6 +71,94 @@ String textoPartido(Map<String, dynamic> r, Liga liga, String partidoId) {
   return b.toString();
 }
 
+/// Convocatoria para pegar en el grupo de WhatsApp (0042), con *negritas* de WhatsApp:
+/// liga, día y hora, campo, convocados numerados, dudas, pendientes, suplentes por orden y quién no va.
+/// [nombres]: id de miembro → nombre. [suplentes] ya viene ordenada (orden de entrada).
+String textoConvocatoria({
+  required Liga liga,
+  required Partido partido,
+  required List<Inscripcion> lista,
+  required List<Inscripcion> suplentes,
+  required String Function(String) nombre,
+}) {
+  final b = StringBuffer();
+  final f = partido.fechaHora.toLocal();
+  final dia = DateFormat('EEEE d MMMM', idiomaActual).format(f);
+  final hora = DateFormat('HH:mm').format(f);
+  List<String> de(EstadoInscripcion e) => [for (final i in lista) if (i.estado == e) nombre(i.miembroId)];
+  final van = de(EstadoInscripcion.confirmado);
+  final duda = de(EstadoInscripcion.duda);
+  final pend = de(EstadoInscripcion.pendiente);
+  final no = de(EstadoInscripcion.baja);
+  final ocupadas = van.length + duda.length + pend.length;
+
+  b.writeln('⚽ *${liga.nombre}*');
+  b.writeln('📅 *${dia[0].toUpperCase()}${dia.substring(1)}* · ⏰ *$hora*');
+  if ((liga.campoNombre ?? '').isNotEmpty) b.writeln('📍 ${liga.campoNombre}');
+  b.writeln();
+  b.writeln('✅ *${tr('Convocados')} (${van.length}/${partido.plazas})*');
+  for (var i = 0; i < van.length; i++) {
+    b.writeln('${i + 1}. ${van[i]}');
+  }
+  if (duda.isNotEmpty) {
+    b.writeln();
+    b.writeln('🤔 *${tr('En duda')}*');
+    for (final n in duda) {
+      b.writeln('- $n');
+    }
+  }
+  if (pend.isNotEmpty) {
+    b.writeln();
+    b.writeln('⏳ *${tr('Sin confirmar')}*');
+    for (final n in pend) {
+      b.writeln('- $n');
+    }
+  }
+  if (suplentes.isNotEmpty) {
+    b.writeln();
+    b.writeln('🔄 *${tr('Suplentes')}*');
+    for (var i = 0; i < suplentes.length; i++) {
+      b.writeln('${i + 1}. ${nombre(suplentes[i].miembroId)}');
+    }
+  }
+  if (no.isNotEmpty) {
+    b.writeln();
+    b.writeln('❌ *${tr('No van')}*: ${no.join(', ')}');
+  }
+  final faltan = partido.plazas - ocupadas;
+  if (faltan > 0) {
+    b.writeln();
+    b.writeln(faltan == 1 ? '🙋 *${tr('¡Falta 1!')}*' : '🙋 *${trf('¡Faltan {n}!', {'n': faltan})}*');
+  }
+  return b.toString().trimRight();
+}
+
+/// Equipos para pegar en WhatsApp (los manda el capitán o el admin), con la (C) del capitán.
+String textoEquipos({
+  required Liga liga,
+  required Partido partido,
+  required List<Inscripcion> lista,
+  required String Function(String) nombre,
+}) {
+  final b = StringBuffer();
+  final f = partido.fechaHora.toLocal();
+  final dia = DateFormat('EEEE d MMMM', idiomaActual).format(f);
+  b.writeln('⚽ *${liga.nombre}*');
+  b.writeln('📅 *${dia[0].toUpperCase()}${dia.substring(1)}* · ⏰ *${DateFormat('HH:mm').format(f)}*');
+  if ((liga.campoNombre ?? '').isNotEmpty) b.writeln('📍 ${liga.campoNombre}');
+  for (var e = 1; e <= partido.numEquipos; e++) {
+    final eq = [for (final i in lista) if (i.equipo == e && i.estado.ocupaPlaza) i];
+    if (eq.isEmpty) continue;
+    final nombreEq = e - 1 < liga.equipaciones.length ? liga.equipaciones[e - 1].nombre : trf('Equipo {n}', {'n': e});
+    b.writeln();
+    b.writeln('👕 *$nombreEq*');
+    for (final i in eq) {
+      b.writeln('- ${nombre(i.miembroId)}${i.capitan ? ' (C)' : ''}');
+    }
+  }
+  return b.toString().trimRight();
+}
+
 /// Elegir dónde compartir: WhatsApp directamente o el menú del sistema.
 Future<void> compartirTexto(BuildContext context, String texto, {String asunto = 'Fútbol Fantasy', Widget? tarjeta}) async {
   await showModalBottomSheet<void>(

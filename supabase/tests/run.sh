@@ -30,7 +30,8 @@ aplicar tests/escenario_ampliacion.sql
 # 5. v0.3: migraciones nuevas (0015+) sobre los datos de todos los escenarios anteriores
 for f in migrations/00*.sql; do
   n=$(basename "$f" | cut -c1-4)
-  if [ "$n" -ge 15 ] 2>/dev/null; then aplicar "$f"; fi
+  # 0041+ cambia la convocatoria (fijos pendientes): se aplica tras las pruebas antiguas
+  if [ "$n" -ge 15 ] && [ "$n" -le 40 ] 2>/dev/null; then aplicar "$f"; fi
 done
 # Pruebas antiguas: ligas nuevas en modo clásico (fijos inscritos solos); escenario_apertura prueba el modo nuevo
 psql -q -d ff_test -c "alter table ligas alter column modo_convocatoria set default 'clasica'" \
@@ -56,3 +57,9 @@ aplicar tests/escenario_idioma.sql
 aplicar tests/escenario_fantasy_sencillo.sql
 aplicar tests/escenario_mas_sencillo.sql
 aplicar tests/escenario_responder_aviso.sql
+# 6. v0.6: convocatoria sencilla (0041+)
+for f in migrations/00*.sql; do
+  n=$(basename "$f" | cut -c1-4)
+  if [ "$n" -ge 41 ] 2>/dev/null; then aplicar "$f"; fi
+done
+aplicar tests/escenario_convocatoria_sencilla.sql

@@ -13,6 +13,7 @@ import '../../data/repos/partidos_repo.dart';
 import '../liga/chip_rango.dart';
 import '../../core/avatar.dart';
 import 'selector_asistencia.dart';
+import '../../core/compartir.dart';
 import '../../core/info.dart';
 
 /// Lista de inscritos en tiempo real + botones Voy / Duda / No voy.
@@ -32,34 +33,48 @@ class ConvocatoriaTab extends ConsumerWidget {
       data: (lista) {
         List<Inscripcion> de(EstadoInscripcion e) => lista.where((i) => i.estado == e).toList();
         final conf = de(EstadoInscripcion.confirmado);
+        final pend = de(EstadoInscripcion.pendiente);
         final duda = de(EstadoInscripcion.duda);
-        // Orden real de entrada según la regla de la liga (como `promover_espera` en el servidor).
-        final espera = ordenarEspera(de(EstadoInscripcion.espera), miembros, porPrioridad: mi.liga.esperaPorPrioridad);
-        final baja = de(EstadoInscripcion.baja);
+        // Suplentes en su orden real de entrada (como `rellenar_plazas` en el servidor)
+        final espera = ordenarEspera(de(EstadoInscripcion.espera), miembros, porPrioridad: false);
+        // Los lesionados / de baja larga salen aparte, no en «No van»
+        final idsDeBaja = {
+          for (final a in ref.watch(bajasLigaProvider(mi.liga.id)).valueOrNull ?? const <Ausencia>[])
+            if (a.cubre(partido.fechaHora.toLocal())) a.miembroId
+        };
+        final baja = de(EstadoInscripcion.baja).where((i) => !idsDeBaja.contains(i.miembroId)).toList();
+        final ocupadas = conf.length + pend.length + duda.length;
         final mia = lista.where((i) => i.miembroId == mi.yo.id).firstOrNull;
         final importe = conf.isEmpty ? partido.costeTotal : partido.costeTotal / conf.length;
         final todos = ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const <Partido>[];
         final abreEn = mi.liga.abreConvocatoria(partido, todos);
-        final abierta = partido.estado.antesDeJugar && abreEn == null;
+        final soyFijo = mi.yo.rango == RangoMiembro.fijo;
+        // Los fijos contestan siempre; los suplentes, cuando se abre la convocatoria
+        final puedoContestar = partido.estado.antesDeJugar && (abreEn == null || soyFijo);
         String nombre(String id) => miembros[id]?.nombre ?? '…';
         RangoMiembro rangoDeIns(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
-        final soyFijo = mi.yo.rango == RangoMiembro.fijo;
         final liga = mi.liga;
         final precioNoFijo = liga.precioInvitado;
+        final todosContestaron = pend.isEmpty && duda.isEmpty;
+        final puesto = mia?.estado == EstadoInscripcion.espera
+            ? espera.indexWhere((i) => i.miembroId == mi.yo.id) + 1
+            : null;
+        String texto() => textoConvocatoria(liga: liga, partido: partido, lista: lista, suplentes: espera, nombre: nombre);
 
         return ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           ListTile(
-            title: Text(trf('{n}/{p} confirmados', {'n': conf.length, 'p': partido.plazas})),
+            title: Text(trf('Van {n} de {p}', {'n': ocupadas, 'p': partido.plazas}),
+                style: Theme.of(context).textTheme.titleLarge),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 8),
               child: LinearProgressIndicator(
-                value: partido.plazas == 0 ? 0 : (conf.length / partido.plazas).clamp(0.0, 1.0).toDouble(),
+                value: partido.plazas == 0 ? 0 : (ocupadas / partido.plazas).clamp(0.0, 1.0).toDouble(),
               ),
             ),
             trailing: liga.facturaMensual
                 ? Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text(precioNoFijo == null ? 'Cuota' : euros(precioNoFijo), style: Theme.of(context).textTheme.titleMedium),
-                    Text(precioNoFijo == null ? 'reservas: variable' : 'reservas e invitados'),
+                    Text(precioNoFijo == null ? tr('Cuota') : euros(precioNoFijo), style: Theme.of(context).textTheme.titleMedium),
+                    Text(tr(precioNoFijo == null ? 'reservas: variable' : 'reservas e invitados')),
                   ])
                 : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text(euros(importe), style: AppTheme.numero(context, size: 22)),
@@ -71,62 +86,71 @@ class ConvocatoriaTab extends ConsumerWidget {
               leading: Icon(Icons.schedule, color: AppColores.of(context).aviso),
               title: const Tx('Hora pendiente de confirmar'),
             ),
-          if (abreEn != null)
+          if (abreEn != null && !soyFijo)
             Card(
               margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: ListTile(
                 leading: const Icon(Icons.lock_clock),
-                title: Text('La convocatoria se abre el ${fechaHora(abreEn)}'),
-                subtitle: Text('${mi.liga.horasAperturaConvocatoria} h después de acabar el partido anterior. '
-                    'Te avisaremos para que pulses «Voy».'),
+                title: Text(trf('Podrás apuntarte de suplente el {f}', {'f': fechaHora(abreEn)})),
               ),
             ),
-          if (abierta)
+          if (puedoContestar)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-              child: Text(
-                liga.conApertura
-                    ? (soyFijo
-                        ? 'Eres fijo: tienes plaza guardada hasta el ${fechaHora(liga.finReservaFijos(partido))}. '
-                            'Pulsa «Voy» o «No voy» antes; después tu plaza pasa a la lista de espera.'
-                        : 'Los fijos tienen plaza guardada hasta el ${fechaHora(liga.finReservaFijos(partido))}. '
-                            'Si pulsas «Voy» y no queda hueco, entras en la lista de espera y te avisamos si hay plaza.')
-                    : (soyFijo
-                        ? 'Eres fijo: ya estás dentro. Si no puedes ir, marca "No voy" y entrará el primero de la lista de espera.'
-                        : 'Los fijos ya están dentro. Si quieres jugar, pulsa "Voy": entrarás en la lista de espera '
-                            'y pasarás a la convocatoria en cuanto un fijo se dé de baja.'),
-                style: Theme.of(context).textTheme.bodySmall,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: SelectorAsistencia(partido: partido, mi: mi, actual: mia?.estado, puesto: puesto),
+            ),
+          if (puedoContestar && soyFijo)
+            Align(
+              child: TextButton.icon(
+                icon: const Icon(Icons.healing, size: 18),
+                label: const Tx('¿Lesión o ausencia larga? Avisar de baja'),
+                onPressed: () => registrarBaja(context, ref, mi),
               ),
             ),
-          if (abierta)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: SelectorAsistencia(partido: partido, mi: mi, actual: mia?.estado),
-            ),
-          if (mia?.estado == EstadoInscripcion.espera)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Card(
-                color: Theme.of(context).colorScheme.tertiaryContainer,
-                child: ListTile(
-                  leading: const Icon(Icons.hourglass_top),
-                  title: Text(trf('Estás en lista de espera (puesto {n})', {'n': espera.indexWhere((i) => i.miembroId == mi.yo.id) + 1})),
-                  subtitle: const Tx('Entrarás automáticamente si alguien se da de baja.'),
-                ),
+          // Pasar la convocatoria al grupo de WhatsApp (con negritas)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Card(
+              color: todosContestaron ? Theme.of(context).colorScheme.primaryContainer : null,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                    tr(todosContestaron
+                        ? 'Todos los fijos han contestado: pasa la convocatoria al grupo'
+                        : 'Pasa la convocatoria al grupo de WhatsApp'),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        icon: const Icon(Icons.copy),
+                        label: const Tx('Copiar'),
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: texto()));
+                          if (context.mounted) mostrarOk(context, 'Copiada: pégala en el grupo');
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.share),
+                        label: const Tx('WhatsApp'),
+                        onPressed: () => compartirTexto(context, texto()),
+                      ),
+                    ),
+                  ]),
+                ]),
               ),
             ),
-          _Seccion('Confirmados', conf, nombre, rangoDeIns, numerar: true, mi: mi, partido: partido, miembros: miembros),
-          _Seccion('En duda', duda, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
-          _Seccion(
-            liga.esperaPorPrioridad ? 'Lista de espera · por prioridad' : 'Lista de espera · por orden de apuntarse',
-            espera,
-            nombre,
-            rangoDeIns,
-            numerar: true,
-            mi: mi,
-            partido: partido,
-            miembros: miembros,
           ),
+          _Seccion('Van', conf, nombre, rangoDeIns, numerar: true, mi: mi, partido: partido, miembros: miembros),
+          _Seccion('Sin confirmar', pend, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
+          _Seccion('En duda', duda, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
+          _Seccion('Suplentes · por orden', espera, nombre, rangoDeIns,
+              numerar: true, mi: mi, partido: partido, miembros: miembros),
           _Seccion('No van', baja, nombre, rangoDeIns, mi: mi, partido: partido, miembros: miembros),
           // Lesionados y ausentes en la fecha del partido (no reciben avisos ni ocupan plaza de fijo)
           ...() {
@@ -138,7 +162,7 @@ class ConvocatoriaTab extends ConsumerWidget {
             return <Widget>[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text('De baja (${deBaja.length})', style: Theme.of(context).textTheme.titleSmall),
+                child: Text(trf('De baja ({n})', {'n': deBaja.length}), style: Theme.of(context).textTheme.titleSmall),
               ),
               for (final a in deBaja)
                 ListTile(
@@ -162,7 +186,7 @@ class ConvocatoriaTab extends ConsumerWidget {
   }
 }
 
-class _Seccion extends StatelessWidget {
+class _Seccion extends ConsumerWidget {
   const _Seccion(this.titulo, this.lista, this.nombre, this.rango,
       {this.numerar = false, required this.mi, required this.partido, required this.miembros});
   final Map<String, Miembro> miembros;
@@ -175,14 +199,14 @@ class _Seccion extends StatelessWidget {
   final Partido partido;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (lista.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
         child: Row(children: [
-          Flexible(child: Text('$titulo (${lista.length})', style: Theme.of(context).textTheme.titleSmall)),
-          if (titulo.startsWith('Lista de espera')) const InfoBoton(Ayuda.listaEspera),
+          Flexible(child: Text('${tr(titulo)} (${lista.length})', style: Theme.of(context).textTheme.titleSmall)),
+          if (titulo.startsWith('Suplentes')) const InfoBoton(Ayuda.listaEspera),
         ]),
       ),
       for (final (i, ins) in lista.indexed)
@@ -204,40 +228,45 @@ class _Seccion extends StatelessWidget {
           selected: ins.miembroId == mi.yo.id,
           title: Row(children: [
             Flexible(
-              child: Text(nombre(ins.miembroId) + (ins.miembroId == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis),
+              child: Text(nombre(ins.miembroId) + (ins.miembroId == mi.yo.id ? tr(' (tú)') : '') + (ins.capitan ? ' (C)' : ''),
+                  overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(width: 6),
             ChipRango(rango(ins), corto: true),
           ]),
           // El admin puede dar de baja a otro (p. ej. avisó por WhatsApp).
           // El admin puede dar de baja a otro (p. ej. avisó por WhatsApp) y volver a apuntarlo.
+          // El admin cambia a otro (avisó por WhatsApp) o le pone una baja larga (lesión…)
           trailing: !(mi.soyAdmin && partido.estado.antesDeJugar)
               ? null
-              : ins.estado == EstadoInscripcion.baja
-                  ? IconButton(
-                      tooltip: tr('Volver a apuntar'),
-                      icon: Icon(Icons.person_add_alt_1_outlined, color: Theme.of(context).colorScheme.primary),
-                      onPressed: () => ejecutar(
-                        context,
-                        () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.confirmado),
-                        ok: 'Apuntado (si no hay plaza, entra en la lista de espera)',
-                      ),
-                    )
-                  : IconButton(
-                      tooltip: tr('Dar de baja'),
-                      icon: const Icon(Icons.person_remove_outlined),
-                      onPressed: () async {
-                        final antes = ins.estado;
-                        final ok = await ejecutar(
-                          context,
-                          () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, EstadoInscripcion.baja),
-                        );
-                        if (ok && context.mounted) {
-                          avisoDeshacer(context, '${nombre(ins.miembroId)} ya no va',
-                              () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, antes));
-                        }
-                      },
-                    ),
+              : PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (op) async {
+                    final antes = ins.estado;
+                    if (op == 'lesion') {
+                      await registrarBaja(context, ref, mi, miembroId: ins.miembroId);
+                      return;
+                    }
+                    final nuevo = switch (op) {
+                      'va' => EstadoInscripcion.confirmado,
+                      'duda' => EstadoInscripcion.duda,
+                      _ => EstadoInscripcion.baja,
+                    };
+                    final ok = await ejecutar(context, () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, nuevo));
+                    if (ok && context.mounted) {
+                      avisoDeshacer(context, tr('Cambiado'),
+                          () => PartidosRepo.cambiarEstado(partido.id, ins.miembroId, antes));
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    if (ins.estado != EstadoInscripcion.confirmado) PopupMenuItem(value: 'va', child: Text(tr('Va'))),
+                    if (ins.estado != EstadoInscripcion.duda && ins.estado.ocupaPlaza)
+                      PopupMenuItem(value: 'duda', child: Text(tr('Duda'))),
+                    if (ins.estado != EstadoInscripcion.baja) PopupMenuItem(value: 'no', child: Text(tr('No va'))),
+                    if (rango(ins) == RangoMiembro.fijo)
+                      PopupMenuItem(value: 'lesion', child: Text(tr('Baja larga (lesión…)'))),
+                  ],
+                ),
         ),
     ]);
   }

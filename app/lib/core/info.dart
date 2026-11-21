@@ -60,10 +60,9 @@ abstract final class Ayuda {
       'Al empezar, cada mánager recibe 5 jugadores al azar pero compensados: todos los equipos valen más o menos lo mismo. '
           'Además recibe un dinero inicial pequeño (1,5 veces el precio medio de un jugador) para su primer fichaje. '
           'Los jugadores que no se reparten se quedan en el mercado.');
-  static const listaEspera = ('Lista de espera',
-      'Cuando no quedan plazas, los que pulsan «Voy» esperan aquí. Si alguien se da de baja, entra automáticamente el primero '
-          'y le llega un aviso.\n\nEl orden lo elige el administrador: por prioridad (fijos, luego reservas, luego invitados) '
-          'o por orden de apuntarse.');
+  static const listaEspera = ('Suplentes',
+      'Los fijos están siempre en la lista. Los demás se apuntan de suplentes y, en cuanto un fijo dice «No voy», '
+          'entra el primero de la lista (por orden de apuntarse) y le llega un aviso.');
   static const noMeFije = ('«No me fijé»',
       'Si no sabes quién marcó en un equipo, márcalo y no envías datos de ese equipo. Cuentan los partes del resto, '
           'así que no pasa nada: es mejor que inventarse un gol.');

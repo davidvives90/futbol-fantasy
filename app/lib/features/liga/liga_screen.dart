@@ -312,6 +312,10 @@ class _Miembros extends ConsumerWidget {
         if (rango == m.rango) return;
         op = () => LigasRepo.cambiarRango(m.id, rango);
         ok = '${m.nombre} ahora es ${rango.etiqueta.toLowerCase()}';
+      case 'baja':
+        // Lesión o ausencia larga: no se le apunta solo hasta que vuelva
+        await registrarBaja(context, ref, mi, miembroId: m.id);
+        return;
       case 'invitar':
         // El token no es legible por columna: solo los admins lo obtienen con enlaces_invitacion().
         try {
@@ -431,6 +435,7 @@ class _Miembros extends ConsumerWidget {
                       CheckedPopupMenuItem(value: 'rango_${r.name}', checked: m.rango == r, child: Text(r.etiqueta)),
                     if (m.id != mi.yo.id) ...[
                       const PopupMenuDivider(),
+                      const PopupMenuItem(value: 'baja', child: Tx('Baja larga (lesión…)')),
                       if (!m.registrado) const PopupMenuItem(value: 'invitar', child: Tx('Reenviar enlace')),
                       if (m.registrado && !m.esAdmin) const PopupMenuItem(value: 'admin', child: Tx('Nombrar administrador')),
                       if (m.esAdmin) const PopupMenuItem(value: 'quitar_admin', child: Tx('Quitar administrador')),
