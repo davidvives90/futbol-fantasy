@@ -14,7 +14,7 @@ import '../fantasy/fantasy_providers.dart';
 /// Productos (precios orientativos: los definitivos se fijan en Google Play Console).
 const _sinAnuncios = <(String, String, String, String?)>[
   ('ads_1_anio', '1 año sin anuncios', '2,99 €', null),
-  ('ads_siempre', 'Para siempre', '5,99 €', 'Mejor opción'),
+  ('ads_siempre', 'Para siempre · pagas una vez', '7,99 €', 'Mejor opción'),
 ];
 const _packsDinero = <(String, double, String)>[
   ('dinero_1', 1, '0,99 €'),

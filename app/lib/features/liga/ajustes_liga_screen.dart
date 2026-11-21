@@ -109,7 +109,7 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
           ligaId: mi.liga.id,
         ),
         _Interruptor(
-          titulo: 'Post-partido avanzado',
+          titulo: 'Post-partido detallado',
           activo: mi.liga.valoracionAvanzada,
           on: 'Además: «Destacó en», autogoles/paradas/penaltis, «No le vi» y valoración por aspectos',
           off: 'Simple: goles y asistencias, nota del 1 al 5 a todos y estrella MVP',

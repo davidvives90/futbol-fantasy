@@ -80,8 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      'Te hemos enviado un correo a ${_email.text.trim()}. Abre el enlace desde este dispositivo '
-                      'o escribe aquí el código que viene en el correo.',
+                      trf('Te hemos enviado un correo a {e}. Abre el enlace desde este móvil o escribe aquí el código que viene en el correo.',
+                          {'e': _email.text.trim()}),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -97,8 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: _enviando ? null : _enlaceMagico,
-                  child: Text(_enviando ? 'Enviando…' : 'Recibir enlace de acceso'),
+                  child: Text(tr(_enviando ? 'Enviando…' : 'Entrar con mi email')),
                 ),
+                const SizedBox(height: 8),
+                Tx('Sin contraseñas: te mandamos un enlace o un código al correo. Si es tu primera vez, la cuenta se crea sola.',
+                    textAlign: TextAlign.center, style: t.bodySmall),
               ],
               // Google se activa compilando con --dart-define=GOOGLE_LOGIN=true
               // cuando el proveedor esté configurado en Supabase (Authentication → Sign In / Providers → Google).

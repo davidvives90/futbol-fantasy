@@ -122,6 +122,14 @@ class PerfilScreen extends ConsumerWidget {
           onTap: () => context.push('/guia'),
         ),
 
+        ListTile(
+          leading: const Icon(Icons.rate_review_outlined),
+          title: const Tx('Enviar comentarios'),
+          subtitle: const Tx('¿Algo no se entiende o falla? Cuéntanoslo'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _comentarios(context),
+        ),
+
         seccion('Preferencias'),
         FutureBuilder<bool>(
           future: Anuncios.hayOpcionesPrivacidad(),
@@ -205,6 +213,40 @@ class PerfilScreen extends ConsumerWidget {
       ]),
     );
   }
+}
+
+/// Versión de pruebas: el comentario llega al panel máster (Errores), con la pantalla «comentario».
+Future<void> _comentarios(BuildContext context) async {
+  final c = TextEditingController();
+  final texto = await showDialog<String>(
+    context: context,
+    builder: (d) => AlertDialog(
+      title: const Tx('Enviar comentarios'),
+      content: TextField(
+        controller: c,
+        autofocus: true,
+        minLines: 4,
+        maxLines: 8,
+        maxLength: 2000,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(hintText: tr('Qué estabas haciendo, qué esperabas y qué pasó')),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(d), child: const Tx('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(d, c.text.trim()), child: const Tx('Enviar')),
+      ],
+    ),
+  );
+  if (texto == null || texto.isEmpty || !context.mounted) return;
+  await ejecutar(
+    context,
+    () => sb.rpc('registrar_error', params: {
+      'p_mensaje': 'Comentario: ${texto.length > 480 ? '${texto.substring(0, 480)}…' : texto}',
+      'p_traza': texto,
+      'p_pantalla': 'comentario',
+    }),
+    ok: tr('¡Gracias! Lo leeremos.'),
+  );
 }
 
 const urlPrivacidad = 'https://davidvives90.github.io/futbol-fantasy/privacidad.html';
