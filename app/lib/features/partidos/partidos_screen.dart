@@ -17,6 +17,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/post_partido_repo.dart';
 import '../shell/home_shell.dart';
+import 'agenda.dart';
 import 'selector_asistencia.dart';
 
 /// Partidos en post-partido en los que jugué y aún no he enviado nada.
@@ -79,6 +80,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
         onRefresh: () async {
           ref.invalidate(saldosProvider(mi.liga.id));
           ref.invalidate(miembrosProvider(mi.liga.id));
+          ref.invalidate(agendaProvider);
           await ref.refresh(partidosProvider(mi.liga.id).future);
         },
         child: partidos.when(
@@ -96,10 +98,10 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
 
             return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
               _Saludo(mi: mi),
+              // Lo urgente arriba; luego mis partidos de TODAS mis ligas (calendario + Voy / No voy)
               _Pendientes(mi: mi),
-              if (proximos.isNotEmpty)
-                _ProximoPartido(partido: proximos.first, mi: mi)
-              else
+              const AgendaPersonal(),
+              if (proximos.isEmpty && mi.soyAdmin)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Vacio(
@@ -112,13 +114,8 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
                     onAccion: mi.soyAdmin ? () => context.push('/temporada') : null,
                   ),
                 ),
-              if (proximos.length > 1) ...[
-                _Cabecera('Próximos', accion: mi.soyAdmin ? 'Temporada' : null, onAccion: () => context.push('/temporada')),
-                for (final p in proximos.skip(1).take(6)) _FilaPartido(p, mi: mi),
-              ] else if (mi.soyAdmin && proximos.isNotEmpty)
-                _Cabecera('Próximos', accion: 'Programar temporada', onAccion: () => context.push('/temporada')),
               if (anteriores.isNotEmpty) ...[
-                _Cabecera('Anteriores'),
+                _Cabecera(trf('Resultados · {l}', {'l': mi.liga.nombre})),
                 for (final p in anterioresVisibles) _FilaPartido(p, mi: mi),
                 if (anteriores.length > 3)
                   Center(

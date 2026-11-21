@@ -89,6 +89,18 @@ final idiomaProvider = NotifierProvider<IdiomaNotifier, String>(IdiomaNotifier.n
 
 /// Traducciones (orden: català, galego, euskara, English, Deutsch, italiano, Nederlands, français).
 const _textos = <String, List<String>>{
+  'Mis partidos': ['Els meus partits', 'Os meus partidos', 'Nire partidak', 'My matches', 'Meine Spiele', 'Le mie partite', 'Mijn wedstrijden', 'Mes matchs'],
+  'Ver todos': ['Veure\'ls tots', 'Ver todos', 'Denak ikusi', 'See all', 'Alle ansehen', 'Vedi tutte', 'Alles bekijken', 'Tout voir'],
+  'Vas': ['Hi vas', 'Vas', 'Zoaz', 'You\'re in', 'Dabei', 'Ci sei', 'Je komt', 'Tu y vas'],
+  '¡Responde!': ['Respon!', 'Responde!', 'Erantzun!', 'Reply!', 'Antworte!', 'Rispondi!', 'Reageer!', 'Réponds !'],
+  'Suplente': ['Suplent', 'Suplente', 'Ordezkoa', 'Sub', 'Ersatz', 'Riserva', 'Reserve', 'Remplaçant'],
+  'Suplente nº {n}': ['Suplent núm. {n}', 'Suplente nº {n}', '{n}. ordezkoa', 'Sub no. {n}', 'Ersatz Nr. {n}', 'Riserva n° {n}', 'Reserve nr. {n}', 'Remplaçant n° {n}'],
+  'Aún cerrada': ['Encara tancada', 'Aínda pechada', 'Oraindik itxita', 'Not open yet', 'Noch geschlossen', 'Ancora chiusa', 'Nog dicht', 'Pas encore ouverte'],
+  'Sin partidos estas semanas': ['Sense partits aquestes setmanes', 'Sen partidos estas semanas', 'Aste hauetan partidarik ez', 'No matches these weeks', 'Keine Spiele in diesen Wochen', 'Nessuna partita in queste settimane', 'Geen wedstrijden deze weken', 'Pas de match ces semaines-ci'],
+  'Cuando haya partido en alguna de tus ligas, lo verás aquí con un toque para apuntarte.': ['Quan hi hagi partit en alguna de les teves lligues, el veuràs aquí amb un toc per apuntar-t\'hi.', 'Cando haxa partido nalgunha das túas ligas, verálo aquí cun toque para apuntarte.', 'Zure ligaren batean partida dagoenean, hemen ikusiko duzu, ukitu batekin izena emateko.', 'When there\'s a match in any of your leagues, you\'ll see it here with one tap to sign up.', 'Wenn in einer deiner Ligen ein Spiel ansteht, siehst du es hier und meldest dich mit einem Tipp an.', 'Quando c\'è una partita in una delle tue leghe, la vedrai qui con un tocco per iscriverti.', 'Als er in een van je competities een wedstrijd is, zie je die hier en meld je je met één tik aan.', 'Quand il y a un match dans l\'une de tes ligues, tu le verras ici avec un geste pour t\'inscrire.'],
+  'faltan {n}': ['en falten {n}', 'faltan {n}', '{n} falta', '{n} short', '{n} fehlen', 'ne mancano {n}', 'nog {n}', 'il en manque {n}'],
+  'completo': ['complet', 'completo', 'osatuta', 'full', 'voll', 'completo', 'vol', 'complet'],
+  'Resultados · {l}': ['Resultats · {l}', 'Resultados · {l}', 'Emaitzak · {l}', 'Results · {l}', 'Ergebnisse · {l}', 'Risultati · {l}', 'Uitslagen · {l}', 'Résultats · {l}'],
   ' (tú)': [' (tu)', ' (ti)', ' (zu)', ' (you)', ' (du)', ' (tu)', ' (jij)', ' (toi)'],
   'Al acabar': ['En acabar', 'Ao rematar', 'Amaitzean', 'When it ends', 'Nach Spielende', 'Alla fine', 'Na afloop', 'À la fin'],
   'Aún no hay capitanes': ['Encara no hi ha capitans', 'Aínda non hai capitáns', 'Oraindik ez dago kapitainik', 'No captains yet', 'Noch keine Kapitäne', 'Non ci sono ancora capitani', 'Nog geen aanvoerders', 'Pas encore de capitaines'],

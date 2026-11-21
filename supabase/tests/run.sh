@@ -63,3 +63,4 @@ for f in migrations/00*.sql; do
   if [ "$n" -ge 41 ] 2>/dev/null; then aplicar "$f"; fi
 done
 aplicar tests/escenario_convocatoria_sencilla.sql
+aplicar tests/escenario_agenda.sql
