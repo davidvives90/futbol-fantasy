@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../onboarding/bienvenida.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -64,6 +65,15 @@ class PerfilScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/master'),
           ),
+        ListTile(
+          leading: const Icon(Icons.lightbulb_outline),
+          title: const Tx('Cómo funciona'),
+          subtitle: const Tx('Las 3 tarjetas de bienvenida'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (_) => Bienvenida(fantasy: ref.read(ligaActualProvider)?.liga.fantasyActivo ?? true))),
+        ),
         ListTile(
           leading: const Icon(Icons.menu_book_outlined),
           title: const Tx('Guía y normas'),

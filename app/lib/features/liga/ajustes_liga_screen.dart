@@ -5,15 +5,44 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/exportar.dart';
 import '../../core/utils.dart';
+import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
 
 /// Ajustes de la liga (solo admin): todo lo que se configura, agrupado, fuera de la vista de jugadores.
-class AjustesLigaScreen extends ConsumerWidget {
+class AjustesLigaScreen extends ConsumerStatefulWidget {
   const AjustesLigaScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AjustesLigaScreen> createState() => _AjustesLigaScreenState();
+}
+
+class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
+  bool _verTodo = false;
+
+  Future<void> _cambiarNivel(Liga l, String nivel) async {
+    if (nivel == l.nivel) return;
+    final nombre = tr(nivelesLiga.firstWhere((n) => n.$1 == nivel).$3);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(trf('¿Pasar a modo {n}?', {'n': nombre})),
+        content: Text(tr(nivelesLiga.firstWhere((n) => n.$1 == nivel).$4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Cambiar')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    if (await ejecutar(context, () => LigasRepo.actualizarLiga(l.id, ajustesNivel(nivel)),
+        ok: trf('Modo {n} activado', {'n': nombre}))) {
+      refrescarLigas(ref);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const Scaffold(body: Cargando());
     if (!mi.soyAdmin) {
@@ -27,23 +56,42 @@ class AjustesLigaScreen extends ConsumerWidget {
         );
     Widget opcion(IconData i, String titulo, String sub, String ruta) => ListTile(
           leading: Icon(i),
-          title: Text(titulo),
-          subtitle: Text(sub),
+          title: Text(tr(titulo)),
+          subtitle: Text(tr(sub)),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(ruta),
         );
     return Scaffold(
       appBar: AppBar(title: const Tx('Ajustes de la liga')),
       body: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
-        grupo('Liga'),
+        grupo(tr('Modo de la liga')),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SegmentedButton<String>(
+            showSelectedIcon: false,
+            segments: [
+              for (final (id, icono, nombre, _) in nivelesLiga)
+                ButtonSegment(value: id, icon: Icon(icono), label: Text(tr(nombre))),
+            ],
+            selected: {mi.liga.nivel},
+            onSelectionChanged: (x) => _cambiarNivel(mi.liga, x.first),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          child: Text(tr(nivelesLiga.firstWhere((n) => n.$1 == mi.liga.nivel, orElse: () => nivelesLiga.last).$4),
+              style: Theme.of(context).textTheme.bodySmall),
+        ),
+        grupo(tr('Liga')),
         opcion(Icons.edit_outlined, 'Datos de la liga', 'Nombre, campo, plazas, equipos y precio', '/liga/editar'),
         opcion(Icons.checkroom, 'Equipaciones', 'Qué lleva cada equipo (p. ej. blanco y color)', '/liga/equipaciones'),
         opcion(Icons.menu_book_outlined, 'Normas y guía', 'Lo acordado en la liga y cómo funciona todo', '/guia'),
-        grupo('Partidos'),
+        grupo(tr('Partidos')),
         opcion(Icons.event_repeat, 'Programar temporada', 'Partidos recurrentes entre dos fechas', '/temporada'),
         opcion(Icons.how_to_reg_outlined, 'Convocatoria y cobro', 'Lista de espera, factura mensual y precio de reservas',
             '/liga/convocatoria'),
-        grupo('Módulos'),
+        if (mi.liga.esAvanzada || _verTodo) ...[
+        grupo(tr('Módulos')),
         _Interruptor(
           titulo: 'Fantasy',
           activo: mi.liga.fantasyActivo,
@@ -68,7 +116,8 @@ class AjustesLigaScreen extends ConsumerWidget {
           campo: 'valoracion_avanzada',
           ligaId: mi.liga.id,
         ),
-        grupo('Normas y votaciones'),
+        ],
+        grupo(tr('Normas y votaciones')),
         opcion(Icons.gavel_outlined, 'Reglamento', 'Modalidad (${mi.liga.nombreModalidad}) y reglas del partido', '/reglamento'),
         opcion(Icons.how_to_vote_outlined, 'Votaciones', 'Pregunta a la liga o somete a votación un cambio de regla', '/votaciones'),
         opcion(Icons.event_busy_outlined, 'Asistencia y bajas', 'Historial de cada jugador y bajas temporales', '/asistencia'),
@@ -79,10 +128,21 @@ class AjustesLigaScreen extends ConsumerWidget {
           trailing: const Icon(Icons.download_outlined),
           onTap: () => exportarLigaExcel(context, mi.liga),
         ),
-        grupo('Puntuación y Fantasy'),
+        if (mi.liga.esAvanzada || _verTodo) ...[
+        grupo(tr('Puntuación y Fantasy')),
         opcion(Icons.rule, 'Puntuación y valoraciones', 'Puntos por acción, valoración rápida o detallada', '/liga/reglas'),
         if (mi.liga.fantasyActivo)
           opcion(Icons.storefront_outlined, 'Fantasy', 'Bonus, opciones avanzadas y reiniciar', '/liga/fantasy'),
+        ],
+        if (!mi.liga.esAvanzada && !_verTodo)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: OutlinedButton.icon(
+              onPressed: () => setState(() => _verTodo = true),
+              icon: const Icon(Icons.tune),
+              label: const Tx('Ver todas las opciones'),
+            ),
+          ),
       ]),
     );
   }
@@ -96,12 +156,12 @@ class _Interruptor extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => SwitchListTile(
-        title: Text(titulo),
-        subtitle: Text(activo ? on : off),
+        title: Text(tr(titulo)),
+        subtitle: Text(tr(activo ? on : off)),
         value: activo,
         onChanged: (v) async {
           if (await ejecutar(context, () => LigasRepo.actualizarLiga(ligaId, {campo: v}),
-              ok: v ? '$titulo activado' : '$titulo desactivado')) {
+              ok: trf(v ? '{x} activado' : '{x} desactivado', {'x': tr(titulo)}))) {
             refrescarLigas(ref);
           }
         },

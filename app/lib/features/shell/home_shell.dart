@@ -55,15 +55,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     if (ligas.value!.isEmpty) return const OnboardingScreen();
 
     // Primer uso: 3 pantallas de bienvenida, una sola vez por móvil
-    final prefs = ref.read(prefsProvider);
-    if (!(prefs.getBool(claveBienvenida) ?? false)) {
-      prefs.setBool(claveBienvenida, true);
-      final conFantasy = ref.read(ligaActualProvider)?.liga.fantasyActivo ?? true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => Bienvenida(fantasy: conFantasy)));
-      });
-    }
+    mostrarBienvenidaSiToca(context, ref.read(prefsProvider),
+        fantasy: ref.read(ligaActualProvider)?.liga.fantasyActivo ?? true);
 
     // Solo 3 pestañas: Inicio · Fantasy · Liga. Clasificación (rama 2) y Caja (rama 3) se abren desde Liga.
     // Con el Fantasy desactivado en la liga, su pestaña desaparece (rama 1 del shell).

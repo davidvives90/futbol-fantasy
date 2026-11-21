@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 // Los valores de los enums coinciden con los de Postgres (snake_case).
 // ignore_for_file: constant_identifier_names
 
@@ -165,7 +166,12 @@ class Liga {
     this.bizumTelefono,
     this.modoEquipos = 'admin',
     this.capitanesPorEquipo = 1,
+    this.nivel = 'avanzado',
   });
+
+  /// 0045: 'basico' | 'medio' | 'avanzado'. Decide qué opciones se enseñan en Ajustes.
+  final String nivel;
+  bool get esAvanzada => nivel == 'avanzado';
 
   /// 0042: quién hace los equipos: 'admin' | 'automatico' | 'capitanes' (1 o 2 por equipo).
   final String modoEquipos;
@@ -284,6 +290,7 @@ class Liga {
       bizumTelefono: m['bizum_telefono'] as String?,
       modoEquipos: (m['modo_equipos'] ?? 'admin') as String,
       capitanesPorEquipo: toInt(m['capitanes_por_equipo'], 1),
+      nivel: (m['nivel'] ?? 'avanzado') as String,
     );
   }
 }
@@ -898,3 +905,40 @@ const nombresModalidad = <String, String>{
   'f8': 'Fútbol 8',
   'f11': 'Fútbol 11',
 };
+
+
+/// Niveles de liga (0045): qué se activa con cada uno. El avanzado parte del medio y se ajusta a mano.
+const nivelesLiga = <(String, IconData, String, String)>[
+  ('basico', Icons.directions_walk, 'Básico', 'Lista de quién va, equipos automáticos, resultados y pagos. Sin Fantasy.'),
+  ('medio', Icons.directions_run, 'Medio', 'Lo básico más el Fantasy y estrellas a los compañeros tras el partido. El recomendado.'),
+  ('avanzado', Icons.bolt, 'Avanzado', 'Todo a tu gusto: post-partido detallado, resultado esperado, cesiones y capitanes.'),
+];
+
+/// Valores de cada nivel. [extra] sobrescribe (lo que el admin elige en el modo avanzado).
+Map<String, dynamic> ajustesNivel(String nivel, [Map<String, dynamic> extra = const {}]) => {
+      'nivel': nivel,
+      ...switch (nivel) {
+        'basico' => {
+            'fantasy_activo': false,
+            'prediccion_activa': false,
+            'valoracion_avanzada': false,
+            'cesiones_activas': false,
+            'modo_equipos': 'automatico',
+          },
+        'avanzado' => {
+            'fantasy_activo': true,
+            'prediccion_activa': true,
+            'valoracion_avanzada': true,
+            'cesiones_activas': false,
+            'modo_equipos': 'admin',
+          },
+        _ => {
+            'fantasy_activo': true,
+            'prediccion_activa': true,
+            'valoracion_avanzada': false,
+            'cesiones_activas': false,
+            'modo_equipos': 'automatico',
+          },
+      },
+      ...extra,
+    };

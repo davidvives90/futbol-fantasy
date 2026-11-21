@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/supabase.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
+import '../../core/liga_activa.dart';
+import 'bienvenida.dart';
 
 final _solicitudesProvider = FutureProvider.autoDispose<List<String>>((ref) => LigasRepo.misSolicitudesPendientes());
 
@@ -18,6 +20,7 @@ class OnboardingScreen extends ConsumerWidget {
     final nombre = ref.watch(miPerfilProvider).valueOrNull?.nombre.split(' ').first ?? '';
     final solicitudes = ref.watch(_solicitudesProvider).valueOrNull ?? const [];
     final t = Theme.of(context).textTheme;
+    mostrarBienvenidaSiToca(context, ref.read(prefsProvider));
 
     return Scaffold(
       appBar: AppBar(
@@ -44,7 +47,7 @@ class OnboardingScreen extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.hourglass_top),
               title: const Tx('Solicitudes pendientes'),
-              subtitle: Text('Esperando aprobación en: ${solicitudes.join(', ')}'),
+              subtitle: Text(trf('Esperando aprobación en: {l}', {'l': solicitudes.toSet().join(', ')})),
             ),
           ),
         ],
@@ -52,7 +55,7 @@ class OnboardingScreen extends ConsumerWidget {
         _Opcion(
           icono: Icons.add_circle_outline,
           titulo: 'Crear una liga',
-          texto: 'Serás el administrador: campo, precio, formato y jugadores.',
+          texto: 'Elige modo básico, medio o avanzado. Serás el administrador.',
           onTap: () => context.push('/crear-liga'),
         ),
         _Opcion(
@@ -83,8 +86,8 @@ class _Opcion extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: Icon(icono, size: 32),
-          title: Text(titulo),
-          subtitle: Text(texto),
+          title: Text(tr(titulo)),
+          subtitle: Text(tr(texto)),
           trailing: const Icon(Icons.chevron_right),
           onTap: onTap,
         ),

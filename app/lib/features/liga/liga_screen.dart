@@ -142,7 +142,11 @@ class _Datos extends StatelessWidget {
               avatar: Icon(l.publica ? Icons.public : Icons.lock_outline, size: 18),
               label: Text(l.publica ? 'Pública' : 'Privada'),
             ),
-            if (l.fantasy.bonusRoles) const Chip(label: Tx('Bonus por rol en la alineación')),
+            Chip(
+              avatar: Icon(nivelesLiga.firstWhere((n) => n.$1 == l.nivel, orElse: () => nivelesLiga.last).$2, size: 18),
+              label: Text(trf('Modo {n}', {'n': tr(nivelesLiga.firstWhere((n) => n.$1 == l.nivel, orElse: () => nivelesLiga.last).$3).toLowerCase()})),
+            ),
+            if (l.esAvanzada && l.fantasy.bonusRoles) const Chip(label: Tx('Bonus por rol en la alineación')),
           ]),
           const SizedBox(height: 8),
           ListTile(
