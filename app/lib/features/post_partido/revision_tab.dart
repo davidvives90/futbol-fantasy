@@ -265,7 +265,7 @@ class RevisionTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     if (d.valorPropuesto != null)
-                      Text(trf('Propuesta: {v}', {'v': d.valorPropuesto}),
+                      Text(trf('Propuesta: {v}', {'v': d.valorPropuesto!}),
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary)),
                     const Tx('Lo que dijo cada uno (toca el valor correcto):'),
                     const SizedBox(height: 8),
