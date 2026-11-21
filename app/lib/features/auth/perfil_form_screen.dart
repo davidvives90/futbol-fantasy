@@ -101,7 +101,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
       final bytes = await foto.readAsBytes();
       final ruta = '${uidActual!}/${DateTime.now().millisecondsSinceEpoch}.jpg';
       await sb.storage.from('avatares').uploadBinary(ruta, bytes,
-          fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true));
+          fileOptions: const FileOptions(contentType: 'image/jpeg'));
       _avatarUrl = sb.storage.from('avatares').getPublicUrl(ruta);
     }, ok: 'Foto lista: pulsa Guardar');
     if (mounted) setState(() => _subiendo = false);

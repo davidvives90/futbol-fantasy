@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
@@ -153,7 +154,22 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           child: EquipacionesScope(
             equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
             // Al cambiar de idioma se reconstruye toda la interfaz (fechas y textos incluidos)
-            child: MarcoWeb(onQuitarAnuncios: () => ref.read(routerProvider).push('/tienda'), child: KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!)),
+            child: MarcoWeb(
+              onQuitarAnuncios: () => ref.read(routerProvider).push('/tienda'),
+              // Android dibuja de borde a borde: sin esto, los botones de abajo quedan bajo la barra del sistema.
+              // La app termina encima de la barra (el hueco se pinta con el color de fondo).
+              child: kIsWeb
+                  ? KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!)
+                  : ColoredBox(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: SafeArea(
+                        top: false,
+                        left: false,
+                        right: false,
+                        child: KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!),
+                      ),
+                    ),
+            ),
           ),
         );
       },
