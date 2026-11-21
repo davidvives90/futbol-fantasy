@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../data/repos/fantasy_repo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
+import 'tarjetas_jugador.dart';
 import 'widgets_fantasy.dart';
 import '../../core/info.dart';
 
@@ -33,6 +34,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
     final fila = mercado.where((j) => j.miembroId == miembroId).firstOrNull;
     final valoracion = ref.watch(valoracionProvider(kJugador));
     final historial = ref.watch(historialPreciosProvider(kJugador));
+    final resumen = (ref.watch(resumenFantasyProvider(ligaId)).valueOrNull ?? const <String, ResumenFantasy>{})[miembroId];
     final plantillaTodo = ref.watch(miPlantillaProvider(kYo)).valueOrNull ?? const <JugadorPlantilla>[];
     // La ficha recibida en cesión ocupa una plaza extra: no cuenta para el límite.
     final plantilla = plantillaTodo.where((j) => j.propia).toList();
@@ -58,36 +60,51 @@ class JugadorMercadoScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(miembro?.nombre ?? 'Jugador')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        Row(children: [
-          AvatarMiembro(miembro, radio: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(miembro?.nombre ?? '…', style: t.titleLarge),
-              Text('Posición preferida: ${etiquetaPosicion(miembro?.posicion).toLowerCase()}'),
-              if (fila?.noHabitual ?? false) ...[
-                const SizedBox(height: 4),
-                InsigniaNoHabitual(bonus: p.bonusNoHabitual),
-              ],
-            ]),
-          ),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(millones(fila?.precio), style: t.headlineSmall),
-            VariacionTexto(fila?.variacion),
-          ]),
-        ]),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, children: [
-          if (fila?.rating != null) Chip(label: Text('Valoración ${fila!.rating!.round()}/100')),
-          if (fila?.pctFichado != null) Chip(label: Text('En el ${fila!.pctFichado!.round()} % de plantillas')),
+        // Carta del jugador: media, foto, rango, posición, valor y números clave
+        CartaJugador(
+          miembro: miembro,
+          precio: fila?.precio,
+          variacion: fila?.variacion,
+          resumen: resumen,
+          valoracion: fila?.rating,
+        ),
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          if (fila?.noHabitual ?? false) InsigniaNoHabitual(bonus: p.bonusNoHabitual),
+          if (fila?.pctFichado != null) Chip(label: Text(trf('En el {n} % de plantillas', {'n': fila!.pctFichado!.round()}))),
           if (fila != null && fila.fichasTotales > 0)
-            Chip(label: Text('${fila.fichasLibres}/${fila.fichasTotales} fichas libres')),
+            Chip(label: Text(trf('{l}/{t} copias libres', {'l': fila.fichasLibres, 't': fila.fichasTotales}))),
           if (enPlantilla != null && enPlantilla.propia)
-            Chip(avatar: const Icon(Icons.gavel, size: 16), label: Text('Tu cláusula ${millones(enPlantilla.clausula)}')),
+            Chip(avatar: const Icon(Icons.gavel, size: 16), label: Text(trf('Tu cláusula {x}', {'x': millones(enPlantilla.clausula)}))),
           if (enPlantilla != null && enPlantilla.cedidaAMi) const Chip(label: Tx('Cedido a ti esta jornada')),
         ]),
         const SizedBox(height: 16),
-        Row(children: [Text('Valoración de la liga', style: t.titleMedium), const InfoBoton(Ayuda.valorMercado)]),
+        _Seccion(
+          icono: Icons.bar_chart,
+          titulo: 'Últimas 5 puntuaciones',
+          child: UltimasPuntuaciones(resumen),
+        ),
+        _Seccion(
+          icono: Icons.show_chart,
+          titulo: 'Valor de mercado',
+          ayuda: Ayuda.valorMercado,
+          child: historial.when(
+            loading: () => const SizedBox(height: 60, child: Cargando()),
+            error: (e, _) => Text(mensajeError(e)),
+            data: (h) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                _Cifra(tr('Ahora'), millones(fila?.precio)),
+                _Cifra(tr('Máximo'), h.isEmpty ? '–' : millones(h.map((x) => x.precio).reduce((a, b) => a > b ? a : b))),
+                _Cifra(tr('Mínimo'), h.isEmpty ? '–' : millones(h.map((x) => x.precio).reduce((a, b) => a < b ? a : b))),
+                _Cifra(tr('Desde el inicio'),
+                    h.isEmpty || fila == null ? '–' : variacionM(fila.precio - h.first.precio)),
+              ]),
+              const SizedBox(height: 12),
+              GraficoPrecios(puntos: h, alto: 180),
+            ]),
+          ),
+        ),
+        Row(children: [Tx('Valoración de los compañeros', style: t.titleMedium)]),
         valoracion.when(
           loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
           error: (e, _) => Text(mensajeError(e)),
@@ -99,14 +116,6 @@ class JugadorMercadoScreen extends ConsumerWidget {
                   BarraAtributo(etiqueta: 'Media', valor: v.general),
                   Text('${v.numEvaluadores} evaluadores', style: t.bodySmall),
                 ]),
-        ),
-        const SizedBox(height: 16),
-        Text('Historial de precio', style: t.titleMedium),
-        const SizedBox(height: 8),
-        historial.when(
-          loading: () => const SizedBox(height: 60, child: Cargando()),
-          error: (e, _) => Text(mensajeError(e)),
-          data: (h) => GraficoPrecios(puntos: h),
         ),
         const SizedBox(height: 24),
         if (enPlantilla != null && enPlantilla.propia)
@@ -291,4 +300,48 @@ class _DuenosFichas extends ConsumerWidget {
       },
     );
   }
+}
+
+
+/// Sección de la ficha: título con icono y contenido en una tarjeta.
+class _Seccion extends StatelessWidget {
+  const _Seccion({required this.icono, required this.titulo, required this.child, this.ayuda});
+  final IconData icono;
+  final String titulo;
+  final Widget child;
+  final (String, String)? ayuda;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(icono, size: 20, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr(titulo), style: t.titleMedium?.copyWith(fontWeight: FontWeight.w700))),
+            if (ayuda != null) InfoBoton(ayuda!),
+          ]),
+          const SizedBox(height: 10),
+          child,
+        ]),
+      ),
+    );
+  }
+}
+
+class _Cifra extends StatelessWidget {
+  const _Cifra(this.etiqueta, this.valor);
+  final String etiqueta, valor;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(valor, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+          Text(etiqueta, style: Theme.of(context).textTheme.labelSmall),
+        ]),
+      );
 }

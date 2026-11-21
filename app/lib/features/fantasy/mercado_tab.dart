@@ -9,6 +9,7 @@ import '../../data/models_fantasy.dart';
 import '../../data/providers.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
+import 'tarjetas_jugador.dart';
 
 enum _Orden { precio, variacion, rating, fichado, libres }
 
@@ -41,6 +42,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
     final ligaId = widget.mi.liga.id;
     final k = (ligaId: ligaId, miembroId: widget.mi.yo.id);
     final mercado = ref.watch(mercadoProvider(ligaId));
+    final resumen = ref.watch(resumenFantasyProvider(ligaId)).valueOrNull ?? const <String, ResumenFantasy>{};
     final abierto = ref.watch(mercadoAbiertoProvider(ligaId)).valueOrNull ?? true;
     final miembros = ref.watch(miembrosPorIdProvider(ligaId));
     final mios = {
@@ -107,32 +109,23 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
                 itemBuilder: (_, i) {
                   final j = filtrada[i];
                   final m = miembros[j.miembroId];
-                  return ListTile(
-                    leading: AvatarMiembro(m),
-                    title: Row(children: [
-                      Flexible(child: Text(m?.nombre ?? '…', overflow: TextOverflow.ellipsis)),
-                      if (mios.contains(j.miembroId)) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.check_circle, size: 16),
-                      ],
-                      if (j.noHabitual) ...[
-                        const SizedBox(width: 6),
-                        InsigniaNoHabitual(bonus: widget.mi.liga.fantasy.bonusNoHabitual, corta: true),
-                      ],
-                    ]),
-                    subtitle: Text([
-                      if (j.rating != null) 'valoración ${j.rating!.round()}',
-                      if (j.fichasTotales > 0)
-                        j.hayLibres
-                            ? '${j.fichasLibres}/${j.fichasTotales} fichas libres'
+                  // Tarjeta: foto, rango, posición, valor, media por partido y últimas 5
+                  return TarjetaJugadorLista(
+                    miembro: m,
+                    precio: j.precio,
+                    variacion: j.variacion,
+                    resumen: resumen[j.miembroId],
+                    mio: mios.contains(j.miembroId),
+                    insignia: j.noHabitual
+                        ? InsigniaNoHabitual(bonus: widget.mi.liga.fantasy.bonusNoHabitual, corta: true)
+                        : null,
+                    extra: j.fichasTotales == 0
+                        ? null
+                        : j.hayLibres
+                            ? trf('{l}/{t} copias libres', {'l': j.fichasLibres, 't': j.fichasTotales})
                             : j.clausulaMinima != null
-                                ? 'agotado · cláusula desde ${millones(j.clausulaMinima)}'
-                                : 'agotado',
-                    ].join(' · ')),
-                    trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text(millones(j.precio), style: Theme.of(context).textTheme.titleSmall),
-                      VariacionTexto(j.variacion),
-                    ]),
+                                ? trf('Agotado · cláusula desde {x}', {'x': millones(j.clausulaMinima)})
+                                : tr('Agotado'),
                     onTap: () => context.push('/fantasy/jugador/${j.miembroId}'),
                   );
                 },

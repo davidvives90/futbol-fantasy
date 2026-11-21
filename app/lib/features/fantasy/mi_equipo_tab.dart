@@ -14,6 +14,7 @@ import 'alineacion_campo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
+import 'tarjetas_jugador.dart';
 import '../../core/info.dart';
 
 enum _Accion { clausula, vender, ceder, retirarCesion, ficha }
@@ -124,6 +125,7 @@ class MiEquipoTab extends ConsumerWidget {
                 if (j.noHabitual) ...[const SizedBox(width: 6), InsigniaNoHabitual(bonus: params.bonusNoHabitual)],
               ]),
               subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _Rendimiento(ligaId: mi.liga.id, jugadorId: j.jugadorId),
                 Text('Cláusula ${millones(j.clausula)} · ${variacionM(j.plusvalia)} desde la compra'),
                 Wrap(spacing: 6, children: [
                   if (j.protegida) const _Etiqueta(Icons.shield, 'Protegida'),
@@ -306,4 +308,27 @@ class _Etiqueta extends StatelessWidget {
         const SizedBox(width: 2),
         Text(texto, style: Theme.of(context).textTheme.labelSmall),
       ]);
+}
+
+
+/// Media por partido y últimas 5 puntuaciones del jugador (en la plantilla).
+class _Rendimiento extends ConsumerWidget {
+  const _Rendimiento({required this.ligaId, required this.jugadorId});
+  final String ligaId, jugadorId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final r = (ref.watch(resumenFantasyProvider(ligaId)).valueOrNull ?? const <String, ResumenFantasy>{})[jugadorId];
+    if (r == null || r.partidos == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(children: [
+        Text(trf('{m} pts/partido', {'m': r.media.toStringAsFixed(1)}),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w800, color: colorPuntos(context, r.media))),
+        const SizedBox(width: 8),
+        MiniUltimos(r.ultimos, alto: 14, conNumeros: false),
+      ]),
+    );
+  }
 }

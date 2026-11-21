@@ -87,9 +87,12 @@ abstract final class Ayuda {
           'Penalti fallado: −2 · Autogol: −2 · Nota de los compañeros: hasta 4 · MVP: 3.\n\n'
           'El administrador puede cambiar estos valores en Ajustes → Puntuación.');
   static const valorMercado = ('Valor de mercado',
-      'Todos empiezan con un valor parecido. Después de cada partido sube o baja según cómo ha jugado (goles, notas, MVP) '
-          'y cuántos mánagers lo tienen: como mucho ±15 % por jornada. Si el admin hace la encuesta de valoración (opcional), '
-          'también se tiene en cuenta.');
+      'Todos empiezan con un valor parecido. Después de cada partido se recalcula:\n'
+          '• Rendimiento (8 últimos partidos, los recientes pesan más): 65 % sus puntos Fantasy y 35 % la nota de los '
+          'compañeros, comparados con el resto de la liga.\n'
+          '• Con pocos partidos pesa más su valor de partida; a los 3 partidos ya cuenta la mitad su rendimiento.\n'
+          '• Si muchos mánagers lo tienen, sube un poco más (demanda).\n'
+          'Como mucho cambia un 15 % por jornada.');
   static const fichas = ('Copias de cada jugador',
       'Cada jugador tiene un número limitado de fichas (copias) para que no todo el mundo tenga al mismo. '
           'Si no quedan, solo puedes conseguirlo comprándoselo a otro mánager o pagando su cláusula.');

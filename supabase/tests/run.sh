@@ -64,3 +64,4 @@ for f in migrations/00*.sql; do
 done
 aplicar tests/escenario_convocatoria_sencilla.sql
 aplicar tests/escenario_agenda.sql
+aplicar tests/escenario_fantasy_valor.sql

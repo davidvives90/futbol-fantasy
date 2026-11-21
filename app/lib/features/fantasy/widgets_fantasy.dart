@@ -155,18 +155,43 @@ class _LineaPainter extends CustomPainter {
       tp.paint(canvas, Offset(0, y(v) - tp.height / 2));
     }
 
+    // Verde si ha subido desde el inicio, rojo si ha bajado; con relleno degradado bajo la línea
+    final color = valores.last > valores.first
+        ? const Color(0xFF2E7D32)
+        : (valores.last < valores.first ? const Color(0xFFC62828) : linea);
     final path = Path()..moveTo(x(0), y(valores.first));
     for (var i = 1; i < valores.length; i++) {
       path.lineTo(x(i), y(valores[i]));
     }
+    final area = Path.from(path)
+      ..lineTo(x(valores.length - 1), arriba + h)
+      ..lineTo(x(0), arriba + h)
+      ..close();
+    canvas.drawPath(
+      area,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0.02)],
+        ).createShader(Rect.fromLTWH(izq, arriba, w, h)),
+    );
     canvas.drawPath(
       path,
       Paint()
-        ..color = linea
-        ..strokeWidth = 2
+        ..color = color
+        ..strokeWidth = 2.5
+        ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke,
     );
-    canvas.drawCircle(Offset(x(valores.length - 1), y(valores.last)), 4, Paint()..color = linea);
+    for (var i = 0; i < valores.length; i++) {
+      canvas.drawCircle(Offset(x(i), y(valores[i])), i == valores.length - 1 ? 5 : 2.5, Paint()..color = color);
+    }
+    final tp = TextPainter(
+      text: TextSpan(text: millones(valores.last), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(math.min(x(valores.length - 1) - tp.width / 2, size.width - tp.width), math.max(0, y(valores.last) - tp.height - 6)));
   }
 
   @override

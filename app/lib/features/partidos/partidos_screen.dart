@@ -295,12 +295,31 @@ class _ProximoPartido extends ConsumerWidget {
 }
 
 /// Lo que tengo pendiente, solo si hay algo: votar, pagar, encuesta del Fantasy, solicitudes (admin).
+/// Lo urgente de TODAS mis ligas (votar, pagar, votaciones, solicitudes, baja), por orden de urgencia.
+/// Con varias ligas, cada tarea lleva su etiqueta de color; al tocarla se cambia a esa liga.
 class _Pendientes extends ConsumerWidget {
   const _Pendientes({required this.mi});
   final MiLiga mi;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ligas = ref.watch(misLigasProvider).valueOrNull ?? [mi];
+    final varias = ligas.length > 1;
+    final tareas = <_Tarea>[
+      for (final l in ligas)
+        ..._tareasDe(context, ref, l, etiqueta: varias ? l.liga.nombre : null, colorLiga: colorDeLiga(ligas, l.liga.id)),
+    ]..sort((a, b) => a.prioridad.compareTo(b.prioridad));
+    if (tareas.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _AccionPrincipal(tareas.first),
+      if (tareas.length > 1) ...[
+        const _Cabecera('También pendiente'),
+        ...tareas.skip(1),
+      ],
+    ]);
+  }
+
+  List<_Tarea> _tareasDe(BuildContext context, WidgetRef ref, MiLiga mi, {String? etiqueta, required Color colorLiga}) {
     final votar = ref.watch(_votacionesPendientesProvider((ligaId: mi.liga.id, yo: mi.yo.id))).valueOrNull ?? const [];
     final saldos = ref.watch(saldosProvider(mi.liga.id)).valueOrNull ?? const [];
     final miSaldo = saldos.where((s) => s.miembroId == mi.yo.id).firstOrNull?.saldo ?? 0;
@@ -310,7 +329,6 @@ class _Pendientes extends ConsumerWidget {
             .length
         : 0;
     final cs = Theme.of(context).colorScheme;
-    // Votaciones de la liga abiertas en las que aún no he votado
     final abiertas = (ref.watch(votacionesProvider(mi.liga.id)).valueOrNull ?? const <Votacion>[]).where((v) => v.abierta);
     final sinVotar = abiertas.where((v) {
       final r = ref.watch(resultadoVotacionProvider(v.id));
@@ -320,46 +338,71 @@ class _Pendientes extends ConsumerWidget {
         .where((a) => a.actual)
         .firstOrNull;
 
-    // Por orden de urgencia: lo primero es la acción principal
-    final tareas = <_Tarea>[
-      for (final p in votar)
+    // Antes de ir, se cambia a la liga de la tarea
+    VoidCallback ir(void Function() accion) => () async {
+          if (ref.read(ligaActivaIdProvider) != mi.liga.id) {
+            await ref.read(ligaActivaIdProvider.notifier).elegir(mi.liga.id);
+          }
+          if (context.mounted) accion();
+        };
+    _Tarea t({required int prioridad, required IconData icono, required Color color, required String titulo,
+            required String subtitulo, required String boton, required VoidCallback onTap}) =>
         _Tarea(
+          prioridad: prioridad,
+          icono: icono,
+          color: color,
+          titulo: titulo,
+          subtitulo: subtitulo,
+          boton: boton,
+          onTap: onTap,
+          liga: etiqueta,
+          colorLiga: colorLiga,
+        );
+
+    return [
+      for (final p in votar)
+        t(
+          prioridad: 0,
           icono: Icons.how_to_vote_outlined,
           color: cs.primary,
           titulo: trf('Vota el partido del {f}', {'f': fechaHora(p.fechaHora)}),
           subtitulo: 'Resultado y notas · 1 minuto',
           boton: 'Votar',
-          onTap: () => context.push('/partidos/${p.id}'),
+          onTap: ir(() => context.push('/partidos/${p.id}')),
         ),
       if (miSaldo < -0.005)
-        _Tarea(
+        t(
+          prioridad: 1,
           icono: Icons.account_balance_wallet_outlined,
           color: cs.error,
           titulo: trf('Debes {x}', {'x': euros(-miSaldo)}),
           subtitulo: 'Págalo y pulsa «Ya he pagado» en Caja',
           boton: 'Ir a Caja',
-          onTap: () => context.go('/caja'),
+          onTap: ir(() => context.go('/caja')),
         ),
       for (final v in sinVotar)
-        _Tarea(
+        t(
+          prioridad: 2,
           icono: Icons.ballot_outlined,
           color: cs.secondary,
           titulo: v.titulo,
           subtitulo: trf('Votación de la liga · cierra {f}', {'f': fechaHora(v.cierraEn)}),
           boton: 'Votar',
-          onTap: () => context.push('/votaciones'),
+          onTap: ir(() => context.push('/votaciones')),
         ),
       if (solicitudes > 0)
-        _Tarea(
+        t(
+          prioridad: 3,
           icono: Icons.person_add_alt_1_outlined,
           color: cs.tertiary,
           titulo: solicitudes == 1 ? tr('1 solicitud para unirse') : trf('{n} solicitudes para unirse', {'n': solicitudes}),
           subtitulo: 'Acéptalas o recházalas en Liga',
           boton: 'Revisar',
-          onTap: () => context.go('/liga'),
+          onTap: ir(() => context.go('/liga')),
         ),
       if (miBaja != null)
-        _Tarea(
+        t(
+          prioridad: 4,
           icono: Icons.healing,
           color: Colors.amber.shade700,
           titulo: 'Estás de baja',
@@ -376,15 +419,26 @@ class _Pendientes extends ConsumerWidget {
           },
         ),
     ];
-    if (tareas.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _AccionPrincipal(tareas.first),
-      if (tareas.length > 1) ...[
-        const _Cabecera('También pendiente'),
-        ...tareas.skip(1),
-      ],
-    ]);
   }
+}
+
+/// Etiqueta de liga (color + nombre) para distinguir de qué grupo es cada cosa.
+class _EtiquetaLiga extends StatelessWidget {
+  const _EtiquetaLiga(this.nombre, this.color);
+  final String nombre;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(nombre.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w800, letterSpacing: 0.4)),
+        ),
+      ]);
 }
 
 /// La tarea más urgente, destacada arriba del todo con un botón grande.
@@ -406,6 +460,8 @@ class _AccionPrincipal extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (t.liga != null)
+            Padding(padding: const EdgeInsets.only(bottom: 6), child: _EtiquetaLiga(t.liga!, t.colorLiga ?? t.color)),
           Row(children: [
             Icon(t.icono, color: t.color),
             const SizedBox(width: 10),
@@ -429,8 +485,14 @@ class _AccionPrincipal extends StatelessWidget {
 }
 
 class _Tarea extends StatelessWidget {
-  const _Tarea({required this.icono, required this.color, required this.titulo, required this.subtitulo, this.onTap, this.boton});
+  const _Tarea({required this.icono, required this.color, required this.titulo, required this.subtitulo, this.onTap, this.boton,
+      this.prioridad = 9, this.liga, this.colorLiga});
   final IconData icono;
+  final int prioridad;
+
+  /// Nombre y color de la liga (solo si tengo varias).
+  final String? liga;
+  final Color? colorLiga;
   final String? boton;
   final Color color;
   final String titulo, subtitulo;
@@ -446,7 +508,10 @@ class _Tarea extends StatelessWidget {
             decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
             child: Icon(icono, color: color),
           ),
-          title: Text(tr(titulo)),
+          title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (liga != null) _EtiquetaLiga(liga!, colorLiga ?? color),
+            Text(tr(titulo)),
+          ]),
           subtitle: Text(tr(subtitulo)),
           trailing: const Icon(Icons.chevron_right),
           onTap: onTap,
