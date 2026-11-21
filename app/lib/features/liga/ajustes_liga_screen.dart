@@ -101,7 +101,7 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
           ligaId: mi.liga.id,
         ),
         _Interruptor(
-          titulo: 'Resultado esperado (xG)',
+          titulo: 'Pronóstico del partido',
           activo: mi.liga.prediccionActiva,
           on: 'Con los equipos hechos, la app estima goles y probabilidades',
           off: 'Desactivado',

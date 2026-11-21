@@ -104,6 +104,26 @@ class GuiaScreen extends ConsumerWidget {
           ),
         ),
 
+        // ───── Palabras de la app, en una línea cada una
+        seccion(tr('Palabras de la app')),
+        for (final (palabra, significado) in [
+          ('Fijo', 'Juega todas las semanas: ya está en la lista y solo dice si no puede ir.'),
+          ('Reserva', 'Juega cuando hay hueco: se apunta como suplente y entra por orden.'),
+          ('Invitado', 'Alguien de fuera que viene de vez en cuando.'),
+          if (l.fantasyActivo) ...[
+            ('Mánager', 'Cada jugador en el Fantasy, con su equipo y su dinero.'),
+            ('Disponibles', 'Cuántos mánagers más pueden fichar a ese jugador.'),
+            ('Cláusula', 'Precio por el que otro mánager te lo puede quitar sin preguntarte.'),
+            if (f.cesionesActivas) ('Cesión', 'Prestar un jugador una jornada a cambio de dinero.'),
+          ],
+          if (l.prediccionActiva) ('Pronóstico', 'Lo que la app espera del partido con los equipos hechos.'),
+        ])
+          ListTile(
+            dense: true,
+            title: Text(tr(palabra), style: t.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+            subtitle: Text(tr(significado), style: t.bodyMedium),
+          ),
+
         // ───── Cómo está configurada esta liga
         seccion('Cómo está configurada'),
         dato(Icons.sports_soccer, 'Formato', '${l.jugadoresPorEquipo} contra ${l.jugadoresPorEquipo} · ${l.numEquipos} equipos'),

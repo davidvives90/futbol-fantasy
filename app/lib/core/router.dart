@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/tienda/tienda_screen.dart';
+import 'ventajas.dart';
+
 import '../features/auth/login_screen.dart';
 import '../features/auth/perfil_form_screen.dart';
 import '../features/caja/caja_screen.dart';
@@ -69,10 +72,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/login', builder: (_, __) => const SinPublicidad(child: LoginScreen())),
       GoRoute(path: '/perfil/editar', builder: (_, __) => const PerfilFormScreen()),
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
-      GoRoute(path: '/crear-liga', builder: (_, __) => const CrearLigaScreen()),
+      GoRoute(path: '/crear-liga', builder: (_, __) => const SinPublicidad(child: CrearLigaScreen())),
       GoRoute(path: '/liga/editar', builder: (_, __) => const CrearLigaScreen(editar: true)),
       GoRoute(path: '/liga/ajustes', builder: (_, __) => const AjustesLigaScreen()),
       GoRoute(path: '/liga/equipaciones', builder: (_, __) => const EquipacionesScreen()),
@@ -95,6 +98,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/liga/fantasy', builder: (_, __) => const AjustesFantasyScreen()),
       GoRoute(path: '/master', builder: (_, __) => const MasterScreen()),
       GoRoute(path: '/avisos', builder: (_, __) => const NotificacionesScreen()),
+      GoRoute(path: '/tienda', builder: (_, __) => const TiendaScreen()),
       GoRoute(
         path: '/master/liga/:ligaId',
         builder: (_, state) => MasterLigaScreen(

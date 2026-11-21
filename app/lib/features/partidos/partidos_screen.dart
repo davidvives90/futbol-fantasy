@@ -55,6 +55,33 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
   bool _verTodosAnteriores = false;
   bool _botonGrande = true; // «Nuevo partido» se encoge al bajar para no tapar los botones
 
+  String _saludo(MiLiga mi) {
+    final h = DateTime.now().hour;
+    final s = tr(h < 6 ? 'Buenas noches' : (h < 14 ? 'Buenos días' : (h < 21 ? 'Buenas tardes' : 'Buenas noches')));
+    return '$s, ${mi.yo.nombre.split(' ').first}';
+  }
+
+  Future<void> _elegirLiga(BuildContext context) async {
+    final ligas = ref.read(misLigasProvider).valueOrNull ?? const <MiLiga>[];
+    final actual = ref.read(ligaActualProvider)?.liga.id;
+    final id = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          for (final l in ligas)
+            ListTile(
+              leading: CircleAvatar(radius: 8, backgroundColor: colorDeLiga(ligas, l.liga.id)),
+              title: Text(l.liga.nombre),
+              trailing: l.liga.id == actual ? const Icon(Icons.check) : null,
+              onTap: () => Navigator.pop(c, l.liga.id),
+            ),
+        ]),
+      ),
+    );
+    if (id != null) await ref.read(ligaActivaIdProvider.notifier).elegir(id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final mi = ref.watch(ligaActualProvider);
@@ -63,13 +90,8 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: LigaAppBar(actions: [
-        IconButton(
-          tooltip: tr('Partidos en mi calendario'),
-          icon: const Icon(Icons.calendar_month_outlined),
-          onPressed: () => suscribirCalendario(context, mi.liga, partidos.valueOrNull ?? const <Partido>[]),
-        ),
-      ]),
+      // Inicio es de todas mis ligas: sin selector de liga arriba, solo el saludo
+      appBar: LigaAppBar(titulo: _saludo(mi)),
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/partidos/nuevo'),
@@ -106,7 +128,6 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
             final anterioresVisibles = _verTodosAnteriores ? anteriores : anteriores.take(3).toList();
 
             return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
-              _Saludo(mi: mi),
               // Lo urgente arriba; luego mis partidos de TODAS mis ligas (calendario + Voy / No voy)
               _Pendientes(mi: mi),
               const AgendaPersonal(),
@@ -124,7 +145,9 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
                   ),
                 ),
               if (anteriores.isNotEmpty) ...[
-                _Cabecera(trf('Resultados · {l}', {'l': mi.liga.nombre})),
+                _Cabecera(trf('Resultados · {l}', {'l': mi.liga.nombre}),
+                    accion: (ref.watch(misLigasProvider).valueOrNull?.length ?? 0) > 1 ? 'Otra liga' : null,
+                    onAccion: () => _elegirLiga(context)),
                 for (final p in anterioresVisibles) _FilaPartido(p, mi: mi),
                 if (anteriores.length > 3)
                   Center(
@@ -134,33 +157,19 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
                     ),
                   ),
               ],
-              if (lista.isEmpty) const SizedBox.shrink(),
               const SizedBox(height: 8),
-              Center(child: Text(mi.liga.nombre, style: t.bodySmall)),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => suscribirCalendario(context, mi.liga, lista),
+                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                  label: Text(trf('Añadir los partidos de {l} a mi calendario', {'l': mi.liga.nombre})),
+                ),
+              ),
             ]);
           },
         ),
       ),
       ),
-    );
-  }
-}
-
-class _Saludo extends ConsumerWidget {
-  const _Saludo({required this.mi});
-  final MiLiga mi;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final h = DateTime.now().hour;
-    final saludo = tr(h < 6 ? 'Buenas noches' : (h < 14 ? 'Buenos días' : (h < 21 ? 'Buenas tardes' : 'Buenas noches')));
-    final nombre = mi.yo.nombre.split(' ').first;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-      child: Row(children: [
-        Expanded(child: Text('$saludo, $nombre', style: Theme.of(context).textTheme.headlineSmall)),
-        AvatarMiembro(mi.yo, radio: 18),
-      ]),
     );
   }
 }

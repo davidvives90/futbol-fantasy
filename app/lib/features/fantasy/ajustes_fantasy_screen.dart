@@ -181,6 +181,20 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.storefront_outlined),
+          title: const Tx('Dinero extra con códigos y compras'),
+          subtitle: Tx(mi.liga.comprasDinero
+              ? 'Los mánagers pueden sumar dinero desde la Tienda'
+              : 'Desactivado: todos juegan solo con lo que ganan en los partidos'),
+          value: mi.liga.comprasDinero,
+          onChanged: (v) async {
+            if (await ejecutar(context, () => LigasRepo.actualizarLiga(mi.liga.id, {'compras_dinero': v}))) {
+              refrescarLigas(ref);
+            }
+          },
+        ),
         const Divider(height: 32),
         Text('Bonus y multiplicadores', style: t.titleMedium),
         const SizedBox(height: 4),

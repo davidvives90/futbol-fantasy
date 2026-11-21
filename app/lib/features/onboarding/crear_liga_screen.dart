@@ -397,7 +397,7 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
               _interruptor('Cesiones', 'Prestar jugadores entre mánagers', _cesiones, (v) => _cesiones = v),
             _interruptor('Post-partido detallado', 'Destacados, paradas, penaltis y valoración por aspectos',
                 _postDetallado, (v) => _postDetallado = v),
-            _interruptor('Resultado esperado', 'La app estima goles y probabilidades con los equipos hechos', _xg,
+            _interruptor('Pronóstico del partido', 'La app estima goles y probabilidades con los equipos hechos', _xg,
                 (v) => _xg = v),
             _interruptor('Liga pública', 'Aparece en el buscador', _publica, (v) => _publica = v),
             const SizedBox(height: 12),

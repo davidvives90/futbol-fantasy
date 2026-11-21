@@ -24,7 +24,9 @@ class MasterRepo {
 
   static Future<void> crearCodigo({
     required String codigo,
-    required double importe,
+    double? importe,
+    String tipo = 'dinero',
+    int? diasSinAnuncios,
     String? ligaId,
     int? usosMax,
     DateTime? caduca,
@@ -37,6 +39,8 @@ class MasterRepo {
       'p_usos_max': usosMax,
       'p_caduca': caduca?.toUtc().toIso8601String(),
       'p_nota': nota,
+      'p_tipo': tipo,
+      'p_dias': diasSinAnuncios,
     });
   }
 
@@ -53,9 +57,10 @@ class MasterRepo {
     await sb.rpc('master_forzar_estado', params: {'p_partido': partidoId, 'p_estado': estado, 'p_motivo': motivo});
   }
 
-  /// Para cualquier mánager: canjea un código en su liga. Devuelve el saldo nuevo.
-  static Future<double> canjear(String ligaId, String codigo) async {
-    final r = await sb.rpc('canjear_codigo', params: {'p_liga': ligaId, 'p_codigo': codigo});
-    return (r as num).toDouble();
+  /// Para cualquier usuario: canjea un código (0046). Dinero Fantasy en [ligaId] o «sin anuncios» en la cuenta.
+  /// Devuelve {tipo, importe, saldo} o {tipo, hasta, para_siempre}.
+  static Future<Map<String, dynamic>> canjear(String codigo, {String? ligaId}) async {
+    final r = await sb.rpc('canjear', params: {'p_codigo': codigo, 'p_liga': ligaId});
+    return Map<String, dynamic>.from(r as Map);
   }
 }

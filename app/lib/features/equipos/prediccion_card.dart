@@ -61,7 +61,7 @@ class PrediccionCard extends ConsumerWidget {
           Row(children: [
             Icon(Icons.insights, color: cs.primary),
             const SizedBox(width: 8),
-            Expanded(child: Text('Resultado esperado', style: t.titleMedium)),
+            Expanded(child: Text(tr('Pronóstico del partido'), style: t.titleMedium)),
             Text('fiabilidad $fiabilidad', style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
             const InfoBoton(ayudaXg),
           ]),

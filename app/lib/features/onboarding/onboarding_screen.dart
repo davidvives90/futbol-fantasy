@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/supabase.dart';
+import '../../core/utils.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
 import '../../core/liga_activa.dart';
 import 'bienvenida.dart';
+import '../../core/ventajas.dart';
 
 final _solicitudesProvider = FutureProvider.autoDispose<List<String>>((ref) => LigasRepo.misSolicitudesPendientes());
 
@@ -22,22 +24,17 @@ class OnboardingScreen extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     mostrarBienvenidaSiToca(context, ref.read(prefsProvider));
 
-    return Scaffold(
+    return SinPublicidad(child: Scaffold(
       appBar: AppBar(
         title: const Tx('Fútbol Fantasy'),
-        actions: [
-          IconButton(
-            tooltip: tr('Actualizar'),
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              refrescarLigas(ref);
-              ref.invalidate(_solicitudesProvider);
-            },
-          ),
-          IconButton(tooltip: tr('Cerrar sesión'), icon: const Icon(Icons.logout), onPressed: () => sb.auth.signOut()),
-        ],
       ),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
+      // Sin iconos sueltos arriba: se actualiza deslizando hacia abajo y «Cerrar sesión» va al final, con texto
+      body: RefreshIndicator(
+        onRefresh: () async {
+          refrescarLigas(ref);
+          ref.invalidate(_solicitudesProvider);
+        },
+        child: ListView(padding: const EdgeInsets.all(16), children: [
         Text('¡Hola, $nombre!', style: t.headlineSmall),
         const SizedBox(height: 4),
         const Tx('Para empezar, crea tu liga o únete a la de tus amigos.'),
@@ -70,8 +67,19 @@ class OnboardingScreen extends ConsumerWidget {
           texto: 'Busca por nombre o ciudad y solicita entrar.',
           onTap: () => context.push('/buscar-ligas'),
         ),
+        const SizedBox(height: 32),
+        Center(
+          child: TextButton.icon(
+            onPressed: () async {
+              if (await confirmar(context, 'Cerrar sesión', '¿Seguro que quieres salir?')) await sb.auth.signOut();
+            },
+            icon: const Icon(Icons.logout, size: 18),
+            label: const Tx('Cerrar sesión'),
+          ),
+        ),
       ]),
-    );
+      ),
+    ));
   }
 }
 

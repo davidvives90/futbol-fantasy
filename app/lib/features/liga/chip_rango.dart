@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/info.dart';
 import '../../data/models.dart';
 
-/// Chip compacto con el rango del jugador (Fijo / Reserva / Invitado).
+/// Chip compacto con el rango del jugador (Fijo / Reserva / Invitado). Al tocarlo, explica qué significa.
 class ChipRango extends StatelessWidget {
   const ChipRango(this.rango, {super.key, this.corto = false});
   final RangoMiembro rango;
@@ -18,8 +19,9 @@ class ChipRango extends StatelessWidget {
       RangoMiembro.reserva => (cs.secondaryContainer, cs.onSecondaryContainer),
       RangoMiembro.invitado => (cs.tertiaryContainer, cs.onTertiaryContainer),
     };
-    return Tooltip(
-      message: rango.etiqueta,
+    // Tocar el chip explica qué es fijo, reserva o invitado (palabras de la app)
+    return GestureDetector(
+      onTap: () => mostrarAyuda(context, Ayuda.rangos),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(6)),

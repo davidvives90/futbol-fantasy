@@ -37,12 +37,42 @@ Future<void> abrirUrl(BuildContext context, String? url) async {
   if (!ok && context.mounted) mostrarError(context, 'No se pudo abrir el enlace');
 }
 
-/// Mensaje legible a partir de una excepción de Supabase o genérica.
+/// ¿Es un fallo de conexión (sin internet, servidor inaccesible, tiempo agotado)?
+bool esErrorConexion(Object e) {
+  final t = e.toString().toLowerCase();
+  return t.contains('socketexception') ||
+      t.contains('failed host lookup') ||
+      t.contains('clientexception') ||
+      t.contains('xmlhttprequest') ||
+      t.contains('failed to fetch') ||
+      t.contains('network') ||
+      t.contains('timeoutexception') ||
+      t.contains('connection');
+}
+
+/// Mensaje legible y con qué hacer, a partir de una excepción de Supabase o genérica.
+/// Los mensajes de las funciones del servidor ya están pensados para el usuario y se dejan tal cual.
 String mensajeError(Object e) {
-  if (e is PostgrestException) return e.message;
-  if (e is AuthException) return e.message;
-  if (e is StorageException) return e.message;
-  return e.toString();
+  if (esErrorConexion(e)) return 'Sin conexión. Revisa tu internet y vuelve a intentarlo.';
+  if (e is AuthException) {
+    final m = e.message.toLowerCase();
+    if (m.contains('expired') || m.contains('jwt')) return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar.';
+    if (m.contains('invalid') && m.contains('otp')) return 'El código no es correcto o ha caducado. Pide uno nuevo.';
+    return e.message;
+  }
+  if (e is PostgrestException) {
+    final m = e.message.toLowerCase();
+    if (e.code == 'PGRST301' || m.contains('jwt')) return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar.';
+    if (m.contains('row-level security') || m.contains('permission denied')) {
+      return 'No tienes permiso para hacer esto. Si crees que es un error, habla con el admin de la liga.';
+    }
+    if (e.code == '23505') return 'Eso ya existe. Revisa si ya estaba hecho.';
+    if (e.code == '23514' || e.code == '22P02') return 'Algún dato no es válido. Revísalo y vuelve a intentarlo.';
+    return e.message;
+  }
+  if (e is StorageException) return 'No se ha podido subir o leer el archivo. Vuelve a intentarlo.';
+  if (e is String) return e;
+  return 'Algo ha fallado. Vuelve a intentarlo en unos segundos.';
 }
 
 void mostrarError(BuildContext context, Object e) {
@@ -114,9 +144,9 @@ class ErrorVista extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.error_outline, size: 40),
+            Icon(esErrorConexion(error) ? Icons.cloud_off_outlined : Icons.error_outline, size: 44),
             const SizedBox(height: 8),
-            Text(mensajeError(error), textAlign: TextAlign.center),
+            Text(tr(mensajeError(error)), textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 12),
               OutlinedButton(onPressed: onRetry, child: const Tx('Reintentar')),

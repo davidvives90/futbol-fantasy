@@ -13,7 +13,7 @@ import 'mercado_tab.dart';
 import 'mi_equipo_tab.dart';
 import 'ofertas_tab.dart';
 
-/// Pestaña inferior "Fantasy": Mi equipo · Mercado · Ofertas · Mánagers.
+/// Pestaña inferior "Fantasy": Mi equipo · Mercado · Ofertas · Ranking.
 class FantasyScreen extends ConsumerWidget {
   const FantasyScreen({super.key});
 
@@ -29,17 +29,17 @@ class FantasyScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: LigaAppBar(
           bottom: TabBar(tabs: [
-            const Tab(icon: Icon(Icons.shield_outlined), text: 'Mi equipo'),
-            const Tab(icon: Icon(Icons.storefront_outlined), text: 'Mercado'),
+            Tab(icon: const Icon(Icons.shield_outlined), text: tr('Mi equipo')),
+            Tab(icon: const Icon(Icons.storefront_outlined), text: tr('Mercado')),
             Tab(
               icon: Badge(
                 isLabelVisible: pendientes > 0,
                 label: Text('$pendientes'),
                 child: const Icon(Icons.handshake_outlined),
               ),
-              text: 'Ofertas',
+              text: tr('Ofertas'),
             ),
-            const Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Mánagers'),
+            Tab(icon: const Icon(Icons.emoji_events_outlined), text: tr('Ranking')),
           ]),
         ),
         body: Column(children: [

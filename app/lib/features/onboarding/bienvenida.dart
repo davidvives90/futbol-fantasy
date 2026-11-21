@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/idioma.dart';
+import '../../core/ventajas.dart';
 
 const claveBienvenida = 'bienvenida_vista';
 
@@ -11,7 +12,7 @@ void mostrarBienvenidaSiToca(BuildContext context, SharedPreferences prefs, {boo
   prefs.setBool(claveBienvenida, true);
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!context.mounted) return;
-    Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => Bienvenida(fantasy: fantasy)));
+    Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => SinPublicidad(child: Bienvenida(fantasy: fantasy))));
   });
 }
 

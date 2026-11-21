@@ -37,10 +37,7 @@ class LigaScreen extends ConsumerWidget {
     final miembros = ref.watch(miembrosProvider(liga.id));
 
     return Scaffold(
-      appBar: LigaAppBar(actions: [
-        if (mi.soyAdmin)
-          IconButton(tooltip: tr('Ajustes de la liga'), icon: const Icon(Icons.tune), onPressed: () => context.push('/liga/ajustes')),
-      ]),
+      appBar: const LigaAppBar(),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(miembrosProvider(liga.id));
@@ -48,6 +45,8 @@ class LigaScreen extends ConsumerWidget {
         },
         child: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           _Datos(mi: mi),
+          // Lo del administrador, junto y separado de lo que ve todo el mundo
+          if (mi.soyAdmin) const _PanelAdmin(),
           _Accesos(mi: mi),
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -504,6 +503,56 @@ class _Accesos extends ConsumerWidget {
             color: miSaldo < -0.005 ? cs.error : null,
           ),
       ]),
+    );
+  }
+}
+
+
+/// Solo admin: atajos a la gestión, con texto (no un icono suelto en la barra).
+class _PanelAdmin extends StatelessWidget {
+  const _PanelAdmin();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    Widget boton(IconData i, String texto, String ruta) => Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push(ruta),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(children: [
+                Icon(i, color: cs.onSecondaryContainer),
+                const SizedBox(height: 4),
+                Text(tr(texto),
+                    textAlign: TextAlign.center,
+                    style: t.labelMedium?.copyWith(color: cs.onSecondaryContainer, fontWeight: FontWeight.w700)),
+              ]),
+            ),
+          ),
+        );
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      color: cs.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Row(children: [
+              Icon(Icons.admin_panel_settings_outlined, size: 18, color: cs.onSecondaryContainer),
+              const SizedBox(width: 6),
+              Tx('Gestionar la liga', style: t.titleSmall?.copyWith(color: cs.onSecondaryContainer)),
+            ]),
+          ),
+          Row(children: [
+            boton(Icons.tune, 'Ajustes', '/liga/ajustes'),
+            boton(Icons.event_repeat, 'Temporada', '/temporada'),
+            boton(Icons.how_to_reg_outlined, 'Convocatoria y cobro', '/liga/convocatoria'),
+          ]),
+        ]),
+      ),
     );
   }
 }

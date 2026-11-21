@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/ventajas.dart';
 import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -243,7 +244,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
   // ---------------------------------------------------------------- UI
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SinPublicidad(child: _contenido(context));
+
+  Widget _contenido(BuildContext context) {
     final p = widget.partido;
     final conv = ref.watch(convocatoriaProvider(p.id)).valueOrNull;
     final miembros = ref.watch(miembrosPorIdProvider(widget.mi.liga.id));

@@ -167,17 +167,15 @@ class _AgendaPersonalState extends ConsumerState<AgendaPersonal> {
                               fontWeight: FontWeight.w800, color: sel ? cs.onPrimary : (delDia.isEmpty ? cs.outline : null))),
                       const SizedBox(height: 3),
                       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        // Icono además del color (✓ vas, campana responde, ✕ no vas…): se distingue sin ver colores
                         for (final c in delDia.take(3))
-                          Container(
-                            width: 8,
-                            height: 8,
-                            margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _aspecto(context, _situacion(c.miEstado, c.fijo, c.abreEn), c.puesto).color,
-                              border: sel ? Border.all(color: cs.onPrimary) : null,
-                            ),
-                          ),
+                          Builder(builder: (context) {
+                            final a = _aspecto(context, _situacion(c.miEstado, c.fijo, c.abreEn), c.puesto);
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 0.5),
+                              child: Icon(a.icono, size: 12, color: sel ? cs.onPrimary : a.color, semanticLabel: a.texto),
+                            );
+                          }),
                       ]),
                     ]),
                   ),

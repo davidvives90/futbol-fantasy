@@ -154,7 +154,7 @@ class _Codigos extends ConsumerWidget {
       ),
       body: _async(ref, ref.watch(_codigosProvider), _codigosProvider, (codigos) {
         if (codigos.isEmpty) {
-          return const Vacio('Crea códigos de dinero Fantasy gratis para promociones o compensar incidencias.',
+          return const Vacio('Crea códigos de dinero Fantasy o para quitar los anuncios: promociones, regalos o compensar incidencias.',
               icono: Icons.redeem_outlined);
         }
         return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 96), children: [
@@ -167,10 +167,12 @@ class _Codigos extends ConsumerWidget {
                     ref.invalidate(_codigosProvider);
                   }
                 },
-                title: Text('${c['codigo']}  ·  ${millones(c['importe'] as num)}',
+                secondary: Icon(c['tipo'] == 'sin_anuncios' ? Icons.block : Icons.payments_outlined),
+                title: Text(
+                    '${c['codigo']}  ·  ${c['tipo'] == 'sin_anuncios' ? (c['dias'] == null ? 'Sin anuncios para siempre' : 'Sin anuncios ${c['dias']} días') : millones(c['importe'] as num)}',
                     style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                 subtitle: Text([
-                  c['liga'] ?? 'Todas las ligas',
+                  if (c['tipo'] != 'sin_anuncios') c['liga'] ?? 'Todas las ligas',
                   'usos ${c['usos']}${c['usos_max'] == null ? '' : ' / ${c['usos_max']}'}',
                   if (c['caduca'] != null) 'caduca ${_fecha(c['caduca'])}',
                   if ((c['nota'] ?? '').toString().isNotEmpty) c['nota'],
@@ -209,6 +211,8 @@ class _FormCodigoState extends State<_FormCodigo> {
   final _nota = TextEditingController();
   String? _liga;
   int? _dias;
+  String _tipo = 'dinero';
+  int? _diasSinAnuncios = 365; // null = para siempre
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +228,28 @@ class _FormCodigoState extends State<_FormCodigo> {
             decoration:  InputDecoration(labelText: 'Código (3–24: letras, números, - _)', hintText: tr('BIENVENIDA')),
           ),
           const SizedBox(height: 10),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'dinero', icon: Icon(Icons.payments_outlined), label: Text('Dinero Fantasy')),
+              ButtonSegment(value: 'sin_anuncios', icon: Icon(Icons.block), label: Text('Sin anuncios')),
+            ],
+            selected: {_tipo},
+            onSelectionChanged: (x) => setState(() => _tipo = x.first),
+          ),
+          const SizedBox(height: 10),
+          if (_tipo == 'sin_anuncios')
+            DropdownButtonFormField<int?>(
+              value: _diasSinAnuncios,
+              decoration: const InputDecoration(labelText: 'Sin anuncios durante'),
+              items: const [
+                DropdownMenuItem(value: 30, child: Text('1 mes')),
+                DropdownMenuItem(value: 90, child: Text('3 meses')),
+                DropdownMenuItem(value: 365, child: Text('1 año')),
+                DropdownMenuItem(value: null, child: Text('Para siempre')),
+              ],
+              onChanged: (v) => setState(() => _diasSinAnuncios = v),
+            ),
+          if (_tipo == 'dinero') ...[
           TextField(
             controller: _importe,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -240,6 +266,7 @@ class _FormCodigoState extends State<_FormCodigo> {
             ],
             onChanged: (v) => setState(() => _liga = v),
           ),
+          ],
           const SizedBox(height: 10),
           TextField(
             controller: _usos,
@@ -265,7 +292,7 @@ class _FormCodigoState extends State<_FormCodigo> {
             style: AppButtons.premium(context),
             onPressed: () async {
               final importe = double.tryParse(_importe.text.replaceAll(',', '.'));
-              if (importe == null || importe <= 0) {
+              if (_tipo == 'dinero' && (importe == null || importe <= 0)) {
                 mostrarError(context, 'Indica un importe válido');
                 return;
               }
@@ -273,8 +300,10 @@ class _FormCodigoState extends State<_FormCodigo> {
                 context,
                 () => MasterRepo.crearCodigo(
                   codigo: _codigo.text,
-                  importe: importe,
-                  ligaId: _liga,
+                  importe: _tipo == 'dinero' ? importe : null,
+                  tipo: _tipo,
+                  diasSinAnuncios: _tipo == 'sin_anuncios' ? _diasSinAnuncios : null,
+                  ligaId: _tipo == 'dinero' ? _liga : null,
                   usosMax: int.tryParse(_usos.text),
                   caduca: _dias == null ? null : DateTime.now().add(Duration(days: _dias!)),
                   nota: _nota.text.trim().isEmpty ? null : _nota.text.trim(),

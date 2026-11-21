@@ -13,6 +13,7 @@ import 'core/anuncios.dart';
 import 'core/equipaciones.dart';
 import 'core/idioma.dart';
 import 'core/marco_web.dart';
+import 'core/ventajas.dart';
 import 'core/errores.dart';
 import 'core/push.dart';
 import 'data/providers.dart';
@@ -139,6 +140,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(ventajasProvider); // «sin anuncios» del usuario (lo leen los anuncios y la web)
     return MaterialApp.router(
       title: 'Fútbol Fantasy',
       debugShowCheckedModeBanner: false,
@@ -151,7 +153,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           child: EquipacionesScope(
             equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
             // Al cambiar de idioma se reconstruye toda la interfaz (fechas y textos incluidos)
-            child: MarcoWeb(child: KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!)),
+            child: MarcoWeb(onQuitarAnuncios: () => ref.read(routerProvider).push('/tienda'), child: KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!)),
           ),
         );
       },

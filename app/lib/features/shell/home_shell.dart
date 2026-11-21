@@ -121,8 +121,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
 /// AppBar de las pestañas principales con el selector de liga activa.
 class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
-  const LigaAppBar({super.key, this.actions, this.bottom, this.mostrarPerfil = true});
+  const LigaAppBar({super.key, this.actions, this.bottom, this.mostrarPerfil = true, this.titulo});
   final List<Widget>? actions;
+
+  /// Título fijo en lugar del selector de liga (Inicio, que ya muestra todas las ligas).
+  final String? titulo;
 
   /// false en la propia pantalla de perfil.
   final bool mostrarPerfil;
@@ -138,7 +141,9 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final avatar = ref.watch(miPerfilProvider).valueOrNull?.avatarUrl;
 
     return AppBar(
-      title: PopupMenuButton<String>(
+      title: titulo != null
+          ? Text(titulo!, overflow: TextOverflow.ellipsis)
+          : PopupMenuButton<String>(
         tooltip: tr('Cambiar de liga'),
         onSelected: (v) {
           switch (v) {

@@ -4,8 +4,12 @@ import 'package:flutter/widgets.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'ventajas.dart';
+
 /// Anuncios no intrusivos por tiempo de uso (docs: diseño Pistas y Monetización):
-///  · el primero cuando llevas 3 minutos de uso en el día y luego cada 7 minutos;
+///  · nunca los 2 primeros días tras instalar (primera impresión limpia);
+///  · el primero cuando llevas 5 minutos de uso en el día, luego cada 10 minutos y como mucho 3 al día;
+///  · nunca a quien los ha quitado (código o compra) ni en pantallas limpias (bienvenida, alta, post-partido…);
 ///  · nunca a mitad de algo: solo en una pausa natural (cambiar de pestaña, tras enviar el post-partido);
 ///  · consentimiento europeo (RGPD) con el formulario de Google (UMP) antes de pedir anuncios.
 /// Con los IDs de prueba de Google mientras no haya cuenta de AdMob (--dart-define=ADMOB_INTERSTICIAL=…).
@@ -16,8 +20,10 @@ class Anuncios with WidgetsBindingObserver {
   static const _activos = bool.fromEnvironment('ADS_ACTIVOS', defaultValue: true);
   static const _unidad = String.fromEnvironment('ADMOB_INTERSTICIAL',
       defaultValue: 'ca-app-pub-3940256099942544/1033173712'); // prueba de Google
-  static const _primero = 3 * 60;
-  static const _cada = 7 * 60;
+  static const _primero = 5 * 60;
+  static const _cada = 10 * 60;
+  static const _maxDia = 3;
+  static const _diasGracia = 2;
 
   SharedPreferences? _prefs;
   Timer? _reloj;
@@ -26,10 +32,18 @@ class Anuncios with WidgetsBindingObserver {
   bool _mostrando = false;
   int _segundos = 0;
   int _proximo = _primero;
+  int _vistosHoy = 0;
+  DateTime? _instalada;
 
   Future<void> iniciar(SharedPreferences prefs) async {
     if (!_activos) return;
     _prefs = prefs;
+    final i = prefs.getString('ads_instalada');
+    _instalada = i == null ? null : DateTime.tryParse(i);
+    if (_instalada == null) {
+      _instalada = DateTime.now();
+      prefs.setString('ads_instalada', _instalada!.toIso8601String());
+    }
     _cargarContador();
     WidgetsBinding.instance.addObserver(this);
     _arrancarReloj();
@@ -74,9 +88,11 @@ class Anuncios with WidgetsBindingObserver {
     if (p.getString('ads_dia') == _hoy) {
       _segundos = p.getInt('ads_segundos') ?? 0;
       _proximo = p.getInt('ads_proximo') ?? _primero;
+      _vistosHoy = p.getInt('ads_vistos') ?? 0;
     } else {
       _segundos = 0;
       _proximo = _primero;
+      _vistosHoy = 0;
     }
   }
 
@@ -86,6 +102,7 @@ class Anuncios with WidgetsBindingObserver {
     p.setString('ads_dia', _hoy);
     p.setInt('ads_segundos', _segundos);
     p.setInt('ads_proximo', _proximo);
+    p.setInt('ads_vistos', _vistosHoy);
   }
 
   void _arrancarReloj() {
@@ -109,7 +126,10 @@ class Anuncios with WidgetsBindingObserver {
 
   /// Llamar en una pausa natural. Muestra el anuncio solo si ya toca por tiempo de uso.
   void pausaNatural() {
-    if (!_activos || _mostrando || _segundos < _proximo) return;
+    if (!_activos || _mostrando || _segundos < _proximo || !Publicidad.mostrar) return;
+    if (_vistosHoy >= _maxDia) return;
+    final ins = _instalada;
+    if (ins != null && DateTime.now().difference(ins).inDays < _diasGracia) return;
     final a = _anuncio;
     if (a == null) {
       _cargar();
@@ -130,6 +150,7 @@ class Anuncios with WidgetsBindingObserver {
       },
     );
     _proximo = _segundos + _cada;
+    _vistosHoy++;
     _guardar();
     a.show();
   }

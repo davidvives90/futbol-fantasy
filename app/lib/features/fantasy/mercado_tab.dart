@@ -19,8 +19,8 @@ extension on _Orden {
         _Orden.precio => 'Precio',
         _Orden.variacion => 'Variación',
         _Orden.forma => 'En forma',
-        _Orden.fichado => '% fichado',
-        _Orden.libres => 'Copias libres',
+        _Orden.fichado => 'Más fichados',
+        _Orden.libres => 'Disponibles',
       });
 }
 
@@ -130,7 +130,7 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
                     extra: j.fichasTotales == 0
                         ? null
                         : j.hayLibres
-                            ? trf('{l}/{t} copias libres', {'l': j.fichasLibres, 't': j.fichasTotales})
+                            ? trf('{l} de {t} disponibles', {'l': j.fichasLibres, 't': j.fichasTotales})
                             : j.clausulaMinima != null
                                 ? trf('Agotado · cláusula desde {x}', {'x': millones(j.clausulaMinima)})
                                 : tr('Agotado'),

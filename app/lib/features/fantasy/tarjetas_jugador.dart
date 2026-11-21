@@ -73,7 +73,10 @@ class MiniUltimos extends StatelessWidget {
     final lista = ultimos.reversed.toList();
     final tope = math.max(15.0, lista.fold<double>(0, (a, u) => math.max(a, u.total)));
     final cs = Theme.of(context).colorScheme;
-    return Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+    // La altura ya dice cuánto puntuó (no solo el color); el lector de pantalla lee los números
+    return Semantics(
+      label: trf('Últimos partidos: {p}', {'p': [for (final u in lista) _num(u.total)].join(', ')}),
+      child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
       for (var i = 0; i < 5; i++)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 1.5),
@@ -91,7 +94,7 @@ class MiniUltimos extends StatelessWidget {
             ),
           ]),
         ),
-    ]);
+    ]));
   }
 }
 
@@ -250,7 +253,8 @@ class CartaJugador extends StatelessWidget {
         Text(etiquetaPosicion(miembro?.posicion).toUpperCase(),
             style: TextStyle(color: blanco.withValues(alpha: 0.85), fontSize: 12, letterSpacing: 1.2)),
         const SizedBox(height: 12),
-        // Valor de mercado
+        // Valor de mercado (no se enseña en Perfil, donde no hay precio)
+        if (precio != null)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),

@@ -73,7 +73,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
           if (fila?.noHabitual ?? false) InsigniaNoHabitual(bonus: p.bonusNoHabitual),
           if (fila?.pctFichado != null) Chip(label: Text(trf('En el {n} % de plantillas', {'n': fila!.pctFichado!.round()}))),
           if (fila != null && fila.fichasTotales > 0)
-            Chip(label: Text(trf('{l}/{t} copias libres', {'l': fila.fichasLibres, 't': fila.fichasTotales}))),
+            Chip(label: Text(trf('{l} de {t} disponibles', {'l': fila.fichasLibres, 't': fila.fichasTotales}))),
           if (enPlantilla != null && enPlantilla.propia)
             Chip(avatar: const Icon(Icons.gavel, size: 16), label: Text(trf('Tu cláusula {x}', {'x': millones(enPlantilla.clausula)}))),
           if (enPlantilla != null && enPlantilla.cedidaAMi) const Chip(label: Tx('Cedido a ti esta jornada')),

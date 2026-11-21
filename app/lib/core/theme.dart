@@ -24,7 +24,8 @@ class AppTheme {
   static const bordeSuave = Color(0xFFE4E1D8);
   static const borde = Color(0xFFA9B0AA);
   static const texto = Color(0xFF14201B);
-  static const textoSecundario = Color(0xFF5E6A64);
+  // Gris secundario con contraste ≥ 7:1 sobre el fondo claro (textos pequeños legibles al sol)
+  static const textoSecundario = Color(0xFF4C5752);
   static const verde = Color(0xFF0E4B3A);
   static const verdeClaro = Color(0xFFDCEBE4);
   static const verdeOscuro = Color(0xFF0A3A2D);
@@ -96,6 +97,9 @@ class AppTheme {
       titleSmall: t.titleSmall?.copyWith(fontSize: 14, fontWeight: FontWeight.w700),
       bodyLarge: t.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w400, height: 1.4),
       bodyMedium: t.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w400, height: 1.4),
+      // Textos pequeños: nunca por debajo de 13 / 12 px
+      bodySmall: t.bodySmall?.copyWith(fontSize: 13, fontWeight: FontWeight.w400, height: 1.35),
+      labelSmall: t.labelSmall?.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
       labelLarge: t.labelLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.1),
     );
   }

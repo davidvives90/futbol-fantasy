@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/anuncios.dart';
+import '../../core/ventajas.dart';
+import '../fantasy/tarjetas_jugador.dart';
+import '../partidos/agenda.dart';
 import '../../core/liga_activa.dart';
 import '../../core/push.dart';
 import '../../core/supabase.dart';
@@ -28,38 +31,75 @@ class PerfilScreen extends ConsumerWidget {
     final ligas = ref.watch(misLigasProvider).valueOrNull ?? const <MiLiga>[];
     if (mi == null || perfil == null) return const Scaffold(body: Cargando());
 
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final resumen = ref.watch(resumenFantasyProvider(mi.liga.id)).valueOrNull?[mi.yo.id];
+    final ventajas = ref.watch(ventajasProvider).valueOrNull ?? const Ventajas();
+    Widget seccion(String texto) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 6),
+          child: Text(tr(texto).toUpperCase(),
+              style: t.labelMedium?.copyWith(letterSpacing: 1, color: cs.onSurfaceVariant, fontWeight: FontWeight.w700)),
+        );
+
     return Scaffold(
-      appBar: LigaAppBar(mostrarPerfil: false, actions: [
-        IconButton(tooltip: tr('Editar perfil'), icon: const Icon(Icons.edit_outlined), onPressed: () => context.push('/perfil/editar')),
-      ]),
+      appBar: AppBar(
+        title: const Tx('Mi perfil'),
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.push('/perfil/editar'),
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Tx('Editar'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: ListView(children: [
-        // Mis estadísticas en la liga activa (misma vista que la ficha).
-        SizedBox(height: 520, child: FichaScreen(miembroId: mi.yo.id, conAppBar: false)),
-        const Divider(),
+        // Mi carta de jugador en la liga activa
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Tx('Mis ligas', style: Theme.of(context).textTheme.titleSmall),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: CartaJugador(miembro: mi.yo, resumen: resumen),
         ),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => context.push('/clasificacion/jugador/${mi.yo.id}'),
+            icon: const Icon(Icons.insights_outlined, size: 18),
+            label: Text(trf('Ver mi ficha completa en {liga}', {'liga': mi.liga.nombre})),
+          ),
+        ),
+
+        seccion('Mis ligas'),
         for (final l in ligas)
           ListTile(
-            leading: Icon(l.liga.id == mi.liga.id ? Icons.radio_button_checked : Icons.radio_button_unchecked),
+            leading: CircleAvatar(radius: 8, backgroundColor: colorDeLiga(ligas, l.liga.id)),
             title: Text(l.liga.nombre),
-            subtitle: Text('${l.liga.formato}${l.soyAdmin ? ' · Admin' : ''}'),
-            onTap: () => ref.read(ligaActivaIdProvider.notifier).elegir(l.liga.id),
+            subtitle: Text('${l.liga.formato}${l.soyAdmin ? ' · ${tr('Administrador')}' : ''}'),
+            trailing: l.liga.id == mi.liga.id
+                ? Chip(label: Tx('Activa'), visualDensity: VisualDensity.compact)
+                : TextButton(
+                    onPressed: () => ref.read(ligaActivaIdProvider.notifier).elegir(l.liga.id),
+                    child: const Tx('Ver esta'),
+                  ),
           ),
         ListTile(
-          leading: const Icon(Icons.add),
+          leading: const Icon(Icons.add_circle_outline),
           title: const Tx('Crear o unirse a otra liga'),
           onTap: () => context.push('/onboarding'),
         ),
-        const Divider(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Tx('Opciones', style: Theme.of(context).textTheme.titleSmall),
+
+        seccion('Tienda'),
+        ListTile(
+          leading: Icon(ventajas.sinAnuncios ? Icons.verified_rounded : Icons.storefront_outlined,
+              color: ventajas.sinAnuncios ? const Color(0xFF2E7D32) : cs.tertiary),
+          title: const Tx('Tienda y códigos'),
+          subtitle: Tx(ventajas.sinAnuncios ? 'Sin anuncios' : 'Quitar anuncios, dinero Fantasy y canjear códigos'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/tienda'),
         ),
+
+        seccion('Ayuda'),
         if (ref.watch(esMasterProvider).valueOrNull == true)
           ListTile(
-            leading: Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.tertiary),
+            leading: Icon(Icons.shield_outlined, color: cs.tertiary),
             title: const Tx('Panel máster'),
             subtitle: const Text('Control interno, códigos promocionales y registro'),
             trailing: const Icon(Icons.chevron_right),
@@ -72,14 +112,17 @@ class PerfilScreen extends ConsumerWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
               fullscreenDialog: true,
-              builder: (_) => Bienvenida(fantasy: ref.read(ligaActualProvider)?.liga.fantasyActivo ?? true))),
+              builder: (_) => SinPublicidad(child: Bienvenida(fantasy: mi.liga.fantasyActivo)))),
         ),
         ListTile(
           leading: const Icon(Icons.menu_book_outlined),
           title: const Tx('Guía y normas'),
+          subtitle: const Tx('Palabras de la app, puntos y reglas de tu liga'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/guia'),
         ),
+
+        seccion('Preferencias'),
         FutureBuilder<bool>(
           future: Anuncios.hayOpcionesPrivacidad(),
           builder: (_, s) => s.data == true
@@ -132,7 +175,7 @@ class PerfilScreen extends ConsumerWidget {
             ),
           ),
         ),
-        const Divider(),
+        seccion('Cuenta'),
         ListTile(
           leading: const Icon(Icons.mail_outline),
           title: Text(sb.auth.currentUser?.email ?? ''),

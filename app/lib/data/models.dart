@@ -167,7 +167,11 @@ class Liga {
     this.modoEquipos = 'admin',
     this.capitanesPorEquipo = 1,
     this.nivel = 'avanzado',
+    this.comprasDinero = true,
   });
+
+  /// 0046: se puede conseguir dinero Fantasy con códigos o compras (lo decide el admin).
+  final bool comprasDinero;
 
   /// 0045: 'basico' | 'medio' | 'avanzado'. Decide qué opciones se enseñan en Ajustes.
   final String nivel;
@@ -291,6 +295,7 @@ class Liga {
       modoEquipos: (m['modo_equipos'] ?? 'admin') as String,
       capitanesPorEquipo: toInt(m['capitanes_por_equipo'], 1),
       nivel: (m['nivel'] ?? 'avanzado') as String,
+      comprasDinero: (m['compras_dinero'] ?? true) as bool,
     );
   }
 }

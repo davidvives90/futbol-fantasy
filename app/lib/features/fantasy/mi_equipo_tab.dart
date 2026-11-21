@@ -10,7 +10,6 @@ import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
 import '../../data/providers.dart';
 import '../../data/repos/fantasy_repo.dart';
-import '../../data/repos/master_repo.dart';
 import 'alineacion_campo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
@@ -82,14 +81,15 @@ class MiEquipoTab extends ConsumerWidget {
               ),
             ]),
           ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => _canjear(context, ref),
-            icon: const Icon(Icons.redeem_outlined, size: 18),
-            label: const Tx('Canjear código'),
+        if (mi.liga.comprasDinero)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => context.push('/tienda'),
+              icon: const Icon(Icons.add_card_outlined, size: 18),
+              label: const Tx('Conseguir dinero'),
+            ),
           ),
-        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
           child: Row(children: [
@@ -202,37 +202,6 @@ class MiEquipoTab extends ConsumerWidget {
           AlineacionCampo(mi: mi, partido: proximo, plantilla: lista),
       ]),
     );
-  }
-
-  Future<void> _canjear(BuildContext context, WidgetRef ref) async {
-    final c = TextEditingController();
-    final codigo = await showDialog<String>(
-      context: context,
-      builder: (d) => AlertDialog(
-        title: const Tx('Canjear código'),
-        content: TextField(
-          controller: c,
-          autofocus: true,
-          textCapitalization: TextCapitalization.characters,
-          decoration:  InputDecoration(labelText: tr('Código promocional')),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(d), child: const Tx('Cancelar')),
-          FilledButton(
-            style: AppButtons.premium(d),
-            onPressed: () => Navigator.pop(d, c.text.trim()),
-            child: const Tx('Canjear'),
-          ),
-        ],
-      ),
-    );
-    if (codigo == null || codigo.isEmpty || !context.mounted) return;
-    double? saldo;
-    final ok = await ejecutar(context, () async => saldo = await MasterRepo.canjear(mi.liga.id, codigo));
-    if (ok && context.mounted) {
-      mostrarOk(context, '¡Código canjeado! Saldo: ${millones(saldo)}');
-      refrescarFantasy(ref, _k);
-    }
   }
 
   Future<void> _accion(
