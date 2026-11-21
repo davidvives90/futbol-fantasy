@@ -53,7 +53,6 @@ class PartidosScreen extends ConsumerStatefulWidget {
 
 class _PartidosScreenState extends ConsumerState<PartidosScreen> {
   bool _verTodosAnteriores = false;
-  bool _botonGrande = true; // «Nuevo partido» se encoge al bajar para no tapar los botones
 
   String _saludo(MiLiga mi) {
     final h = DateTime.now().hour;
@@ -95,19 +94,13 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/partidos/nuevo'),
-              isExtended: _botonGrande,
+              isExtended: false, // solo «+»: así no tapa los botones de las tarjetas
               tooltip: tr('Nuevo partido'),
               icon: const Icon(Icons.add),
               label: const Tx('Nuevo partido'),
             )
           : null,
-      body: NotificationListener<ScrollUpdateNotification>(
-        onNotification: (n) {
-          final grande = n.metrics.pixels < 40;
-          if (grande != _botonGrande) setState(() => _botonGrande = grande);
-          return false;
-        },
-        child: RefreshIndicator(
+      body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(saldosProvider(mi.liga.id));
           ref.invalidate(miembrosProvider(mi.liga.id));
@@ -168,7 +161,6 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
             ]);
           },
         ),
-      ),
       ),
     );
   }

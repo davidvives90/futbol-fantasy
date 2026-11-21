@@ -47,9 +47,11 @@ class MarcoWeb extends StatelessWidget {
         ),
       ),
       if (anuncios)
-        Container(
-          width: double.infinity,
+        // Material: fuera del Navigator no hay estilo de texto (saldría subrayado en amarillo)
+        Material(
           color: cs.surfaceContainerLow,
+          child: Container(
+          width: double.infinity,
           padding: EdgeInsets.only(top: 4, bottom: abajo + 4),
           alignment: Alignment.center,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -64,6 +66,7 @@ class MarcoWeb extends StatelessWidget {
                 ),
               ),
           ]),
+        ),
         ),
     ]);
     if (w < 1200) return columna;
