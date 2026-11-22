@@ -109,6 +109,9 @@ jobs:
           sed -i 's|android:label="[^"]*"|android:label="Fútbol Fantasy"|' android/app/src/main/AndroidManifest.xml
           grep -n 'android:label' android/app/src/main/AndroidManifest.xml
 
+      - name: Clave de depuración fija (las versiones de prueba se instalan encima de la anterior)
+        run: mkdir -p ~/.android && cp ../ci/debug.keystore ~/.android/debug.keystore
+
       - name: Firma de publicación (solo si existe el secreto ANDROID_KEYSTORE_BASE64)
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
