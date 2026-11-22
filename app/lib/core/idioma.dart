@@ -89,6 +89,7 @@ final idiomaProvider = NotifierProvider<IdiomaNotifier, String>(IdiomaNotifier.n
 
 /// Traducciones (orden: català, galego, euskara, English, Deutsch, italiano, Nederlands, français).
 const _textos = <String, List<String>>{
+  'Las cuentas de prueba están desactivadas': ['Els comptes de prova estan desactivats', 'As contas de proba están desactivadas', 'Proba-kontuak desaktibatuta daude', 'Test accounts are turned off', 'Testkonten sind deaktiviert', 'Gli account di prova sono disattivati', 'Testaccounts zijn uitgeschakeld', 'Les comptes de test sont désactivés'],
   '1 miembro': ['1 membre', '1 membro', 'Kide 1', '1 member', '1 Mitglied', '1 membro', '1 lid', '1 membre'],
   '{n} miembros': ['{n} membres', '{n} membros', '{n} kide', '{n} members', '{n} Mitglieder', '{n} membri', '{n} leden', '{n} membres'],
   'Ya estás': ['Ja hi ets', 'Xa estás', 'Bertan zaude', 'You\'re in', 'Du bist dabei', 'Ci sei già', 'Je doet al mee', 'Tu y es déjà'],

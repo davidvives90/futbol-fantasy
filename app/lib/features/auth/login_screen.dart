@@ -25,8 +25,26 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Cuentas de prueba (0052): «admin1» … «admin5» en el email entra sin código, si el servidor lo permite.
+  static final _cuentaPrueba = RegExp(r'^admin[\s_-]?[1-5]$', caseSensitive: false);
+
+  Future<void> _entrarPrueba(String codigo) async {
+    setState(() => _enviando = true);
+    await ejecutar(context, () async {
+      final r = await sb.functions.invoke('entrar-pruebas', body: {'codigo': codigo});
+      final d = r.data as Map;
+      if (d['token'] == null) throw tr('Las cuentas de prueba están desactivadas');
+      await sb.auth.verifyOTP(email: d['email'] as String, token: d['token'] as String, type: OtpType.email);
+    });
+    if (mounted) setState(() => _enviando = false);
+  }
+
   Future<void> _enlaceMagico() async {
     final email = _email.text.trim();
+    if (_cuentaPrueba.hasMatch(email)) {
+      await _entrarPrueba(email);
+      return;
+    }
     if (!email.contains('@')) {
       mostrarError(context, 'Escribe un email válido');
       return;
