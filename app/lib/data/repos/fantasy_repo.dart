@@ -82,7 +82,7 @@ class FantasyRepo {
         .select()
         .eq('liga_id', ligaId)
         .eq('jugador_id', jugadorId)
-        .order('numero');
+        .order('numero', ascending: true);
     return [for (final r in rows) FichaJugador.fromMap(r)];
   }
 
@@ -132,7 +132,7 @@ class FantasyRepo {
 
   /// Cesiones ofrecidas en la liga para el próximo partido (también las mías, marcadas con es_mia).
   static Future<List<CesionDisponible>> cesionesDisponibles(String ligaId) async {
-    final rows = await sb.from('v_cesiones_disponibles').select().eq('liga_id', ligaId).order('importe');
+    final rows = await sb.from('v_cesiones_disponibles').select().eq('liga_id', ligaId).order('importe', ascending: true);
     return [for (final r in rows) CesionDisponible.fromMap(r)];
   }
 
@@ -188,7 +188,7 @@ class FantasyRepo {
         .select('precio, rating, creado_en')
         .eq('liga_id', ligaId)
         .eq('miembro_id', miembroId)
-        .order('creado_en');
+        .order('creado_en', ascending: true);
     return [for (final r in rows) PuntoPrecio.fromMap(r)];
   }
 
@@ -277,7 +277,7 @@ class FantasyRepo {
         .select()
         .eq('liga_id', ligaId)
         .eq('estado', 'abierta')
-        .order('creada_en');
+        .order('creada_en', ascending: true);
     return [for (final r in rows) Encuesta.fromMap(r)];
   }
 

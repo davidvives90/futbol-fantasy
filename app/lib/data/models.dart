@@ -168,7 +168,26 @@ class Liga {
     this.capitanesPorEquipo = 1,
     this.nivel = 'avanzado',
     this.comprasDinero = true,
+    this.horasTurno = 24,
+    this.minimoJugadores,
+    this.horasDecision = 24,
+    this.quienRellena = 'jugadores',
+    this.arbitroId,
   });
+
+  /// 0050: modo «turnos» (horas entre fijos → reservas → invitados) y modo «mínimo».
+  final int horasTurno, horasDecision;
+  final int? minimoJugadores;
+
+  /// 0050: quién rellena el acta del post-partido: 'jugadores' | 'arbitro' | 'capitanes'.
+  final String quienRellena;
+  final String? arbitroId;
+
+  /// En estos modos los fijos aparecen en la lista (pendientes) nada más crearse el partido.
+  bool get fijosApuntadosSolos => modoConvocatoria == 'apertura' || modoConvocatoria == 'clasica';
+
+  /// En la lista de espera, los fijos entran antes (salvo en «orden de llegada» y «mínimo»).
+  bool get fijosPrimero => modoConvocatoria != 'libre' && modoConvocatoria != 'minimo';
 
   /// 0046: se puede conseguir dinero Fantasy con códigos o compras (lo decide el admin).
   final bool comprasDinero;
@@ -198,22 +217,43 @@ class Liga {
   /// 0026: 'apertura' (vacía hasta X h después del partido anterior; todos pulsan «Voy») | 'clasica'.
   final String modoConvocatoria;
   final int duracionPartidoMin, horasAperturaConvocatoria, horasReservaFijos;
-  bool get conApertura => modoConvocatoria == 'apertura';
+  bool get conApertura => modoConvocatoria == 'apertura' || modoConvocatoria == 'turnos';
 
   /// 0026: la liga puede usar solo convocatorias. 0028: resultado esperado (xG).
   final bool fantasyActivo, prediccionActiva;
 
-  /// Cuándo se abre la convocatoria de [p] (null = ya abierta): fin del partido anterior + X horas.
-  DateTime? abreConvocatoria(Partido p, List<Partido> todos) {
-    if (!conApertura) return null;
+  /// Fin del partido anterior + X horas (null si no hay partido anterior). Igual que `_base_convocatoria` (0050).
+  DateTime? _baseConvocatoria(Partido p, List<Partido> todos) {
     final anteriores = todos
         .where((a) => a.id != p.id && a.fechaHora.isBefore(p.fechaHora) && a.estado != EstadoPartido.cancelado)
         .map((a) => a.fechaHora)
         .toList();
     if (anteriores.isEmpty) return null;
     anteriores.sort();
-    final abre = anteriores.last.add(Duration(minutes: duracionPartidoMin, hours: horasAperturaConvocatoria));
-    return abre.isAfter(DateTime.now()) ? abre : null;
+    return anteriores.last.add(Duration(minutes: duracionPartidoMin, hours: horasAperturaConvocatoria));
+  }
+
+  /// Cuándo se abre la convocatoria de [p] para el primer grupo (null = ya abierta).
+  DateTime? abreConvocatoria(Partido p, List<Partido> todos) {
+    if (!conApertura) return null;
+    final abre = _baseConvocatoria(p, todos);
+    return abre != null && abre.isAfter(DateTime.now()) ? abre : null;
+  }
+
+  /// Cuándo puede apuntarse alguien de [rango] (null = ya puede). Igual que `convocatoria_abre_para` (0050).
+  DateTime? abreConvocatoriaPara(Partido p, List<Partido> todos, RangoMiembro rango) {
+    final base = _baseConvocatoria(p, todos);
+    if (base == null) return null;
+    final DateTime? abre = switch (modoConvocatoria) {
+      'apertura' => rango == RangoMiembro.fijo ? null : base,
+      'turnos' => base.add(Duration(hours: horasTurno * switch (rango) {
+            RangoMiembro.fijo => 0,
+            RangoMiembro.reserva => 1,
+            RangoMiembro.invitado => 2,
+          })),
+      _ => null,
+    };
+    return abre != null && abre.isAfter(DateTime.now()) ? abre : null;
   }
 
   /// Hasta cuándo tienen los fijos su plaza guardada.
@@ -296,6 +336,11 @@ class Liga {
       capitanesPorEquipo: toInt(m['capitanes_por_equipo'], 1),
       nivel: (m['nivel'] ?? 'avanzado') as String,
       comprasDinero: (m['compras_dinero'] ?? true) as bool,
+      horasTurno: toInt(m['horas_turno'], 24),
+      minimoJugadores: m['minimo_jugadores'] == null ? null : toInt(m['minimo_jugadores']),
+      horasDecision: toInt(m['horas_decision'], 24),
+      quienRellena: (m['quien_rellena'] ?? 'jugadores') as String,
+      arbitroId: m['arbitro_id'] as String?,
     );
   }
 }
@@ -478,10 +523,13 @@ class Partido {
     required this.estado,
     this.votacionCierra,
     this.temporadaId,
+    this.arbitroId,
   });
 
   final String id, ligaId;
   final String? temporadaId;
+  /// 0050: árbitro de este partido (si no, el de la liga).
+  final String? arbitroId;
   final DateTime fechaHora;
   final bool horaConfirmada;
   final String? campoMapsUrl;
@@ -502,6 +550,7 @@ class Partido {
         estado: _enum(EstadoPartido.values, m['estado'], EstadoPartido.abierto),
         votacionCierra: m['votacion_cierra'] == null ? null : DateTime.parse(m['votacion_cierra'] as String),
         temporadaId: m['temporada_id'] as String?,
+        arbitroId: m['arbitro_id'] as String?,
       );
 }
 
@@ -542,7 +591,9 @@ List<Inscripcion> ordenarEspera(
   RangoMiembro rango(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
   final lista = [...espera];
   lista.sort((a, b) {
-    final fa = rango(a) == RangoMiembro.fijo ? 0 : 1, fb = rango(b) == RangoMiembro.fijo ? 0 : 1;
+    // 0050: en «orden de llegada» y «mínimo» no hay prioridad para los fijos
+    final fa = porPrioridad && rango(a) == RangoMiembro.fijo ? 0 : 1,
+        fb = porPrioridad && rango(b) == RangoMiembro.fijo ? 0 : 1;
     if (fa != fb) return fa.compareTo(fb);
     return a.inscritoEn.compareTo(b.inscritoEn);
   });
@@ -952,3 +1003,24 @@ Map<String, dynamic> ajustesNivel(String nivel, [Map<String, dynamic> extra = co
       },
       ...extra,
     };
+
+/// 0050: los cinco modos de convocatoria que puede elegir cada liga (valor, nombre, explicación).
+const modosConvocatoria = <(String, String, String)>[
+  ('apertura', 'Con apertura',
+      'Los fijos están en la lista desde el principio. El resto se apunta cuando se abre, un rato después del partido anterior.'),
+  ('clasica', 'Clásica',
+      'Los fijos están en la lista desde el principio y el resto puede apuntarse en cuanto se crea el partido.'),
+  ('libre', 'Por orden de llegada',
+      'Nadie está apuntado de oficio. Todos se apuntan y entra quien antes llega, sin prioridad para los fijos.'),
+  ('turnos', 'Por turnos',
+      'Primero pueden apuntarse los fijos; unas horas después, las reservas; y al final, los invitados.'),
+  ('minimo', 'Con mínimo de jugadores',
+      'Todos se apuntan. Si a la hora límite no hay suficientes, el partido se cancela solo y se avisa a todos.'),
+];
+
+/// 0050: quién rellena el acta del post-partido (resultado, goles y asistencias).
+const modosActa = <(String, String, String)>[
+  ('jugadores', 'Todos los que jugaron', 'Cada uno pone lo que vio y la app cruza los partes. Lo más fiable.'),
+  ('arbitro', 'El árbitro', 'Solo una persona rellena el acta y vale lo que ponga. Los demás solo ponen notas.'),
+  ('capitanes', 'Los capitanes', 'El capitán de cada equipo rellena el acta. Los demás solo ponen notas.'),
+];

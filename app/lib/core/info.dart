@@ -96,6 +96,11 @@ abstract final class Ayuda {
           '• Con pocos partidos pesa más su valor de partida; a los 3 partidos ya cuenta la mitad su rendimiento.\n'
           '• Si muchos mánagers lo tienen, sube un poco más (demanda).\n'
           'Como mucho cambia un 15 % por jornada.');
+  static const calidad = ('Calidad',
+      'Un único número del 1 al 100 que resume lo bueno que es el jugador en esta liga.\n'
+          '• Sale de sus últimos partidos (puntos Fantasy y nota de los compañeros), comparados con el resto.\n'
+          '• Si la liga hace valoraciones, la opinión de los compañeros también cuenta.\n'
+          '• Es lo que mueve su valor de mercado y lo que usa el generador para hacer equipos igualados.');
   static const fichas = ('Copias de cada jugador',
       'Cada jugador tiene un número limitado de fichas (copias) para que no todo el mundo tenga al mismo. '
           'Si no quedan, solo puedes conseguirlo comprándoselo a otro mánager o pagando su cláusula.');

@@ -36,7 +36,7 @@ class ConvocatoriaTab extends ConsumerWidget {
         final pend = de(EstadoInscripcion.pendiente);
         final duda = de(EstadoInscripcion.duda);
         // Suplentes en su orden real de entrada (como `rellenar_plazas` en el servidor)
-        final espera = ordenarEspera(de(EstadoInscripcion.espera), miembros, porPrioridad: false);
+        final espera = ordenarEspera(de(EstadoInscripcion.espera), miembros, porPrioridad: mi.liga.fijosPrimero);
         // Los lesionados / de baja larga salen aparte, no en «No van»
         final idsDeBaja = {
           for (final a in ref.watch(bajasLigaProvider(mi.liga.id)).valueOrNull ?? const <Ausencia>[])
@@ -47,10 +47,13 @@ class ConvocatoriaTab extends ConsumerWidget {
         final mia = lista.where((i) => i.miembroId == mi.yo.id).firstOrNull;
         final importe = conf.isEmpty ? partido.costeTotal : partido.costeTotal / conf.length;
         final todos = ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const <Partido>[];
-        final abreEn = mi.liga.abreConvocatoria(partido, todos);
+        // 0050: cada uno puede contestar cuando le toca (en «turnos», fijos → reservas → invitados)
+        final abreEn = mi.liga.abreConvocatoriaPara(partido, todos, mi.yo.rango);
         final soyFijo = mi.yo.rango == RangoMiembro.fijo;
-        // Los fijos contestan siempre; los suplentes, cuando se abre la convocatoria
-        final puedoContestar = partido.estado.antesDeJugar && (abreEn == null || soyFijo);
+        final puedoContestar = partido.estado.antesDeJugar && (abreEn == null || mia != null);
+        // Modo «mínimo»: hora a la que se decide si hay partido
+        final minimo = mi.liga.modoConvocatoria == 'minimo' ? (mi.liga.minimoJugadores ?? partido.plazas) : null;
+        final decide = partido.fechaHora.subtract(Duration(hours: mi.liga.horasDecision));
         String nombre(String id) => miembros[id]?.nombre ?? '…';
         RangoMiembro rangoDeIns(Inscripcion i) => i.rango ?? miembros[i.miembroId]?.rango ?? RangoMiembro.reserva;
         final liga = mi.liga;
@@ -86,12 +89,29 @@ class ConvocatoriaTab extends ConsumerWidget {
               leading: Icon(Icons.schedule, color: AppColores.of(context).aviso),
               title: const Tx('Hora pendiente de confirmar'),
             ),
-          if (abreEn != null && !soyFijo)
+          if (abreEn != null && mia == null)
             Card(
               margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: ListTile(
                 leading: const Icon(Icons.lock_clock),
-                title: Text(trf('Podrás apuntarte de suplente el {f}', {'f': fechaHora(abreEn)})),
+                title: Text(trf('Podrás apuntarte el {f}', {'f': fechaHora(abreEn)})),
+                subtitle: liga.modoConvocatoria == 'turnos'
+                    ? const Tx('Por turnos: primero los fijos, luego las reservas y al final los invitados.')
+                    : null,
+              ),
+            ),
+          if (minimo != null && partido.estado.antesDeJugar)
+            Card(
+              margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              color: ocupadas >= minimo ? null : Theme.of(context).colorScheme.tertiaryContainer,
+              child: ListTile(
+                leading: Icon(ocupadas >= minimo ? Icons.check_circle_outline : Icons.groups_outlined),
+                title: Text(ocupadas >= minimo
+                    ? trf('Hay mínimo: {n} de {m}', {'n': ocupadas, 'm': minimo})
+                    : trf('Faltan {n} para llegar al mínimo ({m})', {'n': minimo - ocupadas, 'm': minimo})),
+                subtitle: decide.isAfter(DateTime.now())
+                    ? Text(trf('Si el {f} no se llega, el partido se cancela solo.', {'f': fechaHora(decide)}))
+                    : null,
               ),
             ),
           if (puedoContestar)

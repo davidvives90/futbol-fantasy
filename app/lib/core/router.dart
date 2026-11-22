@@ -99,6 +99,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/master', builder: (_, __) => const MasterScreen()),
       GoRoute(path: '/avisos', builder: (_, __) => const NotificacionesScreen()),
       GoRoute(path: '/tienda', builder: (_, __) => const TiendaScreen()),
+      // Ficha fuera de las pestañas: se abre desde pantallas que están encima (Perfil, avisos…)
+      GoRoute(path: '/ficha/:miembroId', builder: (_, state) => FichaScreen(miembroId: state.pathParameters['miembroId']!)),
       GoRoute(
         path: '/master/liga/:ligaId',
         builder: (_, state) => MasterLigaScreen(

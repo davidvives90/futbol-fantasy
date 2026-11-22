@@ -173,7 +173,7 @@ class _TarjetaTemporada extends StatelessWidget {
                     title: Text(miembros[clasif[i].miembroId]?.nombre ?? 'Exjugador'),
                     subtitle: Text('${clasif[i].partidos} PJ · ${clasif[i].goles} goles · ${clasif[i].mvps} MVP'),
                     trailing: Text('${clasif[i].puntosTotal.toStringAsFixed(0)} pts'),
-                    onTap: () => context.push('/clasificacion/jugador/${clasif[i].miembroId}'),
+                    onTap: () => context.push('/ficha/${clasif[i].miembroId}'),
                   ),
               ],
             ),

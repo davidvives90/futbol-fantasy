@@ -104,18 +104,16 @@ class JugadorMercadoScreen extends ConsumerWidget {
             ]),
           ),
         ),
-        Row(children: [Tx('Valoración de los compañeros', style: t.titleMedium)]),
-        valoracion.when(
-          loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando()),
-          error: (e, _) => Text(mensajeError(e)),
-          data: (v) => v == null
-              ? const Padding(padding: EdgeInsets.all(8), child: Tx('Su valor depende de cómo juegue en los partidos.'))
-              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  for (final a in Atributo.values) BarraAtributo(etiqueta: a.etiqueta, valor: v.atributos[a]),
-                  const Divider(),
-                  BarraAtributo(etiqueta: 'Media', valor: v.general),
-                  Text('${v.numEvaluadores} evaluadores', style: t.bodySmall),
-                ]),
+        // Un único indicador de calidad (1–100): mezcla el rendimiento en los partidos y, si la hay,
+        // la opinión de los compañeros. Es el mismo número que mueve el valor de mercado.
+        _Seccion(
+          icono: Icons.workspace_premium_outlined,
+          titulo: 'Calidad',
+          ayuda: Ayuda.calidad,
+          child: _Calidad(
+            rating: fila?.rating,
+            evaluadores: valoracion.valueOrNull?.numEvaluadores ?? 0,
+          ),
         ),
         const SizedBox(height: 24),
         if (enPlantilla != null && enPlantilla.propia)
@@ -344,4 +342,66 @@ class _Cifra extends StatelessWidget {
           Text(etiqueta, style: Theme.of(context).textTheme.labelSmall),
         ]),
       );
+}
+
+/// Barra única de calidad 1–100 con su lectura en palabras.
+class _Calidad extends StatelessWidget {
+  const _Calidad({required this.rating, required this.evaluadores});
+  final double? rating;
+  final int evaluadores;
+
+  static (String, Color) _nivel(int v) => switch (v) {
+        >= 80 => ('Figura', const Color(0xFF1B5E20)),
+        >= 65 => ('Muy bueno', const Color(0xFF2E7D32)),
+        >= 50 => ('Bueno', const Color(0xFF7A8B2A)),
+        >= 35 => ('Regular', const Color(0xFFB26A00)),
+        _ => ('Por mejorar', const Color(0xFFB3261E)),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    if (rating == null) {
+      return const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Tx('Aún sin datos: se calcula al jugar partidos.'));
+    }
+    final v = rating!.round().clamp(1, 100);
+    final (etiqueta, color) = _nivel(v);
+    return Semantics(
+      label: trf('Calidad {v} de 100, {e}', {'v': v, 'e': tr(etiqueta)}),
+      excludeSemantics: true,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('$v', style: t.displaySmall?.copyWith(fontWeight: FontWeight.w700, color: color)),
+          Padding(padding: const EdgeInsets.only(bottom: 6, left: 4), child: Text('/100', style: t.titleMedium)),
+          const SizedBox(width: 12),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(children: [
+              Icon(Icons.circle, size: 10, color: color),
+              const SizedBox(width: 6),
+              Tx(etiqueta, style: t.titleMedium),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: v / 100,
+            minHeight: 10,
+            color: color,
+            backgroundColor: cs.surfaceContainerHighest,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          evaluadores > 0
+              ? trf('Según sus partidos y la opinión de {n} compañeros.', {'n': evaluadores})
+              : tr('Según sus partidos.'),
+          style: t.bodySmall,
+        ),
+      ]),
+    );
+  }
 }

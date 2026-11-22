@@ -415,7 +415,7 @@ class _Miembros extends ConsumerWidget {
       for (final m in activos)
         ListTile(
           leading: AvatarMiembro(m),
-          onTap: () => context.push('/clasificacion/jugador/${m.id}'),
+          onTap: () => context.push('/ficha/${m.id}'),
           title: Row(children: [
             Flexible(child: Text(m.nombre + (m.id == mi.yo.id ? ' (tú)' : ''), overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 8),

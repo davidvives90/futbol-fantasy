@@ -61,7 +61,7 @@ class PerfilScreen extends ConsumerWidget {
         ),
         Center(
           child: TextButton.icon(
-            onPressed: () => context.push('/clasificacion/jugador/${mi.yo.id}'),
+            onPressed: () => context.push('/ficha/${mi.yo.id}'),
             icon: const Icon(Icons.insights_outlined, size: 18),
             label: Text(trf('Ver mi ficha completa en {liga}', {'liga': mi.liga.nombre})),
           ),

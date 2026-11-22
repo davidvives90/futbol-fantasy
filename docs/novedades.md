@@ -14,6 +14,12 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Cinco modos de convocatoria a elegir en cada liga: con apertura, clásica, por orden de llegada, por turnos y con mínimo de jugadores (Liga › Gestionar › Convocatoria y cobro).
+- Cada liga elige quién rellena el acta del post-partido: todos los que jugaron, el árbitro o los capitanes.
+- Al cancelar una temporada desaparecen todos sus partidos futuros.
+- «Ver mi ficha completa» ya abre la ficha.
+- Fantasy: la gráfica del valor de mercado va en el orden correcto y la valoración es un único indicador de calidad del 1 al 100.
+- Las listas (apuntados, suplentes, encuentros) salen en su orden real.
 - Post-partido sin líos: la app cruza y pondera los partes, cuadra goles y asistencias con el resultado y solo pregunta lo que está en conflicto (con «Aceptar todo lo propuesto»).
 - No puede haber más asistencias que goles.
 - Crear liga en modo Básico, Medio o Avanzado.

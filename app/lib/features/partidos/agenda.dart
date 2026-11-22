@@ -75,7 +75,8 @@ _Situacion _situacion(EstadoInscripcion? e, bool fijo, DateTime? abreEn) => swit
       EstadoInscripcion.duda => _Situacion.duda,
       EstadoInscripcion.espera => _Situacion.suplente,
       EstadoInscripcion.baja => _Situacion.noVas,
-      null => (!fijo && abreEn != null && abreEn.isAfter(DateTime.now())) ? _Situacion.cerrada : _Situacion.responde,
+      // 0050: el servidor ya da la apertura de cada persona (en «turnos» no es la misma para todos)
+      null => (abreEn != null && abreEn.isAfter(DateTime.now())) ? _Situacion.cerrada : _Situacion.responde,
     };
 
 /// Colores fijos por liga (en el orden de mis ligas), para distinguirlas de un vistazo.
@@ -243,7 +244,8 @@ class _TarjetaCita extends ConsumerWidget {
     if (conv != null && estado == EstadoInscripcion.espera) {
       final miembros = ref.watch(miembrosPorIdProvider(cita.ligaId));
       final esp = ordenarEspera(conv.where((i) => i.estado == EstadoInscripcion.espera).toList(), miembros,
-          porPrioridad: false);
+          porPrioridad: ref.watch(misLigasProvider).valueOrNull?.where((l) => l.liga.id == cita.ligaId).firstOrNull
+                  ?.liga.fijosPrimero ?? true);
       puesto = esp.indexWhere((i) => i.miembroId == cita.miembroId) + 1;
     }
     final sit = _situacion(estado, cita.fijo, cita.abreEn);
@@ -292,7 +294,7 @@ class _TarjetaCita extends ConsumerWidget {
     final dentro = estado != null && estado.ocupaPlaza;
     final Widget acciones;
     if (sit == _Situacion.cerrada) {
-      acciones = Text(trf('Podrás apuntarte de suplente el {f}', {'f': fechaHora(cita.abreEn!)}), style: t.bodySmall);
+      acciones = Text(trf('Podrás apuntarte el {f}', {'f': fechaHora(cita.abreEn!)}), style: t.bodySmall);
     } else if (cita.fijo || dentro) {
       acciones = Row(children: [
         mini(EstadoInscripcion.confirmado, 'Voy', Icons.check, AppColores.of(context).exito),

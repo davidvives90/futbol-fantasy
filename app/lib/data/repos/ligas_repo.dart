@@ -66,7 +66,7 @@ class LigasRepo {
   // ---- Miembros y administración ------------------------------------------
 
   static Future<List<Miembro>> miembros(String ligaId) async {
-    final rows = await sb.from('miembros').select(Miembro.select).eq('liga_id', ligaId).order('unido_en');
+    final rows = await sb.from('miembros').select(Miembro.select).eq('liga_id', ligaId).order('unido_en', ascending: true);
     return [for (final r in rows) Miembro.fromMap(r)];
   }
 
@@ -130,7 +130,7 @@ class LigasRepo {
   static Future<List<Aspecto>> aspectos(String ligaId, {bool soloActivos = false}) async {
     var q = sb.from('aspectos_valoracion').select().eq('liga_id', ligaId);
     if (soloActivos) q = q.eq('activo', true);
-    final rows = await q.order('orden');
+    final rows = await q.order('orden', ascending: true);
     return [for (final r in rows) Aspecto.fromMap(r)];
   }
 

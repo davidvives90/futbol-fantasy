@@ -166,7 +166,7 @@ class _Lista extends StatelessWidget {
           title: Text(m?.nombre ?? '…'),
           subtitle: Text('${r.partidos} partidos · media ${r.puntosMedia.toStringAsFixed(1)} pts'),
           trailing: Text(ranking.texto(r), style: AppTheme.numero(context, size: 20)),
-          onTap: () => context.push('/clasificacion/jugador/${r.miembroId}'),
+          onTap: () => context.push('/ficha/${r.miembroId}'),
         );
       },
     );

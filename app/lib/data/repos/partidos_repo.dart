@@ -5,8 +5,14 @@ import '../models.dart';
 /// Partidos, convocatorias, equipos y operaciones del admin sobre el partido.
 class PartidosRepo {
   static Future<List<Partido>> partidos(String ligaId) async {
-    final rows =
-        await sb.from('partidos').select().eq('liga_id', ligaId).order('fecha_hora', ascending: false).limit(100);
+    // Los partidos cancelados (p. ej. de una temporada cancelada) no se muestran en ninguna lista.
+    final rows = await sb
+        .from('partidos')
+        .select()
+        .eq('liga_id', ligaId)
+        .neq('estado', 'cancelado')
+        .order('fecha_hora', ascending: false)
+        .limit(100);
     return [for (final r in rows) Partido.fromMap(r)];
   }
 
@@ -97,7 +103,7 @@ class PartidosRepo {
       .from('convocatorias')
       .stream(primaryKey: ['partido_id', 'miembro_id'])
       .eq('partido_id', partidoId)
-      .order('inscrito_en')
+      .order('inscrito_en', ascending: true)
       .map((rows) => [for (final r in rows) Inscripcion.fromMap(r)]);
 
   /// El trigger de la base de datos pasa a 'espera' si no queda sitio.
@@ -144,7 +150,7 @@ class PartidosRepo {
   }
 
   static Future<List<Encuentro>> encuentros(String partidoId) async {
-    final rows = await sb.from('encuentros').select().eq('partido_id', partidoId).order('n');
+    final rows = await sb.from('encuentros').select().eq('partido_id', partidoId).order('n', ascending: true);
     return [for (final r in rows) Encuentro.fromMap(r)];
   }
 

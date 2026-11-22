@@ -138,10 +138,17 @@ class GuiaScreen extends ConsumerWidget {
         if (l.precioEstimado != null) dato(Icons.euro, 'Precio aproximado', '${euros(l.precioEstimado)}/jugador'),
         if (l.precioInvitado != null) dato(Icons.person_add_alt, 'Reservas e invitados', '${euros(l.precioInvitado)}/partido'),
         dato(Icons.lock_clock, 'Convocatoria',
-            l.conApertura ? 'Se abre ${l.horasAperturaConvocatoria} h tras el partido anterior' : 'Fijos dentro desde el principio'),
-        if (l.conApertura && l.horasReservaFijos > 0)
-          dato(Icons.event_seat, 'Plaza guardada a fijos', 'Hasta ${l.horasReservaFijos} h antes'),
-        dato(Icons.format_list_numbered, 'Lista de espera', l.esperaPorPrioridad ? 'Por prioridad' : 'Por orden de apuntarse'),
+            tr(modosConvocatoria.firstWhere((m) => m.$1 == l.modoConvocatoria, orElse: () => modosConvocatoria.first).$2)),
+        if (l.modoConvocatoria == 'apertura' || l.modoConvocatoria == 'turnos')
+          dato(Icons.schedule, 'Se abre', '${l.horasAperturaConvocatoria} h tras el partido anterior'),
+        if (l.modoConvocatoria == 'turnos')
+          dato(Icons.timelapse, 'Turnos', 'Fijos → reservas → invitados, cada ${l.horasTurno} h'),
+        if (l.modoConvocatoria == 'minimo')
+          dato(Icons.groups_outlined, 'Mínimo de jugadores',
+              '${l.minimoJugadores ?? l.plazas} · se decide ${l.horasDecision} h antes'),
+        dato(Icons.format_list_numbered, 'Lista de espera', l.fijosPrimero ? 'Los fijos primero' : 'Por orden de apuntarse'),
+        dato(Icons.assignment_outlined, 'Acta del partido',
+            tr(modosActa.firstWhere((m) => m.$1 == l.quienRellena, orElse: () => modosActa.first).$2)),
         dato(Icons.how_to_vote_outlined, 'Valoración', l.valoracionDetallada ? 'Detallada (por aspectos)' : 'Rápida (1 a 5)'),
         dato(Icons.shield_outlined, 'Fantasy', l.fantasyActivo ? 'Plantillas de hasta ${f.maxPlantilla} jugadores' : 'Desactivado'),
         if (l.fantasyActivo) dato(Icons.verified_user_outlined, 'Protección tras fichar', '${f.proteccionDias} días'),
@@ -153,14 +160,27 @@ class GuiaScreen extends ConsumerWidget {
         // ───── Una semana normal
         seccion('Una semana normal'),
         for (final (n, texto) in [
-          ('1', l.conApertura
-              ? 'Se abre la convocatoria tras el partido anterior. Todos pulsan «Voy»; los fijos tienen la plaza guardada.'
-              : 'Se abre la convocatoria. Los fijos ya están dentro; el resto pulsa «Voy» y espera plaza.'),
+          ('1', switch (l.modoConvocatoria) {
+            'apertura' => 'Los fijos ya están en la lista y confirman. El resto se apunta cuando se abre, tras el partido anterior.',
+            'clasica' => 'Se abre la convocatoria. Los fijos ya están dentro; el resto pulsa «Voy» y espera plaza.',
+            'libre' => 'Se abre la convocatoria y todos pulsan «Voy»: entra quien antes llega.',
+            'turnos' => 'Se apuntan primero los fijos; después, las reservas; y al final, los invitados.',
+            _ => 'Todos pulsan «Voy». Si a la hora límite no se llega al mínimo, el partido se cancela solo.',
+          }),
           ('2', 'El admin hace equipos equilibrados con las estadísticas de cada uno.'),
           if (l.fantasyActivo) ('3', 'Antes del cierre, cada mánager prepara su alineación del Fantasy.'),
           ('4', 'Se juega. El admin pulsa «Partido jugado» y se abre el post-partido.'),
-          ('5', 'Cada jugador envía el resultado, quién marcó y sus notas (1 minuto).'),
-          ('6', 'La app cruza los partes; si algo no cuadra, el admin lo resuelve.'),
+          if (l.quienRellena == 'jugadores') ...[
+            ('5', 'Cada jugador envía el resultado, quién marcó y sus notas (1 minuto).'),
+            ('6', 'La app cruza los partes; si algo no cuadra, el admin lo resuelve.'),
+          ] else ...[
+            ('5', l.quienRellena == 'arbitro'
+                ? 'El árbitro pone el resultado y quién marcó; los jugadores, sus notas.'
+                : 'Los capitanes ponen el resultado y quién marcó; los jugadores, sus notas.'),
+            ('6', l.quienRellena == 'arbitro'
+                ? 'Vale lo que ponga el árbitro y se calculan los puntos.'
+                : 'Si los capitanes no coinciden, el admin lo resuelve.'),
+          ],
           ('7', 'Se publican los puntos, el MVP, la clasificación y los nuevos precios del mercado.'),
         ])
           ListTile(
@@ -170,7 +190,7 @@ class GuiaScreen extends ConsumerWidget {
 
         // ───── Explicaciones
         seccion('Partidos'),
-        if (l.conApertura) tema(Ayuda.apertura, Icons.lock_clock),
+        if (l.modoConvocatoria == 'apertura') tema(Ayuda.apertura, Icons.lock_clock),
         tema(Ayuda.rangos, Icons.badge_outlined),
         tema(Ayuda.listaEspera, Icons.hourglass_top),
         if (l.facturaMensual) tema(Ayuda.facturaMensual, Icons.receipt_long_outlined),

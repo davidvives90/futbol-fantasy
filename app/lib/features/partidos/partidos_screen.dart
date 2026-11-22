@@ -195,11 +195,12 @@ class _ProximoPartido extends ConsumerWidget {
     final confirmados = conv.where((i) => i.estado.ocupaPlaza).toList();
     final mia = conv.where((i) => i.miembroId == mi.yo.id).firstOrNull?.estado;
     final suplentes = ordenarEspera(conv.where((i) => i.estado == EstadoInscripcion.espera).toList(), miembros,
-        porPrioridad: false);
+        porPrioridad: mi.liga.fijosPrimero);
     final puesto = mia == EstadoInscripcion.espera ? suplentes.indexWhere((i) => i.miembroId == mi.yo.id) + 1 : null;
     final importe = confirmados.isEmpty ? null : partido.costeTotal / confirmados.length;
     final faltan = partido.plazas - confirmados.length;
-    final abreEn = mi.liga.abreConvocatoria(partido, ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const []);
+    final abreEn = mi.liga.abreConvocatoriaPara(
+        partido, ref.watch(partidosProvider(mi.liga.id)).valueOrNull ?? const [], mi.yo.rango);
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final dias = DateTime(partido.fechaHora.year, partido.fechaHora.month, partido.fechaHora.day)
@@ -285,7 +286,7 @@ class _ProximoPartido extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
-            if (abreEn != null && mi.yo.rango != RangoMiembro.fijo)
+            if (abreEn != null && mia == null)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -293,7 +294,7 @@ class _ProximoPartido extends ConsumerWidget {
                 child: Row(children: [
                   Icon(Icons.lock_clock, color: cs.onSurfaceVariant),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(trf('Podrás apuntarte de suplente el {f}', {'f': fechaHora(abreEn)}), style: t.labelLarge)),
+                  Expanded(child: Text(trf('Podrás apuntarte el {f}', {'f': fechaHora(abreEn)}), style: t.labelLarge)),
                 ]),
               )
             else

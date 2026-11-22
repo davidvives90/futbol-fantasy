@@ -39,11 +39,16 @@ class PostPartidoRepo {
   /// v0.3b: envía parte + notas + destacados + voto MVP en UNA llamada atómica (`enviar_post_partido`).
   /// [jugadores]: filas del parte (sin las de equipos marcados «No me fijé»; null en un campo = no sé).
   /// [notas]: [{votado_id, nota | aspectos, destacados}]. Sustituye todo lo que este jugador enviara antes.
+  /// 0050: ¿me toca rellenar el acta (resultado, goles, asistencias) de este partido?
+  static Future<bool> puedoRellenarActa(String partidoId) async =>
+      (await sb.rpc('puedo_rellenar_acta', params: {'p_partido': partidoId})) == true;
+
+  /// [resultados]/[jugadores] null = no envío acta (no me toca); [notas] null = no valoro (no jugué).
   static Future<void> enviarPostPartido({
     required String partidoId,
-    required List<Map<String, dynamic>> resultados,
-    required List<Map<String, dynamic>> jugadores,
-    required List<Map<String, dynamic>> notas,
+    required List<Map<String, dynamic>>? resultados,
+    required List<Map<String, dynamic>>? jugadores,
+    required List<Map<String, dynamic>>? notas,
     String? mvp,
   }) async {
     await sb.rpc('enviar_post_partido', params: {
@@ -72,7 +77,7 @@ class PostPartidoRepo {
   }
 
   static Future<List<Disputa>> disputas(String partidoId) async {
-    final rows = await sb.from('disputas').select().eq('partido_id', partidoId).order('resuelta');
+    final rows = await sb.from('disputas').select().eq('partido_id', partidoId).order('resuelta', ascending: true);
     return [for (final r in rows) Disputa.fromMap(r)];
   }
 

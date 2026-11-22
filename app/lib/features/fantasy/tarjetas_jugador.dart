@@ -306,7 +306,15 @@ class UltimasPuntuaciones extends StatelessWidget {
     }
     final tope = math.max(15.0, lista.fold<double>(0, (a, u) => math.max(a, u.total)));
     final media = resumen!.media;
-    return SizedBox(
+    // La media va como leyenda encima: dentro del gráfico pisaba la cifra de alguna barra.
+    return Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 16, height: 2, color: cs.primary.withValues(alpha: 0.6)),
+        const SizedBox(width: 6),
+        Text(trf('media {m}', {'m': _num(media)}), style: t.labelSmall?.copyWith(color: cs.primary)),
+      ]),
+      const SizedBox(height: 4),
+      SizedBox(
       height: 150,
       child: Stack(children: [
         // Línea de su media
@@ -318,10 +326,7 @@ class UltimasPuntuaciones extends StatelessWidget {
                 left: 0,
                 right: 0,
                 top: y,
-                child: Row(children: [
-                  Expanded(child: Container(height: 1, color: cs.primary.withValues(alpha: 0.5))),
-                  Text(' ${trf('media {m}', {'m': _num(media)})}', style: t.labelSmall?.copyWith(color: cs.primary)),
-                ]),
+                child: Container(height: 1, color: cs.primary.withValues(alpha: 0.5)),
               ),
             ]);
           }),
@@ -351,6 +356,7 @@ class UltimasPuntuaciones extends StatelessWidget {
             ),
         ]),
       ]),
-    );
+      ),
+    ]);
   }
 }

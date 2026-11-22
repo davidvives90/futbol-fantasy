@@ -25,6 +25,10 @@ final _numReportesProvider = FutureProvider.autoDispose.family<int, String>(
 );
 
 /// Lo que ya envié (vacío si nada): sirve para saber si ya envié y para precargar al corregir.
+final _puedoActaProvider = FutureProvider.autoDispose.family<bool, String>(
+  (ref, partidoId) => PostPartidoRepo.puedoRellenarActa(partidoId),
+);
+
 final _miEnvioProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
   (ref, partidoId) => PostPartidoRepo.miPostPartido(partidoId),
 );
@@ -211,7 +215,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
 
   // ---------------------------------------------------------------- envío
 
-  Future<void> _enviar(List<Inscripcion> asistentes, List<Aspecto> listaAspectos) async {
+  Future<void> _enviar(List<Inscripcion> asistentes, List<Aspecto> listaAspectos,
+      {required bool acta, required bool notas}) async {
     final b = _b!;
     final detallada = widget.mi.liga.valoracionDetallada;
     final avanzado = widget.mi.liga.valoracionAvanzada;
@@ -222,10 +227,14 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       context,
       () => PostPartidoRepo.enviarPostPartido(
         partidoId: widget.partido.id,
-        resultados: [
+        resultados: !acta
+            ? null
+            : [
           for (final e in b.encuentros) {'n': e.n, 'goles_local': e.golesLocal, 'goles_visitante': e.golesVisitante},
         ],
-        jugadores: [
+        jugadores: !acta
+            ? null
+            : [
           for (final a in asistentes)
             if (a.equipo != null && !b.noMeFije.contains(a.equipo))
               {
@@ -239,7 +248,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 'penaltis_fallados': masDatos ? (b.penFallados[a.miembroId] ?? 0) : null,
               },
         ],
-        notas: [
+        notas: !notas
+            ? null
+            : [
           for (final id in b.notas.keys)
             if (!sinValorar.contains(id))
               {
@@ -251,9 +262,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 'destacados': avanzado ? (b.destacados[id] ?? const <String>{}).toList() : const <String>[],
               },
         ],
-        mvp: b.mvp != null && !sinValorar.contains(b.mvp) ? b.mvp : null,
+        mvp: notas && b.mvp != null && !sinValorar.contains(b.mvp) ? b.mvp : null,
       ),
-      ok: '¡Enviado! Se cruzará con lo que pongan los demás',
+      ok: widget.mi.liga.quienRellena == 'jugadores' ? '¡Enviado! Se cruzará con lo que pongan los demás' : '¡Enviado!',
     );
     if (!mounted) return;
     setState(() {
@@ -280,16 +291,20 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     final miEnvio = ref.watch(_miEnvioProvider(p.id));
     final numReportes = ref.watch(_numReportesProvider(p.id)).valueOrNull;
     final definidos = ref.watch(_encuentrosDefProvider(p.id));
+    final puedoActa = ref.watch(_puedoActaProvider(p.id));
 
-    if (conv == null || aspectos.isLoading || definidos.isLoading) return const Cargando();
+    if (conv == null || aspectos.isLoading || definidos.isLoading || puedoActa.isLoading) return const Cargando();
+    // 0050: el acta (resultado, goles, asistencias) la rellenan todos, el árbitro o los capitanes, según la liga
+    final hagoActa = puedoActa.valueOrNull ?? false;
+    final modoActa = widget.mi.liga.quienRellena;
     final asistentes = conv.where((i) => i.estado == EstadoInscripcion.confirmado && i.equipo != null).toList()
       ..sort((a, b) => a.equipo!.compareTo(b.equipo!));
     final asisto = asistentes.any((i) => i.miembroId == widget.mi.yo.id);
 
-    if (!asisto) {
+    if (!asisto && !hagoActa) {
       return Vacio(
         'Solo los que jugaron envían el resultado y las notas.'
-        '${numReportes == null ? '' : '\nEnviados: $numReportes de ${asistentes.length}.'}',
+        '${numReportes == null || modoActa != 'jugadores' ? '' : '\nEnviados: $numReportes de ${asistentes.length}.'}',
         icono: Icons.lock_outline,
       );
     }
@@ -313,10 +328,15 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       return ListView(padding: const EdgeInsets.all(24), children: [
         Icon(Icons.check_circle, size: 64, color: AppColores.of(context).exito),
         const SizedBox(height: 12),
-        Tx('¡Listo! Ya has enviado el resultado y tus notas.',
+        Tx(
+            hagoActa && asisto
+                ? '¡Listo! Ya has enviado el resultado y tus notas.'
+                : hagoActa
+                    ? '¡Listo! Ya has enviado el acta.'
+                    : '¡Listo! Ya has enviado tus notas.',
             textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
-        if (numReportes != null)
+        if (numReportes != null && modoActa == 'jugadores')
           Text('Enviados: $numReportes de ${asistentes.length}', textAlign: TextAlign.center),
         if (p.votacionCierra != null)
           Text('Puedes corregirlo hasta: ${fechaHora(p.votacionCierra!)}', textAlign: TextAlign.center),
@@ -353,12 +373,29 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
             Icon(Icons.timer_outlined, size: 18, color: cs.onSurfaceVariant),
             const SizedBox(width: 6),
             Expanded(
-              child: Tx('Menos de 1 minuto · anónimo · se cruza con el resto',
+              child: Tx(
+                  modoActa == 'jugadores'
+                      ? 'Menos de 1 minuto · anónimo · se cruza con el resto'
+                      : hagoActa
+                          ? 'Te toca el acta: lo que pongas es lo que cuenta'
+                          : 'Menos de 1 minuto · anónimo',
                   style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
             ),
           ]),
           const SizedBox(height: 8),
 
+          if (!hagoActa)
+            Card(
+              color: cs.secondaryContainer,
+              child: ListTile(
+                leading: const Icon(Icons.assignment_outlined),
+                title: Tx(modoActa == 'arbitro'
+                    ? 'El resultado y los goles los pone el árbitro'
+                    : 'El resultado y los goles los ponen los capitanes'),
+                subtitle: const Tx('Tú solo pones las notas de tus compañeros.'),
+              ),
+            ),
+          if (hagoActa) ...[
           // ───── 1. Resultado
           _Titulo('1', 'Resultado'),
           if (b.encuentros.isEmpty) const Tx('El administrador aún no ha definido los equipos de este partido.'),
@@ -453,9 +490,11 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
             ),
           ),
           const SizedBox(height: 12),
+          ],
 
-          // ───── 3. Notas
-          _Titulo('3', detallada ? 'Valora a tus compañeros' : 'Notas de tus compañeros', ayuda: Ayuda.notas),
+          // ───── 3. Notas (solo quien jugó)
+          if (asisto) ...[
+          _Titulo(hagoActa ? '3' : '1', detallada ? 'Valora a tus compañeros' : 'Notas de tus compañeros', ayuda: Ayuda.notas),
           Text(
             detallada
                 ? 'Del 1 al 5 en cada aspecto (3 = normal).'
@@ -506,6 +545,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                   b.abiertos.contains(a.miembroId) ? b.abiertos.remove(a.miembroId) : b.abiertos.add(a.miembroId)),
               onCambio: () => setState(() {}),
             ),
+          ],
         ]),
       ),
 
@@ -518,7 +558,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              if (cotejo.error != null)
+              if (hagoActa && cotejo.error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(children: [
@@ -541,9 +581,9 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                   ),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _enviando || cotejo.error != null || b.encuentros.isEmpty
+                    onPressed: _enviando || (hagoActa && (cotejo.error != null || b.encuentros.isEmpty))
                         ? null
-                        : () => _enviar(asistentes, listaAspectos),
+                        : () => _enviar(asistentes, listaAspectos, acta: hagoActa, notas: asisto),
                     icon: _enviando
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.send),

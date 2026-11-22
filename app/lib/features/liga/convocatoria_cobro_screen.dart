@@ -3,6 +3,7 @@ import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils.dart';
+import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
 
@@ -21,8 +22,9 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
   final _precio = TextEditingController(text: '5');
   bool _cargado = false;
   bool _guardando = false;
-  bool _apertura = true;
-  int _duracion = 60, _horasApertura = 2, _horasReserva = 24;
+  String _modo = 'apertura';
+  int _duracion = 60, _horasApertura = 2, _horasReserva = 24, _horasTurno = 24, _horasDecision = 24;
+  int? _minimo;
   String _recordatorio = 'mensual';
   String _modoEquipos = 'admin';
   int _capitanes = 1;
@@ -49,7 +51,10 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
       context,
       () => LigasRepo.actualizarLiga(ligaId, {
         'orden_espera': _ordenEspera,
-        'modo_convocatoria': _apertura ? 'apertura' : 'clasica',
+        'modo_convocatoria': _modo,
+        'horas_turno': _horasTurno,
+        'horas_decision': _horasDecision,
+        if (_modo == 'minimo') 'minimo_jugadores': _minimo,
         'duracion_partido_min': _duracion,
         'horas_apertura_convocatoria': _horasApertura,
         'horas_reserva_fijos': _horasReserva,
@@ -77,7 +82,10 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
       _ordenEspera = l.ordenEspera;
       _modoCobro = l.modoCobro;
       _precioFijo = l.precioInvitado != null;
-      _apertura = l.conApertura;
+      _modo = l.modoConvocatoria;
+      _horasTurno = l.horasTurno;
+      _horasDecision = l.horasDecision;
+      _minimo = l.minimoJugadores;
       _duracion = l.duracionPartidoMin;
       _horasApertura = l.horasAperturaConvocatoria;
       _horasReserva = l.horasReservaFijos;
@@ -92,33 +100,68 @@ class _ConvocatoriaCobroScreenState extends ConsumerState<ConvocatoriaCobroScree
     return Scaffold(
       appBar: AppBar(title: const Tx('Convocatoria y cobro')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        Tx('Convocatoria', style: t.titleMedium),
+        Tx('Cómo se apunta la gente', style: t.titleMedium),
         const SizedBox(height: 4),
-        Tx('Los fijos están siempre en la lista (pendientes de confirmar). Si un fijo dice «No voy», '
-            'entra el primer suplente, por orden de apuntarse.', style: t.bodySmall),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: _apertura,
-          onChanged: (v) => setState(() => _apertura = v),
-          title: const Tx('Los suplentes se apuntan cuando se abre'),
-          subtitle: Tx(_apertura
-              ? 'Pueden apuntarse un rato después de acabar el partido anterior.'
-              : 'Pueden apuntarse en cuanto se crea el partido.'),
-        ),
-        if (_apertura) ...[
+        Tx('Elige el modo que mejor encaje con vuestro grupo. Puedes cambiarlo cuando quieras.', style: t.bodySmall),
+        const SizedBox(height: 4),
+        for (final (v, titulo, sub) in modosConvocatoria)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(_modo == v ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: _modo == v ? Theme.of(context).colorScheme.primary : null),
+            title: Row(children: [
+              Flexible(child: Text(tr(titulo))),
+              if (v == l.modoConvocatoria) ...[
+                const SizedBox(width: 8),
+                Tx('Actual', style: t.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary)),
+              ],
+            ]),
+            subtitle: Text(tr(sub)),
+            onTap: () => setState(() {
+              _modo = v;
+              if (v == 'minimo') _minimo ??= (mi.liga.plazas * 0.8).round().clamp(4, 60);
+            }),
+          ),
+        if (_modo == 'apertura' || _modo == 'turnos' || _modo == 'libre' || _modo == 'minimo') ...[
           _Selector(
-            titulo: 'Duración del partido',
+            titulo: tr('Duración del partido'),
             valor: _duracion,
             opciones: const [45, 60, 75, 90, 120],
             texto: (v) => v % 60 == 0 ? '${v ~/ 60} h' : '${v ~/ 60} h ${v % 60} min',
             onCambio: (v) => setState(() => _duracion = v),
           ),
           _Selector(
-            titulo: 'Se abre después de acabar el anterior',
+            titulo: tr(_modo == 'apertura' || _modo == 'turnos'
+                ? 'Se abre después de acabar el anterior'
+                : 'Aviso de «convocatoria abierta» tras el anterior'),
             valor: _horasApertura,
             opciones: const [0, 1, 2, 3, 6, 12, 24],
             texto: (v) => v == 0 ? tr('Al acabar') : '$v h',
             onCambio: (v) => setState(() => _horasApertura = v),
+          ),
+        ],
+        if (_modo == 'turnos')
+          _Selector(
+            titulo: tr('Tiempo entre turnos'),
+            valor: _horasTurno,
+            opciones: const [1, 2, 6, 12, 24, 48],
+            texto: (v) => '$v h',
+            onCambio: (v) => setState(() => _horasTurno = v),
+          ),
+        if (_modo == 'minimo') ...[
+          _Selector(
+            titulo: tr('Mínimo de jugadores'),
+            valor: _minimo ?? mi.liga.plazas,
+            opciones: [for (var n = 4; n <= mi.liga.plazas; n += 2) n],
+            texto: (v) => '$v',
+            onCambio: (v) => setState(() => _minimo = v),
+          ),
+          _Selector(
+            titulo: tr('Se decide antes del partido'),
+            valor: _horasDecision,
+            opciones: const [2, 4, 6, 12, 24, 48],
+            texto: (v) => '$v h',
+            onCambio: (v) => setState(() => _horasDecision = v),
           ),
         ],
         const Divider(height: 32),

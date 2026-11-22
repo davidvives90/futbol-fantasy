@@ -41,6 +41,92 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
     }
   }
 
+  /// «El árbitro (Juan)», «Los capitanes»…
+  String _textoActa(MiLiga mi) {
+    final l = mi.liga;
+    final porId = ref.watch(miembrosPorIdProvider(l.id)); // también carga la lista para elegir árbitro
+    final nombre = tr(modosActa.firstWhere((m) => m.$1 == l.quienRellena, orElse: () => modosActa.first).$2);
+    if (l.quienRellena != 'arbitro') return nombre;
+    final arbitro = l.arbitroId == null ? null : porId[l.arbitroId];
+    return '$nombre · ${arbitro?.nombre ?? tr('el administrador')}';
+  }
+
+  /// 0050: jugadores, árbitro o capitanes. Con árbitro, se elige quién (o el administrador).
+  Future<void> _elegirActa(MiLiga mi) async {
+    final l = mi.liga;
+    final modo = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: ListView(shrinkWrap: true, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Tx('Quién rellena el acta', style: Theme.of(c).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Tx('El acta es el resultado, los goles y las asistencias. Las notas y el MVP los ponen siempre todos los que jugaron.',
+                  style: Theme.of(c).textTheme.bodySmall),
+            ]),
+          ),
+          for (final (v, titulo, sub) in modosActa)
+            ListTile(
+              leading: Icon(l.quienRellena == v ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: l.quienRellena == v ? Theme.of(c).colorScheme.primary : null),
+              title: Text(tr(titulo)),
+              subtitle: Text(tr(sub)),
+              onTap: () => Navigator.pop(c, v),
+            ),
+        ]),
+      ),
+    );
+    if (modo == null || !mounted) return;
+    String? arbitro = l.arbitroId;
+    if (modo == 'arbitro') {
+      final miembros = ref.read(miembrosPorIdProvider(l.id)).values
+          .where((m) => m.estado == EstadoMiembro.activo)
+          .toList()
+        ..sort((a, b) => a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase()));
+      const admin = '__admin__';
+      final r = await showModalBottomSheet<String>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (c) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(c).size.height * 0.75),
+            child: ListView(shrinkWrap: true, children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Tx('¿Quién es el árbitro?', style: Theme.of(c).textTheme.titleLarge),
+              ),
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: const Tx('El administrador'),
+                subtitle: const Tx('Si no eliges a nadie, rellena el acta el administrador.'),
+                selected: arbitro == null,
+                onTap: () => Navigator.pop(c, admin),
+              ),
+              for (final m in miembros)
+                ListTile(
+                  leading: Icon(arbitro == m.id ? Icons.sports : Icons.person_outline),
+                  title: Text(m.nombre),
+                  selected: arbitro == m.id,
+                  onTap: () => Navigator.pop(c, m.id),
+                ),
+            ]),
+          ),
+        ),
+      );
+      if (r == null || !mounted) return;
+      arbitro = r == admin ? null : r;
+    }
+    if (await ejecutar(context,
+        () => LigasRepo.actualizarLiga(l.id, {'quien_rellena': modo, 'arbitro_id': modo == 'arbitro' ? arbitro : null}),
+        ok: 'Ajustes guardados')) {
+      refrescarLigas(ref);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mi = ref.watch(ligaActualProvider);
@@ -88,8 +174,16 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
         opcion(Icons.menu_book_outlined, 'Normas y guía', 'Lo acordado en la liga y cómo funciona todo', '/guia'),
         grupo(tr('Partidos')),
         opcion(Icons.event_repeat, 'Programar temporada', 'Partidos recurrentes entre dos fechas', '/temporada'),
-        opcion(Icons.how_to_reg_outlined, 'Convocatoria y cobro', 'Lista de espera, factura mensual y precio de reservas',
+        opcion(Icons.how_to_reg_outlined, 'Convocatoria y cobro',
+            '${tr(modosConvocatoria.firstWhere((m) => m.$1 == mi.liga.modoConvocatoria, orElse: () => modosConvocatoria.first).$2)} · ${tr('lista de espera y cobro')}',
             '/liga/convocatoria'),
+        ListTile(
+          leading: const Icon(Icons.assignment_outlined),
+          title: const Tx('Quién rellena el acta'),
+          subtitle: Text(_textoActa(mi)),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _elegirActa(mi),
+        ),
         if (mi.liga.esAvanzada || _verTodo) ...[
         grupo(tr('Módulos')),
         _Interruptor(
