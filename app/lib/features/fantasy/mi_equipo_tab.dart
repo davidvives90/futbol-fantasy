@@ -30,6 +30,13 @@ class MiEquipoTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final k = _k;
     final manager = ref.watch(miManagerProvider(k));
+    // La primera visita crea el mánager (y puede arrancar el Fantasy): hay que volver a mirar el mercado
+    ref.listen(miManagerProvider(k), (antes, ahora) {
+      if (antes?.isLoading == true && ahora.hasValue) {
+        ref.invalidate(mercadoAbiertoProvider(mi.liga.id));
+        ref.invalidate(mercadoProvider(mi.liga.id));
+      }
+    });
     final plantilla = ref.watch(miPlantillaProvider(k));
     final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
     final abierto = ref.watch(mercadoAbiertoProvider(mi.liga.id)).valueOrNull ?? false;

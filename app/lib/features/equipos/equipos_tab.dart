@@ -253,7 +253,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
             ]),
           ),
         ),
-      if (editable && _equipos != null && !hayGuardados)
+      if (editable && _equipos != null && _pool == null && _opciones.isNotEmpty && !hayGuardados)
         Card(
           color: Theme.of(context).colorScheme.secondaryContainer,
           child: const Padding(

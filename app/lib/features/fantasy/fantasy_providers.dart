@@ -12,10 +12,12 @@ final miManagerProvider = FutureProvider.autoDispose.family<Manager?, LigaMiembr
   (ref, k) => FantasyRepo.miManager(k.ligaId, k.miembroId),
 );
 
-final miPlantillaProvider = FutureProvider.autoDispose.family<List<JugadorPlantilla>, LigaMiembro>(
+final miPlantillaProvider = FutureProvider.autoDispose.family<List<JugadorPlantilla>, LigaMiembro>((ref, k) async {
+  // Primero el mánager: la primera vez se crea y recibe su reparto inicial; si no, la plantilla llegaría vacía.
+  await ref.watch(miManagerProvider(k).future);
   // v_mi_plantilla ya filtra por el usuario autenticado; el miembro solo forma parte de la clave.
-  (ref, k) => FantasyRepo.miPlantilla(k.ligaId),
-);
+  return FantasyRepo.miPlantilla(k.ligaId);
+});
 
 final mercadoProvider = FutureProvider.autoDispose.family<List<JugadorMercado>, String>(
   (ref, ligaId) => FantasyRepo.mercado(ligaId),
