@@ -6,6 +6,7 @@ import '../../core/equipaciones.dart';
 import '../../core/info.dart';
 import '../../core/utils.dart';
 import '../equipos/prediccion_card.dart' show ayudaXg;
+import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/ligas_repo.dart';
 
