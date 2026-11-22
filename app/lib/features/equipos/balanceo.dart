@@ -133,8 +133,12 @@ List<Reparto> balancear(
   int top = 5,
   int maxExhaustivo = 16,
   Random? rng,
+  Map<String, int> fijos = const {},
 }) {
   if (numEquipos < 2) throw ArgumentError('Se necesitan al menos 2 equipos');
+  if (fijos.isNotEmpty && jugadores.length >= numEquipos) {
+    return _conFijos(jugadores, numEquipos, top: top, maxExhaustivo: maxExhaustivo, rng: rng ?? Random(), fijos: fijos);
+  }
   if (jugadores.length < numEquipos) {
     return [
       Reparto([for (var i = 0; i < numEquipos; i++) i < jugadores.length ? [jugadores[i]] : <JugadorBalanceo>[]], 0)
@@ -226,8 +230,50 @@ List<Reparto> _serpienteConIntercambios(List<JugadorBalanceo> js, int k, int top
   return unicos.take(top).toList();
 }
 
-/// Intercambia parejas de jugadores entre equipos mientras baje el coste.
-void _mejorarConIntercambios(List<List<JugadorBalanceo>> equipos, {int maxIteraciones = 500}) {
+/// Reparto con jugadores fijos en un equipo ([fijos]: id → índice de equipo 0-based), p. ej. los capitanes.
+/// Parte de los mejores repartos libres, los recoloca para respetar a los fijos y vuelve a equilibrar
+/// intercambiando solo a los demás.
+List<Reparto> _conFijos(List<JugadorBalanceo> js, int k,
+    {required int top, required int maxExhaustivo, required Random rng, required Map<String, int> fijos}) {
+  final base = balancear(js, k, top: top * 4, maxExhaustivo: maxExhaustivo, rng: rng);
+  final resultados = <Reparto>[];
+  for (final r in base) {
+    final equipos = [for (final e in r.equipos) [...e]];
+    // Cada fijo a su equipo, cambiándolo por el no fijo de su equipo destino con nivel más parecido
+    for (final f in fijos.entries) {
+      final destino = f.value;
+      if (destino < 0 || destino >= k) continue;
+      final origen = equipos.indexWhere((e) => e.any((j) => j.id == f.key));
+      if (origen < 0 || origen == destino) continue;
+      final x = equipos[origen].firstWhere((j) => j.id == f.key);
+      final candidatos = equipos[destino].where((j) => !fijos.containsKey(j.id)).toList();
+      equipos[origen].remove(x);
+      if (candidatos.isEmpty) {
+        equipos[destino].add(x);
+        continue;
+      }
+      candidatos.sort((a, b) => (a.rating - x.rating).abs().compareTo((b.rating - x.rating).abs()));
+      final y = candidatos.first;
+      equipos[destino].remove(y);
+      equipos[destino].add(x);
+      equipos[origen].add(y);
+    }
+    _mejorarConIntercambios(equipos, bloqueados: fijos.keys.toSet());
+    resultados.add(Reparto(equipos, costeReparto(equipos)));
+  }
+  resultados.sort((a, b) => a.coste.compareTo(b.coste));
+  final vistos = <String>{};
+  final unicos = <Reparto>[];
+  for (final r in resultados) {
+    final firma = [for (final e in r.equipos) (e.map((j) => j.id).toList()..sort()).join(',')].join('|');
+    if (vistos.add(firma)) unicos.add(r);
+  }
+  return unicos.take(top).toList();
+}
+
+/// Intercambia parejas de jugadores entre equipos mientras baje el coste ([bloqueados] no se mueven).
+void _mejorarConIntercambios(List<List<JugadorBalanceo>> equipos,
+    {int maxIteraciones = 500, Set<String> bloqueados = const {}}) {
   var coste = costeReparto(equipos);
   for (var it = 0; it < maxIteraciones; it++) {
     var mejoro = false;
@@ -236,6 +282,7 @@ void _mejorarConIntercambios(List<List<JugadorBalanceo>> equipos, {int maxIterac
         for (var i = 0; i < equipos[a].length && !mejoro; i++) {
           for (var j = 0; j < equipos[b].length && !mejoro; j++) {
             final x = equipos[a][i], y = equipos[b][j];
+            if (bloqueados.contains(x.id) || bloqueados.contains(y.id)) continue;
             equipos[a][i] = y;
             equipos[b][j] = x;
             final nuevo = costeReparto(equipos);

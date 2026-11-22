@@ -102,8 +102,10 @@ abstract final class Ayuda {
           '• Si la liga hace valoraciones, la opinión de los compañeros también cuenta.\n'
           '• Es lo que mueve su valor de mercado y lo que usa el generador para hacer equipos igualados.');
   static const fichas = ('Copias de cada jugador',
-      'Cada jugador tiene un número limitado de fichas (copias) para que no todo el mundo tenga al mismo. '
-          'Si no quedan, solo puedes conseguirlo comprándoselo a otro mánager o pagando su cláusula.');
+      'Cada jugador tiene 5 copias, así que hasta 5 mánagers pueden tenerlo a la vez.\n'
+          '• Comprar una copia libre no se la quita a nadie.\n'
+          '• Pagar la cláusula de la copia de otro mánager sí: él lo pierde y cobra lo que pagas.\n'
+          '• Si no quedan copias libres, solo puedes conseguirlo con la cláusula o con una oferta.');
   static const clausula = ('Cláusula',
       'Precio al que cualquiera puede quitarte un jugador sin preguntarte. Tú la fijas: subirla cuesta un porcentaje de la subida; '
           'bajarla es gratis, pero será más fácil que te lo quiten. Recién fichado está protegido 7 días (lo fija el admin).');

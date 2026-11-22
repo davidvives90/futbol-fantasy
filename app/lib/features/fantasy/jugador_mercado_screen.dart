@@ -145,8 +145,11 @@ class JugadorMercadoScreen extends ConsumerWidget {
         else if (fila != null) ...[
           Row(children: [Tx('Fichas', style: t.titleMedium), const InfoBoton(Ayuda.fichas)]),
           Text(
-            '${fila.fichasLibres} libres de ${fila.fichasTotales}. '
-            '${fila.hayLibres ? 'Puedes comprar una al precio de mercado.' : 'Están todas cogidas: paga la cláusula de un dueño o hazle una oferta.'}',
+            fila.hayLibres
+                ? trf('Quedan {l} de {t} copias libres. Comprar una no se la quita a nadie.',
+                    {'l': fila.fichasLibres, 't': fila.fichasTotales})
+                : trf('Las {t} copias tienen dueño. Para tenerlo, paga la cláusula de uno (lo pierde) o hazle una oferta.',
+                    {'t': fila.fichasTotales}),
             style: t.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -154,7 +157,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
             FilledButton.icon(
               style: AppButtons.premium(context),
               icon: const Icon(Icons.add_shopping_cart),
-              label: Text('Comprar por ${millones(fila.precio)}'),
+              label: Text(trf('Comprar copia libre · {p}', {'p': millones(fila.precio)})),
               onPressed: motivoNoCompra != null
                   ? null
                   : () async {
@@ -226,7 +229,8 @@ class _DuenosFichas extends ConsumerWidget {
         if (conDueno.isEmpty) return const SizedBox.shrink();
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const SizedBox(height: 8),
-          Text('Dueños', style: t.titleSmall),
+          Tx('Dueños', style: t.titleSmall),
+          Tx('Si pagas la cláusula de uno, él lo pierde y cobra lo que pagas.', style: t.bodySmall),
           for (final f in conDueno)
             Card(
               child: Padding(
@@ -274,9 +278,8 @@ class _DuenosFichas extends ConsumerWidget {
                               if (!await confirmar(
                                 context,
                                 'Pagar la cláusula',
-                                'Pagas ${millones(f.clausula)} a ${f.propietarioNombre ?? 'su dueño'} y te llevas su ficha de '
-                                    '$jugadorNombre al instante. No puede negarse. Quedará protegida para ti hasta '
-                                    'que se cierre el próximo partido.',
+                                trf('Pagas {c} a {d}, que pierde a {j} al instante y no puede negarse. Quedará protegido para ti hasta que se cierre el próximo partido.',
+                                    {'c': millones(f.clausula), 'd': f.propietarioNombre ?? tr('su dueño'), 'j': jugadorNombre}),
                                 accion: 'Pagar',
                                 tipo: TipoConfirmacion.premium,
                               )) {

@@ -62,6 +62,8 @@ class _BuscarLigasScreenState extends ConsumerState<BuscarLigasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ligas en las que ya estoy: no se ofrece «Solicitar»
+    final misLigas = {for (final m in ref.watch(misLigasProvider).valueOrNull ?? const []) m.liga.id};
     return Scaffold(
       appBar: AppBar(title: const Tx('Buscar ligas')),
       body: Column(children: [
@@ -88,15 +90,19 @@ class _BuscarLigasScreenState extends ConsumerState<BuscarLigasScreen> {
                     final l = _resultados[i];
                     final id = l['id'] as String;
                     final enviada = _solicitadas.contains(id);
+                    final yaEstoy = misLigas.contains(id);
+                    final n = (l['num_miembros'] as num?)?.toInt() ?? 0;
                     return ListTile(
                       title: Text(l['nombre'] as String),
                       subtitle: Text([
                         if (l['ciudad'] != null) l['ciudad'],
                         if (l['campo_nombre'] != null) l['campo_nombre'],
                         'Fútbol ${l['jugadores_por_equipo']}',
-                        '${l['num_miembros'] ?? 0} miembros',
+                        n == 1 ? tr('1 miembro') : trf('{n} miembros', {'n': n}),
                       ].join(' · ')),
-                      trailing: enviada
+                      trailing: yaEstoy
+                          ? const Chip(label: Tx('Ya estás'))
+                          : enviada
                           ? const Chip(label: Tx('Enviada'))
                           : FilledButton.tonal(onPressed: () => _solicitar(id), child: const Tx('Solicitar')),
                     );

@@ -87,12 +87,21 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
     // Push: al haber sesión, registra este móvil y atiende los avisos.
     void activarPush() => Push.activar(
           alAbrir: (ruta) => ref.read(routerProvider).go(ruta),
-          enPrimerPlano: (titulo, cuerpo, ruta) => _mensajes.currentState?.showSnackBar(SnackBar(
-            content: Text(cuerpo.isEmpty ? titulo : '$titulo\n$cuerpo'),
-            action: (ruta == null || ruta.isEmpty)
-                ? null
-                : SnackBarAction(label: 'Ver', onPressed: () => ref.read(routerProvider).go(ruta)),
-          )),
+          enPrimerPlano: (titulo, cuerpo, ruta) {
+            final router = ref.read(routerProvider);
+            // Si ya estás en esa pantalla, no se ofrece «Ver»: abrirla otra vez borraría lo que estés rellenando
+            final aqui = router.routerDelegate.currentConfiguration.uri.path;
+            final ofrecerVer = ruta != null && ruta.isNotEmpty && aqui != ruta;
+            _mensajes.currentState
+              ?..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(
+                content: Text(cuerpo.isEmpty ? titulo : '$titulo\n$cuerpo'),
+                duration: const Duration(seconds: 5),
+                // Con acción, Flutter lo deja fijo hasta cerrarlo y tapa los botones de abajo
+                persist: false,
+                action: ofrecerVer ? SnackBarAction(label: tr('Ver'), onPressed: () => router.go(ruta)) : null,
+              ));
+          },
         );
     if (sb.auth.currentSession != null) {
       activarPush();

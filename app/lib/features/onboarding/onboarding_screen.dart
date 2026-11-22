@@ -19,7 +19,9 @@ class OnboardingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final nombre = ref.watch(miPerfilProvider).valueOrNull?.nombre.split(' ').first ?? '';
+    // Igual que en el resto de la app: el apodo si lo hay, si no el nombre
+    final perfil = ref.watch(miPerfilProvider).valueOrNull;
+    final nombre = (perfil?.apodo?.isNotEmpty ?? false) ? perfil!.apodo! : (perfil?.nombre.split(' ').first ?? '');
     final solicitudes = ref.watch(_solicitudesProvider).valueOrNull ?? const [];
     final t = Theme.of(context).textTheme;
     mostrarBienvenidaSiToca(context, ref.read(prefsProvider));

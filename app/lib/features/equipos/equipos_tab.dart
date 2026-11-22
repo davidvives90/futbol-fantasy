@@ -36,6 +36,12 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
   bool _guardando = false;
   bool _propuestaAuto = false;
 
+  /// Capitanes fijos en su equipo: miembroId → índice de equipo (0-based). Se actualiza en cada build.
+  Map<String, int> _fijos = const {};
+
+  /// Elección por turnos (capitanes): jugadores que quedan por elegir. null = no se está eligiendo.
+  List<JugadorBalanceo>? _pool;
+
   int get _k => widget.partido.numEquipos;
 
   /// Construye los jugadores del algoritmo a partir de confirmados + rendimiento.
@@ -78,12 +84,40 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
   }
 
   void _generar(List<JugadorBalanceo> js) {
-    final opciones = balancear(js, _k, rng: _rng);
+    final opciones = balancear(js, _k, rng: _rng, fijos: _fijos);
     final elegido = elegirConVariedad(opciones, rng: _rng);
     setState(() {
       _opciones = opciones;
       _opcion = opciones.indexOf(elegido);
       _equipos = [for (final e in elegido.equipos) [...e]];
+      _pool = null;
+    });
+  }
+
+  /// Empieza la elección por turnos: cada capitán en su equipo y el resto por elegir.
+  void _empezarTurnos(List<JugadorBalanceo> js) {
+    setState(() {
+      _opciones = [];
+      _equipos = List.generate(_k, (e) => [for (final j in js) if (_fijos[j.id] == e) j]);
+      _pool = [for (final j in js) if (!_fijos.containsKey(j.id)) j]..sort((a, b) => a.nombre.compareTo(b.nombre));
+    });
+  }
+
+  /// Equipo al que le toca elegir: el que tiene menos jugadores (a igualdad, el de número más bajo).
+  int get _turno {
+    final eq = _equipos!;
+    var t = 0;
+    for (var e = 1; e < eq.length; e++) {
+      if (eq[e].length < eq[t].length) t = e;
+    }
+    return t;
+  }
+
+  void _elegir(JugadorBalanceo j) {
+    setState(() {
+      _equipos![_turno].add(j);
+      _pool!.remove(j);
+      if (_pool!.isEmpty) _pool = null;
     });
   }
 
@@ -117,7 +151,10 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     if (!mounted) return;
     setState(() {
       _guardando = false;
-      if (ok) _equipos = null; // se muestran los guardados y el resultado esperado
+      if (ok) {
+        _equipos = null; // se muestran los guardados y el resultado esperado
+        _pool = null;
+      }
     });
     if (ok) ref.invalidate(prediccionProvider(widget.partido.id));
   }
@@ -140,11 +177,20 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     // Hace los equipos el admin o, en ligas con capitanes, los capitanes del partido
     final editable = widget.partido.estado.antesDeJugar && (widget.mi.soyAdmin || (liga.conCapitanes && soyCapitan));
 
-    // Equipos ya guardados en la base de datos.
+    // Capitanes fijos en su equipo (al nombrarlos ya se les asigna uno)
+    _fijos = {
+      for (final i in capitanes)
+        if (i.equipo != null && i.equipo! >= 1 && i.equipo! <= _k) i.miembroId: i.equipo! - 1,
+    };
+
+    // Equipos ya guardados en la base de datos. Solo cuentan como hechos si el partido tiene los equipos
+    // hechos o todos tienen equipo: con capitanes recién nombrados solo ellos tienen equipo.
     final guardados = <List<JugadorBalanceo>>[
       for (var e = 1; e <= _k; e++) [for (final j in js) if (conf.firstWhere((i) => i.miembroId == j.id).equipo == e) j],
     ];
-    final hayGuardados = guardados.any((e) => e.isNotEmpty);
+    final sinEquipo = [for (final j in js) if (!guardados.any((e) => e.contains(j))) j];
+    final hayGuardados = guardados.any((e) => e.isNotEmpty) &&
+        (widget.partido.estado == EstadoPartido.equipos_hechos || sinEquipo.isEmpty);
     final mostrar = _equipos ?? (hayGuardados ? guardados : null);
 
     if (conf.length < _k * 2) {
@@ -224,11 +270,47 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
           FilledButton.tonalIcon(
             onPressed: () => _generar(js),
             icon: const Icon(Icons.auto_awesome),
-            label: Text(mostrar == null ? 'Generar equipos' : 'Volver a generar'),
+            label: Tx(mostrar == null ? 'Generar equipos' : 'Volver a generar'),
           ),
+          if (liga.conCapitanes && _fijos.length >= _k)
+            FilledButton.tonalIcon(
+              onPressed: () => _empezarTurnos(js),
+              icon: const Icon(Icons.front_hand_outlined),
+              label: const Tx('Elegir por turnos'),
+            ),
           if (_opciones.length > 1)
             OutlinedButton.icon(onPressed: _otraOpcion, icon: const Icon(Icons.shuffle), label: const Tx('Otra opción')),
         ]),
+      if (editable && _pool != null && _equipos != null) ...[
+        const SizedBox(height: 12),
+        Card(
+          color: cs.primaryContainer,
+          child: ListTile(
+            leading: const Icon(Icons.front_hand_outlined),
+            title: Text(trf('Elige {e}', {'e': nombreEquipo(context, _turno + 1)})),
+            subtitle: Text([
+              for (final i in capitanes)
+                if (_fijos[i.miembroId] == _turno) nombre(i.miembroId),
+            ].join(', ')),
+          ),
+        ),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final j in _pool!)
+            ActionChip(
+              avatar: const Icon(Icons.person_add_alt_1, size: 18),
+              label: Text('${j.nombre} · ${j.rating.round()}'),
+              onPressed: () => _elegir(j),
+            ),
+        ]),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => setState(() {
+            _pool = null;
+            _equipos = null;
+          }),
+          child: const Tx('Cancelar'),
+        ),
+      ],
       if (mostrar == null)
         Padding(
           padding: const EdgeInsets.only(top: 32),
@@ -280,7 +362,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
             numEquipos: mostrar.length,
             onMover: editable && _equipos != null ? _mover : null,
           ),
-        if (editable && _equipos != null) ...[
+        if (editable && _equipos != null && _pool == null) ...[
           const SizedBox(height: 8),
           const Tx('Toca un jugador para moverlo a otro equipo.'),
           const SizedBox(height: 12),
@@ -288,7 +370,17 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
         ],
         if (editable && _equipos == null && hayGuardados)
           TextButton(
-            onPressed: () => setState(() => _equipos = [for (final e in guardados) [...e]]),
+            onPressed: () => setState(() {
+              _equipos = [for (final e in guardados) [...e]];
+              // Los que se apuntaron después de hacer los equipos van al equipo con menos gente
+              for (final j in sinEquipo) {
+                var t = 0;
+                for (var e = 1; e < _equipos!.length; e++) {
+                  if (_equipos![e].length < _equipos![t].length) t = e;
+                }
+                _equipos![t].add(j);
+              }
+            }),
             child: const Tx('Ajustar a mano'),
           ),
       ],

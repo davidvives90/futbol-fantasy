@@ -14,6 +14,10 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Capitanes: cada capitán se queda en su equipo al generar, nuevo «Elegir por turnos» y ya no se dan por hechos unos equipos con solo los capitanes.
+- Fantasy: 5 copias de cada jugador. Comprar una copia libre no se la quita a nadie; pagar la cláusula de otro sí (lo pierde y cobra).
+- Los avisos de abajo («Cambiado», notificaciones con «Ver») se van solos y ya no tapan el botón de enviar.
+- Buscar ligas: no ofrece «Solicitar» en las ligas en las que ya estás.
 - Cinco modos de convocatoria a elegir en cada liga: con apertura, clásica, por orden de llegada, por turnos y con mínimo de jugadores (Liga › Gestionar › Convocatoria y cobro).
 - Cada liga elige quién rellena el acta del post-partido: todos los que jugaron, el árbitro o los capitanes.
 - Al cancelar una temporada desaparecen todos sus partidos futuros.

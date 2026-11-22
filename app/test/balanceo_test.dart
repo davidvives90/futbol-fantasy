@@ -15,6 +15,31 @@ void _todosUnaVez(Reparto r, List<JugadorBalanceo> js) {
 }
 
 void main() {
+  group('capitanes fijos', () {
+    test('cada capitán queda en su equipo y el reparto sigue equilibrado', () {
+      final js = _jugadores([90, 85, 70, 60, 55, 50, 40, 30, 20, 10]);
+      // Los dos mejores son capitanes de equipos distintos
+      final fijos = {'j0': 0, 'j1': 1};
+      for (var semilla = 0; semilla < 20; semilla++) {
+        final r = balancear(js, 2, fijos: fijos, rng: Random(semilla)).first;
+        _todosUnaVez(r, js);
+        expect(r.equipos[0].any((j) => j.id == 'j0'), isTrue);
+        expect(r.equipos[1].any((j) => j.id == 'j1'), isTrue);
+        expect(r.diferenciaPct, lessThan(10));
+      }
+    });
+
+    test('también con 3 equipos', () {
+      final js = _jugadores([95, 90, 80, 75, 70, 65, 60, 55, 50, 45, 40, 30, 25, 20, 15, 10, 8, 5, 3]);
+      final fijos = {'j18': 0, 'j17': 1, 'j0': 2};
+      final r = balancear(js, 3, fijos: fijos, rng: Random(1)).first;
+      _todosUnaVez(r, js);
+      expect(r.equipos[0].any((j) => j.id == 'j18'), isTrue);
+      expect(r.equipos[1].any((j) => j.id == 'j17'), isTrue);
+      expect(r.equipos[2].any((j) => j.id == 'j0'), isTrue);
+    });
+  });
+
   group('balancear con 2 equipos (exhaustivo)', () {
     test('encuentra el reparto perfecto cuando existe', () {
       // 90+10+50+50 = 200 = 80+20+60+40

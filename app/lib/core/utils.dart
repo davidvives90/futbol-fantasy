@@ -269,8 +269,10 @@ void avisoDeshacer(BuildContext context, String texto, VoidCallback deshacer) {
   m.clearSnackBars();
   m.showSnackBar(SnackBar(
     content: Text(texto),
-    duration: const Duration(seconds: 5),
-    action: SnackBarAction(label: 'Deshacer', onPressed: deshacer),
+    duration: const Duration(seconds: 4),
+    // Con acción, Flutter lo deja fijo hasta cerrarlo; aquí debe irse solo
+    persist: false,
+    action: SnackBarAction(label: tr('Deshacer'), onPressed: deshacer),
   ));
 }
 
