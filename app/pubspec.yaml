@@ -45,12 +45,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icono/icono.png
 
 # Icono de la app (se genera en la compilación: dart run flutter_launcher_icons)
 flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/icono/icono.png"
-  adaptive_icon_background: "#0E4B3A"
+  adaptive_icon_background: "#E2162A"
   adaptive_icon_foreground: "assets/icono/icono_primer_plano.png"
   min_sdk_android: 24

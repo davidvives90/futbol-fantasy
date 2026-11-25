@@ -166,7 +166,7 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
           const PopupMenuItem(value: '_buscar', child: ListTile(leading: Icon(Icons.search), title: Tx('Buscar ligas'))),
         ],
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Flexible(child: Text(actual?.liga.nombre ?? 'Fútbol Fantasy', overflow: TextOverflow.ellipsis)),
+          Flexible(child: Text(actual?.liga.nombre ?? 'Pachanga Fantasy', overflow: TextOverflow.ellipsis)),
           const Icon(Icons.arrow_drop_down),
         ]),
       ),

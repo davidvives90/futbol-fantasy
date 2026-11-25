@@ -69,3 +69,17 @@ select t_check((select titulo from notificaciones where perfil_id = t_uid(1001) 
                  = '🎯 ¡Porra ganada!', 'tipos sin frases: título original');
 select t_check((select count(*) from frases_humor) = 14 * 3 * 9, '14 tipos × 3 frases × 9 idiomas');
 select t_check(revisar_logros() >= 0, 'revisión horaria');
+
+-- 0057 · Porra prudente
+select t_check(porra_retorno('sencilla', 5, false, '[{"cuota": 4, "acierto": true}]', 10) = 15, 'ganancia máxima: 10 M por boleto');
+select t_check(porra_retorno('sencilla', 5, false, '[{"cuota": 2.5, "acierto": true}]', 10) = 12.5, 'por debajo del máximo, sin tocar');
+select t_check(porra_retorno('sencilla', 5, true, '[{"cuota": 1.5, "acierto": false}]', 10) = 2.5, 'el seguro sigue igual');
+select t_check((select bool_and(cuota between 1.02 and 1.30) from porra_cuotas where mercado in ('goleador', 'no_goleador')),
+               'marca / no marca pagan muy poco (≤ 1,30)');
+select t_check((select max(cuota) from porra_cuotas where mercado = 'mvp') > 1.30, 'el MVP paga más que marcar');
+update ligas set porra_modo = 'dinero', porra_max = null, valor_base = 50 where id = current_setting('t.liga')::uuid;
+select t_check(porra_tope(current_setting('t.liga')::uuid) = 5, 'tope por defecto: 5 M');
+select t_check(porra_ganancia_max(current_setting('t.liga')::uuid) = 10, 'ganancia máxima por defecto: 10 M');
+update ligas set porra_modo = 'puntos' where id = current_setting('t.liga')::uuid;
+select t_check(porra_tope(current_setting('t.liga')::uuid) = 50 and porra_ganancia_max(current_setting('t.liga')::uuid) = 100,
+               'modo puntos: 50 de tope y 100 de ganancia máxima');

@@ -153,7 +153,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
   Widget build(BuildContext context) {
     ref.watch(ventajasProvider); // «sin anuncios» del usuario (lo leen los anuncios y la web)
     return MaterialApp.router(
-      title: 'Fútbol Fantasy',
+      title: 'Pachanga Fantasy',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _mensajes,
       // Accesibilidad: respeta el tamaño de letra del móvil, con un tope para que nada se rompa

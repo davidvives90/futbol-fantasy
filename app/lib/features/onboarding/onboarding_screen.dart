@@ -28,7 +28,7 @@ class OnboardingScreen extends ConsumerWidget {
 
     return SinPublicidad(child: Scaffold(
       appBar: AppBar(
-        title: const Tx('Fútbol Fantasy'),
+        title: const Tx('Pachanga Fantasy'),
       ),
       // Sin iconos sueltos arriba: se actualiza deslizando hacia abajo y «Cerrar sesión» va al final, con texto
       body: RefreshIndicator(

@@ -6,10 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 /// Diseño visual: claro, premium y elegante (docs/diseno_visual.md).
 ///
 /// Jerarquía de botones:
-///  1 Principal ........ FilledButton (verde bosque) — una por pantalla
+///  1 Principal ........ FilledButton (rojo Pachanga) — una por pantalla
 ///  2 Premium .......... FilledButton(style: AppButtons.premium(context)) — dinero Fantasy / premios
-///  3 Secundaria ....... OutlinedButton (borde verde)
-///  4 Herramienta admin  FilledButton.tonal (verde claro)
+///  3 Secundaria ....... OutlinedButton (borde rojo)
+///  4 Herramienta admin  FilledButton.tonal (rojo claro)
 ///  5 Terciaria ........ TextButton
 ///  6 Destructiva ...... TextButton/OutlinedButton(style: AppButtons.peligro(context));
 ///                       en el diálogo de confirmación FilledButton(style: AppButtons.peligroRelleno(context))
@@ -21,19 +21,24 @@ class AppTheme {
   static const contenedorBajo = Color(0xFFF3F1EC);
   static const contenedorAlto = Color(0xFFE9E7E0);
   static const contenedorMasAlto = Color(0xFFE3E1D9);
-  static const bordeSuave = Color(0xFFE4E1D8);
-  static const borde = Color(0xFFA9B0AA);
-  static const texto = Color(0xFF14201B);
+  static const bordeSuave = Color(0xFFE7E1DE);
+  static const borde = Color(0xFFB3A9AA);
+  static const texto = Color(0xFF1C1617);
   // Gris secundario con contraste ≥ 7:1 sobre el fondo claro (textos pequeños legibles al sol)
-  static const textoSecundario = Color(0xFF4C5752);
-  static const verde = Color(0xFF0E4B3A);
-  static const verdeClaro = Color(0xFFDCEBE4);
-  static const verdeOscuro = Color(0xFF0A3A2D);
-  static const oro = Color(0xFFB8892E);
+  static const textoSecundario = Color(0xFF524849);
+  /// Colores del logo de Pachanga Fantasy: rojo #E2162A y oro #F2A229.
+  static const marca = Color(0xFFE2162A);
+  static const oroMarca = Color(0xFFF2A229);
+  // Rojo de botones y enlaces: el del logo, un punto más oscuro para que el texto blanco se lea bien (5,9:1).
+  static const verde = Color(0xFFC8102E); // nombre heredado: es el color principal
+  static const verdeClaro = Color(0xFFFDE3E5);
+  static const verdeOscuro = Color(0xFF5E0712);
+  static const oro = Color(0xFFC4861A);
   static const sobreOro = Color(0xFF1E1606);
-  static const oroClaro = Color(0xFFF4EAD3);
-  static const rojo = Color(0xFFB3261E);
-  static const rojoClaro = Color(0xFFF9E3E1);
+  static const oroClaro = Color(0xFFFBEBCB);
+  // Errores y acciones peligrosas: granate, distinto del rojo de la marca
+  static const rojo = Color(0xFF8C1D18);
+  static const rojoClaro = Color(0xFFF6DEDB);
   static const exito = Color(0xFF2E7D4F);
   static const aviso = Color(0xFFB7791F);
   static const equipo1 = Color(0xFF1F4E79);
@@ -47,14 +52,14 @@ class AppTheme {
     onPrimary: Colors.white,
     primaryContainer: verdeClaro,
     onPrimaryContainer: verdeOscuro,
-    secondary: Color(0xFF3F5A50),
+    secondary: Color(0xFF5A4F50),
     onSecondary: Colors.white,
-    secondaryContainer: Color(0xFFE2E8E4),
-    onSecondaryContainer: Color(0xFF1C2D26),
+    secondaryContainer: Color(0xFFF0E6E6),
+    onSecondaryContainer: Color(0xFF2A1E1F),
     tertiary: oro,
     onTertiary: sobreOro,
     tertiaryContainer: oroClaro,
-    onTertiaryContainer: Color(0xFF4A3510),
+    onTertiaryContainer: Color(0xFF4A3008),
     error: rojo,
     onError: Colors.white,
     errorContainer: rojoClaro,
@@ -62,7 +67,7 @@ class AppTheme {
     surface: fondo,
     onSurface: texto,
     onSurfaceVariant: textoSecundario,
-    surfaceDim: Color(0xFFE2E0D9),
+    surfaceDim: Color(0xFFE5E0DC),
     surfaceBright: tarjeta,
     surfaceContainerLowest: tarjeta,
     surfaceContainerLow: contenedorBajo,
@@ -73,9 +78,9 @@ class AppTheme {
     outlineVariant: bordeSuave,
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
-    inverseSurface: Color(0xFF26302B),
-    onInverseSurface: Color(0xFFF2F1EC),
-    inversePrimary: Color(0xFF9FD0BB),
+    inverseSurface: Color(0xFF2E2627),
+    onInverseSurface: Color(0xFFF5EFEE),
+    inversePrimary: Color(0xFFFFB3B8),
     surfaceTint: Colors.transparent,
   );
 
@@ -105,21 +110,21 @@ class AppTheme {
   }
 
 
-  /// Modo oscuro premium: carbón verdoso cálido, verde menta y oro (mismo lenguaje que el claro).
-  static const fondoOscuro = Color(0xFF0F1513);
-  static const tarjetaOscura = Color(0xFF171F1C);
+  /// Modo oscuro premium: carbón cálido, rojo claro de la marca y oro (mismo lenguaje que el claro).
+  static const fondoOscuro = Color(0xFF141112);
+  static const tarjetaOscura = Color(0xFF1E1A1B);
 
   static const ColorScheme _esquemaOscuro = ColorScheme(
     brightness: Brightness.dark,
-    primary: Color(0xFF86CDAD),
-    onPrimary: Color(0xFF00382A),
-    primaryContainer: Color(0xFF1F4A3C),
-    onPrimaryContainer: Color(0xFFC3EAD8),
-    secondary: Color(0xFFA9C2B6),
-    onSecondary: Color(0xFF15291F),
-    secondaryContainer: Color(0xFF2A3A33),
-    onSecondaryContainer: Color(0xFFD5E5DC),
-    tertiary: Color(0xFFE2B65E),
+    primary: Color(0xFFFF8A92),
+    onPrimary: Color(0xFF5E0712),
+    primaryContainer: Color(0xFF7A1020),
+    onPrimaryContainer: Color(0xFFFFDADC),
+    secondary: Color(0xFFD8C2C3),
+    onSecondary: Color(0xFF3B2D2E),
+    secondaryContainer: Color(0xFF4A3A3B),
+    onSecondaryContainer: Color(0xFFF2DEDF),
+    tertiary: Color(0xFFF2B54A),
     onTertiary: Color(0xFF2B1F05),
     tertiaryContainer: Color(0xFF4A3814),
     onTertiaryContainer: Color(0xFFF6E4BE),
@@ -128,21 +133,21 @@ class AppTheme {
     errorContainer: Color(0xFF6B1E18),
     onErrorContainer: Color(0xFFF9DEDB),
     surface: fondoOscuro,
-    onSurface: Color(0xFFE8ECE8),
-    onSurfaceVariant: Color(0xFFA6B1AB),
-    surfaceDim: Color(0xFF0B100E),
-    surfaceBright: Color(0xFF2B3531),
-    surfaceContainerLowest: Color(0xFF0B100E),
-    surfaceContainerLow: Color(0xFF131A17),
-    surfaceContainer: Color(0xFF1C2421),
-    surfaceContainerHigh: Color(0xFF232C28),
-    surfaceContainerHighest: Color(0xFF2A3430),
-    outline: Color(0xFF6F7C75),
-    outlineVariant: Color(0xFF2B3631),
+    onSurface: Color(0xFFEDE6E6),
+    onSurfaceVariant: Color(0xFFBBAFB0),
+    surfaceDim: Color(0xFF0F0D0D),
+    surfaceBright: Color(0xFF3A3233),
+    surfaceContainerLowest: Color(0xFF0F0D0D),
+    surfaceContainerLow: Color(0xFF1A1617),
+    surfaceContainer: Color(0xFF221D1E),
+    surfaceContainerHigh: Color(0xFF2B2526),
+    surfaceContainerHighest: Color(0xFF342D2E),
+    outline: Color(0xFF8A7F80),
+    outlineVariant: Color(0xFF3A3233),
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
-    inverseSurface: Color(0xFFE8ECE8),
-    onInverseSurface: Color(0xFF1B2420),
+    inverseSurface: Color(0xFFEDE6E6),
+    onInverseSurface: Color(0xFF231D1E),
     inversePrimary: verde,
     surfaceTint: Colors.transparent,
   );

@@ -68,7 +68,7 @@ Future<void> mostrarAvisoConBotones(Map<String, dynamic> d) async {
   final id = int.tryParse('${d['id']}') ?? DateTime.now().millisecondsSinceEpoch ~/ 1000;
   await _local.show(
     id,
-    d['titulo'] as String? ?? 'Fútbol Fantasy',
+    d['titulo'] as String? ?? 'Pachanga Fantasy',
     d['cuerpo'] as String? ?? '',
     _detalles(),
     payload: jsonEncode({'id': id, 'ruta': d['ruta'], 'voy': d['url_voy'], 'no': d['url_no']}),
@@ -97,7 +97,7 @@ Future<void> _responder(NotificationResponse r) async {
     texto = tr('No se ha podido responder: ábrelo en la app');
   }
   // Se sustituye la notificación por la confirmación (sin botones)
-  await _local.show(id, 'Fútbol Fantasy', texto, _detalles(botones: false), payload: jsonEncode({'ruta': p['ruta']}));
+  await _local.show(id, 'Pachanga Fantasy', texto, _detalles(botones: false), payload: jsonEncode({'ruta': p['ruta']}));
 }
 
 /// Mensajes con la app cerrada o en segundo plano (Android).

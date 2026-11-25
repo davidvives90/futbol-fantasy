@@ -116,7 +116,7 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
                 value: 'puntos',
                 groupValue: modo,
                 title: const Tx('Solo puntos'),
-                subtitle: const Tx('Ranking de Mejor pronosticador. Cada uno tiene 100 puntos por partido.'),
+                subtitle: const Tx('Ranking de Mejor pronosticador. Cada uno tiene 50 puntos por partido.'),
                 onChanged: (v) => setD(() => modo = v!),
               ),
               RadioListTile<String>(
@@ -133,8 +133,8 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
                 decoration: InputDecoration(
                   labelText: tr('Tope por partido (opcional)'),
                   helperText: modo == 'dinero'
-                      ? trf('Vacío = {x} M (la mitad del valor base)', {'x': (l.fantasy.valorBase / 2).toStringAsFixed(0)})
-                      : tr('Vacío = 100 puntos'),
+                      ? trf('Vacío = {x} M (una décima parte del valor base)', {'x': (l.fantasy.valorBase / 10).toStringAsFixed(0)})
+                      : tr('Vacío = 50 puntos'),
                 ),
               ),
             ]),

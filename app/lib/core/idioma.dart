@@ -87,10 +87,83 @@ Future<void> sincronizarIdioma() async {
 
 final idiomaProvider = NotifierProvider<IdiomaNotifier, String>(IdiomaNotifier.new);
 
-/// Bandera o código corto de cada idioma (las lenguas cooficiales no tienen emoji de bandera).
+/// Bandera emoji de cada idioma. Catalán, gallego y euskera no tienen emoji: se dibujan (BanderaIdioma).
 const banderasIdioma = <String, String>{
-  'es': '🇪🇸', 'ca': 'CA', 'gl': 'GL', 'eu': 'EU', 'en': '🇬🇧', 'de': '🇩🇪', 'it': '🇮🇹', 'nl': '🇳🇱', 'fr': '🇫🇷',
+  'es': '🇪🇸', 'en': '🇬🇧', 'de': '🇩🇪', 'it': '🇮🇹', 'nl': '🇳🇱', 'fr': '🇫🇷',
 };
+
+/// Bandera de un idioma: emoji o, para ca/gl/eu, la senyera, la bandera de Galicia y la ikurriña dibujadas.
+class BanderaIdioma extends StatelessWidget {
+  const BanderaIdioma(this.idioma, {super.key, this.alto = 16});
+  final String idioma;
+  final double alto;
+
+  @override
+  Widget build(BuildContext context) {
+    final emoji = banderasIdioma[idioma];
+    if (emoji != null) return Text(emoji, style: TextStyle(fontSize: alto * 1.1, height: 1));
+    if (!const {'ca', 'gl', 'eu'}.contains(idioma)) {
+      return Text(idioma.toUpperCase(), style: TextStyle(fontSize: alto * 0.75, fontWeight: FontWeight.w700));
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(2),
+      child: SizedBox(
+        width: alto * 1.5,
+        height: alto,
+        child: CustomPaint(painter: _PintorBandera(idioma)),
+      ),
+    );
+  }
+}
+
+class _PintorBandera extends CustomPainter {
+  _PintorBandera(this.idioma);
+  final String idioma;
+
+  @override
+  void paint(Canvas c, Size s) {
+    final r = Offset.zero & s;
+    final p = Paint()..isAntiAlias = true;
+    switch (idioma) {
+      case 'ca': // Senyera: 9 franjas, amarillo y rojo
+        p.color = const Color(0xFFFCDD09);
+        c.drawRect(r, p);
+        p.color = const Color(0xFFDA121A);
+        final f = s.height / 9;
+        for (var i = 1; i < 9; i += 2) {
+          c.drawRect(Rect.fromLTWH(0, f * i, s.width, f), p);
+        }
+      case 'gl': // Galicia: blanco con banda azul en diagonal
+        p.color = Colors.white;
+        c.drawRect(r, p);
+        p
+          ..color = const Color(0xFF0099CC)
+          ..strokeWidth = s.height * 0.24
+          ..strokeCap = StrokeCap.square;
+        c.drawLine(Offset.zero, Offset(s.width, s.height), p);
+        p
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.6
+          ..color = const Color(0x33000000);
+        c.drawRect(r.deflate(0.3), p);
+      case 'eu': // Ikurriña: rojo, aspa verde y cruz blanca
+        p.color = const Color(0xFFD52B1E);
+        c.drawRect(r, p);
+        p
+          ..color = const Color(0xFF009B48)
+          ..strokeWidth = s.height * 0.16;
+        c.drawLine(Offset.zero, Offset(s.width, s.height), p);
+        c.drawLine(Offset(s.width, 0), Offset(0, s.height), p);
+        p.color = Colors.white;
+        final g = s.height * 0.14;
+        c.drawRect(Rect.fromLTWH(0, (s.height - g) / 2, s.width, g), p);
+        c.drawRect(Rect.fromLTWH((s.width - g) / 2, 0, g, s.height), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PintorBandera old) => old.idioma != idioma;
+}
 
 /// Selector visual de idioma (0053): fila de banderas para el login y la creación del perfil.
 class SelectorIdioma extends ConsumerWidget {
@@ -109,8 +182,7 @@ class SelectorIdioma extends ConsumerWidget {
             selected: e.key == actual,
             selectedColor: cs.primaryContainer,
             visualDensity: VisualDensity.compact,
-            label: Text(banderasIdioma[e.key] ?? e.key.toUpperCase(),
-                style: TextStyle(fontSize: (banderasIdioma[e.key]?.length ?? 2) > 2 ? 18 : 12, fontWeight: FontWeight.w700)),
+            label: BanderaIdioma(e.key, alto: 16),
             onSelected: (_) => ref.read(idiomaProvider.notifier).elegir(e.key),
           ),
         ),
@@ -120,6 +192,10 @@ class SelectorIdioma extends ConsumerWidget {
 
 /// Traducciones (orden: català, galego, euskara, English, Deutsch, italiano, Nederlands, français).
 const _textos = <String, List<String>>{
+  '{n} no marca': ['{n} no marca', '{n} non marca', '{n}(e)k ez du golik sartzen', '{n} does not score', '{n} trifft nicht', '{n} non segna', '{n} scoort niet', '{n} ne marque pas'],
+  'ganancia máxima {x} por boleto': ['guany màxim {x} per butlleta', 'ganancia máxima {x} por boleto', 'gehienezko irabazia {x} txarteleko', 'max. winnings {x} per slip', 'max. Gewinn {x} pro Schein', 'vincita massima {x} a schedina', 'max. winst {x} per briefje', 'gain maximal {x} par bulletin'],
+  'No marca (ningún gol)': ['No marca (cap gol)', 'Non marca (ningún gol)', 'Ez du golik sartzen', 'Does not score', 'Trifft nicht (kein Tor)', 'Non segna (nessun gol)', 'Scoort niet (geen goal)', 'Ne marque pas (aucun but)'],
+  'Fácil de acertar: paga muy poco': ['Fàcil d\'encertar: paga molt poc', 'Fácil de acertar: paga moi pouco', 'Asmatzeko erraza: oso gutxi ordaintzen du', 'Easy to get right: pays very little', 'Leicht zu treffen: zahlt sehr wenig', 'Facile da indovinare: paga pochissimo', 'Makkelijk te raden: betaalt heel weinig', 'Facile à deviner : paie très peu'],
   'Ataque': ['Atac', 'Ataque', 'Erasoa', 'Attack', 'Angriff', 'Attacco', 'Aanval', 'Attaque'],
   'Portería': ['Porteria', 'Portería', 'Atea', 'Goalkeeping', 'Tor', 'Porta', 'Doel', 'But'],
   'Constancia': ['Constància', 'Constancia', 'Iraunkortasuna', 'Consistency', 'Beständigkeit', 'Costanza', 'Volharding', 'Constance'],
@@ -158,12 +234,12 @@ const _textos = <String, List<String>>{
   'Activar la porra': ['Activar la porra', 'Activar a porra', 'Porra aktibatu', 'Turn on the pool', 'Tippspiel aktivieren', 'Attiva i pronostici', 'Pool aanzetten', 'Activer les pronostics'],
   'Con los equipos hechos, cada uno pronostica 1-X-2, goleador o MVP hasta el pitido inicial.': ['Amb els equips fets, cadascú pronostica 1-X-2, golejador o MVP fins al xiulet inicial.', 'Cos equipos feitos, cada un prognostica 1-X-2, goleador ou MVP ata o asubío inicial.', 'Taldeak eginda, bakoitzak 1-X-2, golegilea edo MVPa iragartzen du hasierako txistura arte.', 'Once teams are set, everyone predicts 1-X-2, scorer or MVP until kick-off.', 'Sobald die Teams stehen, tippt jeder 1-X-2, Torschützen oder MVP bis zum Anpfiff.', 'Con le squadre fatte, ognuno pronostica 1-X-2, marcatore o MVP fino al fischio d\'inizio.', 'Met de teams gemaakt voorspelt iedereen 1-X-2, scorer of MVP tot de aftrap.', 'Une fois les équipes faites, chacun pronostique 1-X-2, buteur ou MVP jusqu\'au coup d\'envoi.'],
   'Solo puntos': ['Només punts', 'Só puntos', 'Puntuak bakarrik', 'Points only', 'Nur Punkte', 'Solo punti', 'Alleen punten', 'Points seulement'],
-  'Ranking de Mejor pronosticador. Cada uno tiene 100 puntos por partido.': ['Rànquing de Millor pronosticador. Cadascú té 100 punts per partit.', 'Ranking de Mellor prognosticador. Cada un ten 100 puntos por partido.', 'Iragarle onenaren sailkapena. Bakoitzak 100 puntu ditu partidako.', 'Best Predictor ranking. Everyone has 100 points per match.', 'Rangliste Bester Tipper. Jeder hat 100 Punkte pro Spiel.', 'Classifica Miglior pronosticatore. Ognuno ha 100 punti a partita.', 'Ranglijst Beste voorspeller. Iedereen heeft 100 punten per wedstrijd.', 'Classement Meilleur pronostiqueur. Chacun a 100 points par match.'],
+  'Ranking de Mejor pronosticador. Cada uno tiene 50 puntos por partido.': ['Rànquing de Millor pronosticador. Cadascú té 50 punts per partit.', 'Ranking de Mellor prognosticador. Cada un ten 50 puntos por partido.', 'Iragarle onenaren sailkapena. Bakoitzak 50 puntu ditu partidako.', 'Best Predictor ranking. Everyone has 50 points per match.', 'Rangliste Bester Tipper. Jeder hat 50 Punkte pro Spiel.', 'Classifica Miglior pronosticatore. Ognuno ha 50 punti a partita.', 'Ranglijst Beste voorspeller. Iedereen heeft 50 punten per wedstrijd.', 'Classement Meilleur pronostiqueur. Chacun a 50 points par match.'],
   'Con dinero Fantasy': ['Amb diners Fantasy', 'Con diñeiro Fantasy', 'Fantasy diruarekin', 'With Fantasy money', 'Mit Fantasy-Geld', 'Con denaro Fantasy', 'Met Fantasy-geld', 'Avec l\'argent Fantasy'],
   'Se apuesta del saldo del Fantasy y se cobra en el saldo.': ['S\'aposta del saldo del Fantasy i es cobra al saldo.', 'Apóstase do saldo do Fantasy e cóbrase no saldo.', 'Fantasy saldotik apustatzen da eta saldoan kobratzen da.', 'Bets come from your Fantasy balance and winnings go back to it.', 'Es wird mit dem Fantasy-Guthaben gespielt und dorthin ausgezahlt.', 'Si punta dal saldo Fantasy e si incassa sul saldo.', 'Je zet in vanuit je Fantasy-saldo en wint terug op je saldo.', 'On mise sur le solde Fantasy et on encaisse sur le solde.'],
   'Tope por partido (opcional)': ['Límit per partit (opcional)', 'Tope por partido (opcional)', 'Partidako muga (aukerakoa)', 'Cap per match (optional)', 'Höchstbetrag pro Spiel (optional)', 'Tetto a partita (facoltativo)', 'Maximum per wedstrijd (optioneel)', 'Plafond par match (facultatif)'],
-  'Vacío = {x} M (la mitad del valor base)': ['Buit = {x} M (la meitat del valor base)', 'Baleiro = {x} M (a metade do valor base)', 'Hutsik = {x} M (oinarrizko balioaren erdia)', 'Empty = {x} M (half the base value)', 'Leer = {x} M (die Hälfte des Basiswerts)', 'Vuoto = {x} M (metà del valore base)', 'Leeg = {x} M (de helft van de basiswaarde)', 'Vide = {x} M (la moitié de la valeur de base)'],
-  'Vacío = 100 puntos': ['Buit = 100 punts', 'Baleiro = 100 puntos', 'Hutsik = 100 puntu', 'Empty = 100 points', 'Leer = 100 Punkte', 'Vuoto = 100 punti', 'Leeg = 100 punten', 'Vide = 100 points'],
+  'Vacío = {x} M (una décima parte del valor base)': ['Buit = {x} M (una desena part del valor base)', 'Baleiro = {x} M (unha décima parte do valor base)', 'Hutsik = {x} M (oinarrizko balioaren hamarrena)', 'Empty = {x} M (a tenth of the base value)', 'Leer = {x} M (ein Zehntel des Basiswerts)', 'Vuoto = {x} M (un decimo del valore base)', 'Leeg = {x} M (een tiende van de basiswaarde)', 'Vide = {x} M (un dixième de la valeur de base)'],
+  'Vacío = 50 puntos': ['Buit = 50 punts', 'Baleiro = 50 puntos', 'Hutsik = 50 puntu', 'Empty = 50 points', 'Leer = 50 Punkte', 'Vuoto = 50 punti', 'Leeg = 50 punten', 'Vide = 50 points'],
   'Activada · con dinero Fantasy': ['Activada · amb diners Fantasy', 'Activada · con diñeiro Fantasy', 'Aktibatuta · Fantasy diruarekin', 'On · with Fantasy money', 'Aktiv · mit Fantasy-Geld', 'Attiva · con denaro Fantasy', 'Aan · met Fantasy-geld', 'Activée · avec l\'argent Fantasy'],
   'Activada · solo puntos': ['Activada · només punts', 'Activada · só puntos', 'Aktibatuta · puntuak bakarrik', 'On · points only', 'Aktiv · nur Punkte', 'Attiva · solo punti', 'Aan · alleen punten', 'Activée · points seulement'],
   'Desactivada': ['Desactivada', 'Desactivada', 'Desaktibatuta', 'Off', 'Aus', 'Disattivata', 'Uit', 'Désactivée'],
@@ -816,7 +892,7 @@ const _textos = <String, List<String>>{
   'Todo lo demás (reglas, fijos, Fantasy…) ya está listo con valores por defecto. Lo puedes cambiar cuando quieras en Liga › Ajustes.': ['Tota la resta (normes, fixos, Fantasy…) ja està llest amb valors per defecte. Ho pots canviar quan vulguis a Lliga › Ajustos.', 'Todo o demais (regras, fixos, Fantasy…) xa está listo con valores por defecto. Podes cambialo cando queiras en Liga › Axustes.', 'Gainerako guztia (arauak, finkoak, Fantasy…) prest dago balio lehenetsiekin. Nahi duzunean alda dezakezu Liga › Ezarpenak atalean.', 'Everything else (rules, regulars, Fantasy…) is ready with default settings. You can change it any time in League › Settings.', 'Alles andere (Regeln, Stammspieler, Fantasy…) ist mit Standardwerten fertig. Du kannst es jederzeit unter Liga › Einstellungen ändern.', 'Tutto il resto (regole, fissi, Fantasy…) è già pronto con i valori predefiniti. Puoi cambiarlo quando vuoi in Lega › Impostazioni.', 'Al het andere (regels, vaste spelers, Fantasy…) staat klaar met standaardwaarden. Je kunt het altijd wijzigen in Competitie › Instellingen.', 'Tout le reste (règles, titulaires, Fantasy…) est prêt avec les valeurs par défaut. Tu peux le modifier quand tu veux dans Ligue › Réglages.'],
   'Siguiente': ['Següent', 'Seguinte', 'Hurrengoa', 'Next', 'Weiter', 'Avanti', 'Volgende', 'Suivant'],
   'Ir a mi liga': ['Anar a la meva lliga', 'Ir á miña liga', 'Nire ligara joan', 'Go to my league', 'Zu meiner Liga', 'Vai alla mia lega', 'Naar mijn competitie', 'Aller à ma ligue'],
-  '⚽ Únete a «{liga}» en Fútbol Fantasy.\nEntra en {web} (o en la app) y usa el código *{codigo}*.': ['⚽ Uneix-te a «{liga}» a Fútbol Fantasy.\nEntra a {web} (o a l\'app) i fes servir el codi *{codigo}*.', '⚽ Únete a «{liga}» en Fútbol Fantasy.\nEntra en {web} (ou na app) e usa o código *{codigo}*.', '⚽ Batu «{liga}» ligara Fútbol Fantasy-n.\nSartu {web} helbidean (edo aplikazioan) eta erabili *{codigo}* kodea.', '⚽ Join «{liga}» on Fútbol Fantasy.\nGo to {web} (or the app) and use the code *{codigo}*.', '⚽ Tritt «{liga}» bei Fútbol Fantasy bei.\nÖffne {web} (oder die App) und nutze den Code *{codigo}*.', '⚽ Unisciti a «{liga}» su Fútbol Fantasy.\nVai su {web} (o nell\'app) e usa il codice *{codigo}*.', '⚽ Doe mee met «{liga}» op Fútbol Fantasy.\nGa naar {web} (of de app) en gebruik de code *{codigo}*.', '⚽ Rejoins « {liga} » sur Fútbol Fantasy.\nVa sur {web} (ou dans l\'app) et utilise le code *{codigo}*.'],
+  '⚽ Únete a «{liga}» en Pachanga Fantasy.\nEntra en {web} (o en la app) y usa el código *{codigo}*.': ['⚽ Uneix-te a «{liga}» a Pachanga Fantasy.\nEntra a {web} (o a l\'app) i fes servir el codi *{codigo}*.', '⚽ Únete a «{liga}» en Pachanga Fantasy.\nEntra en {web} (ou na app) e usa o código *{codigo}*.', '⚽ Batu «{liga}» ligara Pachanga Fantasy-n.\nSartu {web} helbidean (edo aplikazioan) eta erabili *{codigo}* kodea.', '⚽ Join «{liga}» on Pachanga Fantasy.\nGo to {web} (or the app) and use the code *{codigo}*.', '⚽ Tritt «{liga}» bei Pachanga Fantasy bei.\nÖffne {web} (oder die App) und nutze den Code *{codigo}*.', '⚽ Unisciti a «{liga}» su Pachanga Fantasy.\nVai su {web} (o nell\'app) e usa il codice *{codigo}*.', '⚽ Doe mee met «{liga}» op Pachanga Fantasy.\nGa naar {web} (of de app) en gebruik de code *{codigo}*.', '⚽ Rejoins « {liga} » sur Pachanga Fantasy.\nVa sur {web} (ou dans l\'app) et utilise le code *{codigo}*.'],
   'Votar': ['Votar', 'Votar', 'Bozkatu', 'Vote', 'Abstimmen', 'Vota', 'Stemmen', 'Voter'],
   'Hacerlo ahora': ['Fer-ho ara', 'Facelo agora', 'Orain egin', 'Do it now', 'Jetzt erledigen', 'Fallo ora', 'Nu doen', 'Le faire maintenant'],
   'Ir a Caja': ['Anar a Caixa', 'Ir a Caixa', 'Kutxara joan', 'Go to Cash', 'Zur Kasse', 'Vai alla Cassa', 'Naar Kas', 'Aller à la Caisse'],
@@ -907,7 +983,7 @@ const _textos = <String, List<String>>{
   'Unirse a una liga': ['Unir-se a una lliga', 'Unirse a unha liga', 'Liga batera batu', 'Join a league', 'Einer Liga beitreten', 'Unisciti a una lega', 'Deelnemen aan een competitie', 'Rejoindre une ligue'],
   'Buscar ligas': ['Cercar lligues', 'Buscar ligas', 'Ligak bilatu', 'Find leagues', 'Ligen suchen', 'Cerca leghe', 'Competities zoeken', 'Chercher des ligues'],
   'Abandonar la liga': ['Abandonar la lliga', 'Abandonar a liga', 'Liga utzi', 'Leave league', 'Liga verlassen', 'Lascia la lega', 'Competitie verlaten', 'Quitter la ligue'],
-  'Fútbol Fantasy': ['Fútbol Fantasy', 'Fútbol Fantasy', 'Fútbol Fantasy', 'Fútbol Fantasy', 'Fútbol Fantasy', 'Fútbol Fantasy', 'Fútbol Fantasy', 'Fútbol Fantasy'],
+  'Pachanga Fantasy': ['Pachanga Fantasy', 'Pachanga Fantasy', 'Pachanga Fantasy', 'Pachanga Fantasy', 'Pachanga Fantasy', 'Pachanga Fantasy', 'Pachanga Fantasy', 'Pachanga Fantasy'],
   'Convocatorias, caja y liga Fantasy con tus amigos': ['Convocatòries, caixa i lliga Fantasy amb els teus amics', 'Convocatorias, caixa e liga Fantasy cos teus amigos', 'Deialdiak, kutxa eta Fantasy liga zure lagunekin', 'Line-ups, money and a Fantasy league with your friends', 'Aufstellungen, Kasse und Fantasy-Liga mit deinen Freunden', 'Convocazioni, cassa e lega Fantasy con i tuoi amici', 'Opstellingen, kas en Fantasy-competitie met je vrienden', 'Convocations, caisse et ligue Fantasy entre amis'],
   'Continuar con Google': ['Continuar amb Google', 'Continuar con Google', 'Jarraitu Googlerekin', 'Continue with Google', 'Weiter mit Google', 'Continua con Google', 'Doorgaan met Google', 'Continuer avec Google'],
   'Usar otro email': ['Fer servir un altre correu', 'Usar outro correo', 'Beste posta bat erabili', 'Use another email', 'Andere E-Mail verwenden', 'Usa un\'altra email', 'Ander e-mailadres gebruiken', 'Utiliser un autre e-mail'],

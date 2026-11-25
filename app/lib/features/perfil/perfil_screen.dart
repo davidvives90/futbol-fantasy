@@ -151,7 +151,11 @@ class PerfilScreen extends ConsumerWidget {
         ListTile(
           leading: const Icon(Icons.translate),
           title: const Text('Idioma · Language'),
-          subtitle: Text(idiomas[ref.watch(idiomaProvider)] ?? ''),
+          subtitle: Row(children: [
+            BanderaIdioma(ref.watch(idiomaProvider), alto: 13),
+            const SizedBox(width: 8),
+            Text(idiomas[ref.watch(idiomaProvider)] ?? ''),
+          ]),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => showDialog<void>(
             context: context,
@@ -162,7 +166,7 @@ class PerfilScreen extends ConsumerWidget {
                   RadioListTile<String>(
                     value: e.key,
                     groupValue: ref.read(idiomaProvider),
-                    title: Text(e.value),
+                    title: Row(children: [BanderaIdioma(e.key, alto: 16), const SizedBox(width: 10), Text(e.value)]),
                     onChanged: (v) {
                       Navigator.pop(c);
                       if (v != null) ref.read(idiomaProvider.notifier).elegir(v);

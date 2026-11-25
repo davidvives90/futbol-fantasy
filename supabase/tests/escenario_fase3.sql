@@ -29,16 +29,16 @@ select t_confirmar(:'p');
 select t_debe_fallar(format($$select apostar(%L, 'sencilla', '[{"mercado":"1x2","seleccion":"1"}]', 10)$$, :'p'),
                      'sin activar la porra no se apuesta');
 reset role;
-update ligas set porra_activa = true where id = :'lp';
+update ligas set porra_activa = true, porra_max = 100 where id = :'lp';
 set role authenticated;
 select t_como(1001);
 select t_debe_fallar(format($$select apostar(%L, 'sencilla', '[{"mercado":"1x2","seleccion":"1"}]', 10)$$, :'p'),
                      'antes de hacer equipos, cerrada');
 select guardar_equipos(:'p', jsonb_build_object(t_m(1001), 1, t_m(1002), 1, t_m(1003), 1, t_m(1004), 2, t_m(1005), 2, t_m(1006), 2));
 select t_check((porra_partido(:'p') ->> 'abierta')::boolean, 'con equipos hechos, abierta');
-select t_check(jsonb_array_length(porra_partido(:'p') -> 'cuotas') = 3 + 6 + 6, 'cuotas: 1X2, goleador y MVP');
+select t_check(jsonb_array_length(porra_partido(:'p') -> 'cuotas') = 3 + 6 + 6 + 6, 'cuotas: 1X2, marca, no marca y MVP');
 reset role;
-select t_check((select bool_and(cuota between 1.05 and 25) from porra_cuotas where partido_id = :'p'), 'cuotas entre 1,05 y 25');
+select t_check((select bool_and(cuota between 1.02 and 25) from porra_cuotas where partido_id = :'p'), 'cuotas entre 1,05 y 25');
 select t_check(abs((select sum(prob) from porra_cuotas where partido_id = :'p' and mercado = '1x2') - 1) < 0.01, '1X2 suma 100 %');
 set role authenticated;
 
@@ -82,7 +82,7 @@ select t_check((select retorno from apuestas where partido_id = :'p' and miembro
 select t_check(jsonb_array_length(ranking_porra(:'lp')) = 3, 'ranking de pronosticadores');
 
 -- Porra con dinero Fantasy
-update ligas set porra_modo = 'dinero', fantasy_activo = true where id = :'lp';
+update ligas set porra_modo = 'dinero', fantasy_activo = true, porra_max = null where id = :'lp';
 set role authenticated;
 select t_como(1001);
 select entrar_fantasy(current_setting('t.liga')::uuid);
@@ -94,10 +94,10 @@ update fantasy_managers set saldo = 100 where miembro_id = t_m(1001);
 set role authenticated;
 select t_como(1001);
 select (select saldo from fantasy_managers where miembro_id = t_m(1001)) as s0 \gset
-select apostar(:'q', 'sencilla', '[{"mercado":"1x2","seleccion":"X"}]', 10);
-select t_check((select saldo from fantasy_managers where miembro_id = t_m(1001)) = :'s0'::numeric - 10, 'dinero: se descuenta');
-select t_debe_fallar(format($$select apostar(%L, 'sencilla', '[{"mercado":"1x2","seleccion":"1"}]', 20)$$, :'q'),
-                     'dinero: tope = mitad del valor base (25 M)');
+select apostar(:'q', 'sencilla', '[{"mercado":"1x2","seleccion":"X"}]', 4);
+select t_check((select saldo from fantasy_managers where miembro_id = t_m(1001)) = :'s0'::numeric - 4, 'dinero: se descuenta');
+select t_debe_fallar(format($$select apostar(%L, 'sencilla', '[{"mercado":"1x2","seleccion":"1"}]', 2)$$, :'q'),
+                     'dinero: tope = una décima parte del valor base (5 M)');
 reset role;
 update partidos set estado = 'cancelado' where id = :'q';
 select t_check((select saldo from fantasy_managers where miembro_id = t_m(1001)) = :'s0'::numeric, 'cancelado: se devuelve');

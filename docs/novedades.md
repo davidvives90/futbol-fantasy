@@ -14,6 +14,9 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Nueva imagen: la app pasa a llamarse Pachanga Fantasy, con el logo nuevo como icono y los colores de la marca (rojo y oro) en toda la app y en la web.
+- Porra más prudente: como mucho se ganan 10 M por boleto (100 pts en modo puntos) y por defecto se apuestan hasta 5 M por partido. Nuevo pronóstico «no marca»; «marca» y «no marca» pagan muy poco, el valor está en acertar el resultado y el MVP.
+- Idiomas con bandera: senyera para el catalán, bandera de Galicia para el gallego e ikurriña para el euskera.
 - 150 logros: 30 familias con 5 niveles (Bronce, Plata, Oro, Diamante y Leyenda) de goles, portería, rachas, votaciones, Fantasy y porra. Los de humor (autogoles, rachas de derrotas…) son secretos hasta que los consigues. Ficha del jugador › Ver todos, con tu progreso y el % de la liga que tiene cada uno.
 - Avisos con humor: los avisos habituales llegan con un título con gracia en tu idioma. Se quitan en Perfil › Preferencias (o para toda la liga en Ajustes de la liga).
 - Preguntas frecuentes con buscador: Perfil › Ayuda › Preguntas frecuentes.

@@ -1,7 +1,7 @@
 import '../../core/supabase.dart';
 import '../../core/utils.dart';
 
-/// Un pronóstico del boleto: mercado '1x2' | 'goleador' | 'mvp' y la selección ('1', 'X', '2' o el id del jugador).
+/// Un pronóstico del boleto: mercado '1x2' | 'goleador' | 'no_goleador' | 'mvp' y la selección ('1', 'X', '2' o el id del jugador).
 class Pronostico {
   const Pronostico(this.mercado, this.seleccion, this.cuota, {this.acierto});
   final String mercado, seleccion;
@@ -62,10 +62,13 @@ class EstadoPorra {
     required this.mias,
     required this.todas,
     this.saldo,
+    this.maxGanancia,
   });
   final bool abierta;
   final String modo;
   final double tope, apostado;
+  /// 0057: lo máximo que se puede ganar con un boleto (10 M o 100 pts).
+  final double? maxGanancia;
   final double? saldo;
   final List<Pronostico> cuotas;
   final List<Boleto> mias, todas;
@@ -79,6 +82,7 @@ class EstadoPorra {
         tope: toDouble(m['tope']) ?? 100,
         apostado: toDouble(m['apostado']) ?? 0,
         saldo: toDouble(m['saldo']),
+        maxGanancia: toDouble(m['max_ganancia']),
         cuotas: [for (final x in (m['cuotas'] as List? ?? const [])) Pronostico.fromMap(Map<String, dynamic>.from(x as Map))],
         mias: [for (final x in (m['mias'] as List? ?? const [])) Boleto.fromMap(Map<String, dynamic>.from(x as Map))],
         todas: [for (final x in (m['todas'] as List? ?? const [])) Boleto.fromMap(Map<String, dynamic>.from(x as Map))],
@@ -86,7 +90,7 @@ class EstadoPorra {
 }
 
 /// Retorno de un boleto si aciertan los pronósticos marcados (mismo cálculo que el servidor, 0055).
-double retornoBoleto(String tipo, double importe, bool seguro, List<(double, bool)> sel) {
+double retornoBoleto(String tipo, double importe, bool seguro, List<(double, bool)> sel, {double? maxGanancia}) {
   var bruto = 0.0;
   if (tipo == 'multiple') {
     final n = sel.length;
@@ -101,6 +105,7 @@ double retornoBoleto(String tipo, double importe, bool seguro, List<(double, boo
     bruto = ok ? sel.fold<double>(importe, (a, s) => a * s.$1) : 0;
   }
   if (seguro) bruto = bruto >= importe ? importe + (bruto - importe) * 0.70 : (bruto > importe * 0.5 ? bruto : importe * 0.5);
+  if (maxGanancia != null && bruto > importe + maxGanancia) bruto = importe + maxGanancia;
   return (bruto * 100).round() / 100;
 }
 

@@ -89,9 +89,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               const SelectorIdioma(),
               const SizedBox(height: 16),
-              Icon(Icons.sports_soccer, size: 72, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 12),
-              Tx('Fútbol Fantasy', textAlign: TextAlign.center, style: t.headlineMedium),
+              // Logo (ya lleva el nombre de la app)
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.asset('assets/icono/icono.png', width: 128, height: 128, semanticLabel: 'Pachanga Fantasy'),
+                ),
+              ),
+              const SizedBox(height: 16),
               Tx('Convocatorias, caja y liga Fantasy con tus amigos',
                   textAlign: TextAlign.center, style: t.bodyMedium),
               const SizedBox(height: 32),

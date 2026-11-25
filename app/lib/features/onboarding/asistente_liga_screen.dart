@@ -97,7 +97,7 @@ class _AsistenteLigaScreenState extends ConsumerState<AsistenteLigaScreen> {
           Text('Código de la liga: ${mi.liga.codigoInvitacion}', style: t.titleMedium, textAlign: TextAlign.center),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => Share.share('⚽ Únete a «${mi.liga.nombre}» en Fútbol Fantasy.\n'
+            onPressed: () => Share.share('⚽ Únete a «${mi.liga.nombre}» en Pachanga Fantasy.\n'
                 'Entra en ${Env.webApp} (o en la app) y usa el código *${mi.liga.codigoInvitacion}*.\n'
                 'Si te he creado ficha, en la pestaña Liga tienes tu enlace personal.'),
             icon: const Icon(Icons.share),

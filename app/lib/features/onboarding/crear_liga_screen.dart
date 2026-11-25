@@ -332,7 +332,7 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
   }
 
   void _compartir() => Share.share(trf(
-      '⚽ Únete a «{liga}» en Fútbol Fantasy.\nEntra en {web} (o en la app) y usa el código *{codigo}*.',
+      '⚽ Únete a «{liga}» en Pachanga Fantasy.\nEntra en {web} (o en la app) y usa el código *{codigo}*.',
       {'liga': _nombre.text.trim(), 'web': Env.webApp, 'codigo': _codigo ?? ''}));
 
   Widget _interruptor(String titulo, String sub, bool v, ValueChanged<bool> f) => SwitchListTile(

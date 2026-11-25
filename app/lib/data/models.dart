@@ -233,13 +233,13 @@ class Liga {
   /// 0026: la liga puede usar solo convocatorias. 0028: resultado esperado (xG).
   final bool fantasyActivo, prediccionActiva;
 
-  /// 0055: porra del partido. [porraModo] 'puntos' | 'dinero'; [porraMax] null = 100 pts o la mitad del valor base.
+  /// 0055/0057: porra del partido. [porraModo] 'puntos' | 'dinero'; [porraMax] null = 50 pts o una décima parte del valor base.
   final bool porraActiva;
   final String porraModo;
   final double? porraMax;
   /// 0056: avisos con humor (títulos con gracia). Cada jugador también puede quitarlos en su perfil.
   final bool avisosHumor;
-  double get porraTope => porraMax ?? (porraModo == 'dinero' ? fantasy.valorBase / 2 : 100);
+  double get porraTope => porraMax ?? (porraModo == 'dinero' ? fantasy.valorBase / 10 : 50);
 
   /// Fin del partido anterior + X horas (null si no hay partido anterior). Igual que `_base_convocatoria` (0050).
   DateTime? _baseConvocatoria(Partido p, List<Partido> todos) {

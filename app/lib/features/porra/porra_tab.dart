@@ -49,7 +49,12 @@ class _PorraTabState extends ConsumerState<PorraTab> {
         _boleto.remove(p.clave);
       } else {
         // Un solo 1-X-2 y un solo MVP por boleto: el nuevo sustituye al anterior
-        if (p.mercado != 'goleador') _boleto.removeWhere((_, x) => x.mercado == p.mercado);
+        if (p.mercado == '1x2' || p.mercado == 'mvp') _boleto.removeWhere((_, x) => x.mercado == p.mercado);
+        // «Marca» y «no marca» del mismo jugador se excluyen
+        if (p.mercado == 'goleador' || p.mercado == 'no_goleador') {
+          _boleto.removeWhere((_, x) =>
+              x.seleccion == p.seleccion && x.mercado == (p.mercado == 'goleador' ? 'no_goleador' : 'goleador'));
+        }
         _boleto[p.clave] = p;
       }
       _tipoElegido = null;
@@ -73,6 +78,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
             _ => tr('Empate'),
           },
         'goleador' => trf('Marca {n}', {'n': miembros[p.seleccion]?.nombre ?? '…'}),
+        'no_goleador' => trf('{n} no marca', {'n': miembros[p.seleccion]?.nombre ?? '…'}),
         _ => trf('MVP: {n}', {'n': miembros[p.seleccion]?.nombre ?? '…'}),
       };
 
@@ -147,6 +153,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
             ? [
                 e.conDinero ? tr('Con dinero Fantasy') : tr('Solo puntos: ranking de Mejor pronosticador'),
                 trf('te quedan {x} de {t}', {'x': _fmt(e, e.disponible), 't': _fmt(e, e.tope)}),
+                if (e.maxGanancia != null) trf('ganancia máxima {x} por boleto', {'x': _fmt(e, e.maxGanancia!)}),
                 if (e.conDinero && e.saldo != null) trf('saldo {s}', {'s': _fmt(e, e.saldo!)}),
               ].join(' · ')
             : tr('Se abre al hacer los equipos y se liquida al cerrar el acta.')),
@@ -188,9 +195,20 @@ class _PorraTabState extends ConsumerState<PorraTab> {
       ExpansionTile(
         tilePadding: EdgeInsets.zero,
         title: Tx('Goleador (marca al menos un gol)', style: t.titleSmall),
+        subtitle: Tx('Fácil de acertar: paga muy poco', style: t.bodySmall),
         children: [
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final p in e.cuotas.where((c) => c.mercado == 'goleador')) chipJugador(p),
+          ]),
+        ],
+      ),
+      ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        title: Tx('No marca (ningún gol)', style: t.titleSmall),
+        subtitle: Tx('Fácil de acertar: paga muy poco', style: t.bodySmall),
+        children: [
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final p in e.cuotas.where((c) => c.mercado == 'no_goleador')) chipJugador(p),
           ]),
         ],
       ),
@@ -220,9 +238,9 @@ class _PorraTabState extends ConsumerState<PorraTab> {
     final sel = _boleto.values.toList();
     final todos = [for (final s in sel) (s.cuota, true)];
     final ninguno = [for (final s in sel) (s.cuota, false)];
-    final gana = retornoBoleto(_tipo, importe, _seguro, todos);
-    final pierde = retornoBoleto(_tipo, importe, _seguro, ninguno);
-    final sinSeguro = retornoBoleto(_tipo, importe, false, todos);
+    final gana = retornoBoleto(_tipo, importe, _seguro, todos, maxGanancia: e.maxGanancia);
+    final pierde = retornoBoleto(_tipo, importe, _seguro, ninguno, maxGanancia: e.maxGanancia);
+    final sinSeguro = retornoBoleto(_tipo, importe, false, todos, maxGanancia: e.maxGanancia);
     return Card(
       margin: const EdgeInsets.only(top: 12),
       child: Padding(

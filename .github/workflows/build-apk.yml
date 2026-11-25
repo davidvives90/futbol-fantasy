@@ -106,7 +106,7 @@ jobs:
       - name: Icono y nombre de la app
         run: |
           dart run flutter_launcher_icons
-          sed -i 's|android:label="[^"]*"|android:label="Fútbol Fantasy"|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|android:label="[^"]*"|android:label="Pachanga Fantasy"|' android/app/src/main/AndroidManifest.xml
           grep -n 'android:label' android/app/src/main/AndroidManifest.xml
 
       - name: Clave de depuración fija (las versiones de prueba se instalan encima de la anterior)
@@ -198,7 +198,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.9.${{ github.run_number }}
-          name: Fútbol Fantasy 0.9.${{ github.run_number }} · versión de pruebas
+          name: Pachanga Fantasy 0.9.${{ github.run_number }} · versión de pruebas
           body_path: docs/novedades.md
           files: app/build/app/outputs/flutter-apk/app-release.apk
           prerelease: true

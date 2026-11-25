@@ -160,7 +160,7 @@ String textoEquipos({
 }
 
 /// Elegir dónde compartir: WhatsApp directamente o el menú del sistema.
-Future<void> compartirTexto(BuildContext context, String texto, {String asunto = 'Fútbol Fantasy', Widget? tarjeta}) async {
+Future<void> compartirTexto(BuildContext context, String texto, {String asunto = 'Pachanga Fantasy', Widget? tarjeta}) async {
   await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -261,9 +261,9 @@ class TarjetaPartido extends StatelessWidget {
   final Map<String, dynamic> r;
   final Liga liga;
 
-  static const _verde = Color(0xFF0E4B3A);
-  static const _verdeOscuro = Color(0xFF082E24);
-  static const _oro = Color(0xFFE3B341);
+  static const _verde = Color(0xFFC8102E); // rojo de la marca
+  static const _verdeOscuro = Color(0xFF7A0A1C);
+  static const _oro = Color(0xFFF2A229);
   static const _crema = Color(0xFFF4F1E8);
 
   Equipacion _eq(dynamic n) {
@@ -388,7 +388,7 @@ class TarjetaPartido extends StatelessWidget {
         const SizedBox(height: 18),
         contenido,
         const SizedBox(height: 18),
-        Tx('Fútbol Fantasy', style: TextStyle(color: _oro.withValues(alpha: 0.9), fontSize: 11, letterSpacing: 2)),
+        Tx('Pachanga Fantasy', style: TextStyle(color: _oro.withValues(alpha: 0.9), fontSize: 11, letterSpacing: 2)),
       ]),
     );
   }

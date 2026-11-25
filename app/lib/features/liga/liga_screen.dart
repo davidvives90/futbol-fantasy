@@ -22,7 +22,7 @@ import '../../core/info.dart';
 String _enlacePersonal(String token) => '${Env.webInvitacion}/$token';
 
 String _textoInvitacion(String liga, String? nombre, String codigo) =>
-    '${nombre == null ? '¡Hola!' : '¡Hola, $nombre!'} Te invito a la liga "$liga" en Fútbol Fantasy. '
+    '${nombre == null ? '¡Hola!' : '¡Hola, $nombre!'} Te invito a la liga "$liga" en Pachanga Fantasy. '
     'Descarga la app y únete desde este enlace: ${_enlacePersonal(codigo)}\n'
     'Si ya tienes la app, pega este código en "Unirse": $codigo';
 

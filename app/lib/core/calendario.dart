@@ -32,7 +32,7 @@ String icsDePartidos(List<Partido> partidos, Liga l) {
   final b = StringBuffer()
     ..writeln('BEGIN:VCALENDAR')
     ..writeln('VERSION:2.0')
-    ..writeln('PRODID:-//Futbol Fantasy//ES')
+    ..writeln('PRODID:-//Pachanga Fantasy//ES')
     ..writeln('CALSCALE:GREGORIAN')
     ..writeln('METHOD:PUBLISH');
   for (final p in partidos) {
