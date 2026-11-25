@@ -14,6 +14,7 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Porra del partido (se activa en Ajustes de la liga): con los equipos hechos y hasta el pitido inicial, pronostica 1-X-2, goleador o MVP. Boleto sencillo, combinado o múltiple (parejas), con seguro opcional (si pierdes recuperas el 50 %; si ganas, el beneficio queda en el 70 %). Solo puntos (ranking de Mejor pronosticador) o con dinero Fantasy. Se liquida sola al cerrar el acta.
 - Fantasy en escala de 50 M: un jugador medio vale 50 M y el presupuesto es de 260 M en F5 (360 M en F7, 560 M en F11). Las ligas que ya jugaban se han convertido manteniendo el valor de todo.
 - Copias según mánagers y jugadores: siempre hay copias para que todos tengan alineación completa + 1 reserva. Opcional: ediciones (Única ×1,25 pts, Titular ×1,10) e inflación por escasez.
 - Cuatro formas de empezar: reparto equilibrado (se paga del presupuesto), mercado libre, subasta diaria (abierta o ciega, con anti-sniping) y draft por turnos en serpiente.

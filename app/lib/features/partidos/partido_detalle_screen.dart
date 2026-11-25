@@ -14,6 +14,7 @@ import '../post_partido/post_partido_tab.dart';
 import '../post_partido/resultado_tab.dart';
 import '../post_partido/revision_tab.dart';
 import 'convocatoria_tab.dart';
+import '../porra/porra_tab.dart';
 
 /// Detalle de un partido. Las pestañas visibles dependen del estado y del rol.
 class PartidoDetalleScreen extends ConsumerWidget {
@@ -45,6 +46,11 @@ class PartidoDetalleScreen extends ConsumerWidget {
           if (admin && (e == EstadoPartido.post_partido || e == EstadoPartido.en_revision))
             ('Revisión', RevisionTab(partido: p, mi: mi)),
           if (e == EstadoPartido.cerrado) ('Resultado', ResultadoTab(partido: p, mi: mi)),
+          // 0055: porra del partido (se abre con los equipos hechos)
+          if (mi.liga.porraActiva &&
+              const [EstadoPartido.equipos_hechos, EstadoPartido.jugado, EstadoPartido.post_partido,
+                      EstadoPartido.en_revision, EstadoPartido.cerrado].contains(e))
+            ('Porra', PorraTab(partido: p, mi: mi)),
         ];
 
         // Al cambiar de estado cambia el nº de pestañas: la key fuerza un controlador nuevo

@@ -167,6 +167,9 @@ class Liga {
     this.horasReservaFijos = 24,
     this.fantasyActivo = true,
     this.prediccionActiva = true,
+    this.porraActiva = false,
+    this.porraModo = 'puntos',
+    this.porraMax,
     this.valoracionAvanzada = false,
     this.modalidad = 'f7',
     this.recordatorioDeudas = 'mensual',
@@ -228,6 +231,12 @@ class Liga {
 
   /// 0026: la liga puede usar solo convocatorias. 0028: resultado esperado (xG).
   final bool fantasyActivo, prediccionActiva;
+
+  /// 0055: porra del partido. [porraModo] 'puntos' | 'dinero'; [porraMax] null = 100 pts o la mitad del valor base.
+  final bool porraActiva;
+  final String porraModo;
+  final double? porraMax;
+  double get porraTope => porraMax ?? (porraModo == 'dinero' ? fantasy.valorBase / 2 : 100);
 
   /// Fin del partido anterior + X horas (null si no hay partido anterior). Igual que `_base_convocatoria` (0050).
   DateTime? _baseConvocatoria(Partido p, List<Partido> todos) {
@@ -342,6 +351,9 @@ class Liga {
       horasReservaFijos: toInt(m['horas_reserva_fijos'], 24),
       fantasyActivo: (m['fantasy_activo'] ?? true) as bool,
       prediccionActiva: (m['prediccion_activa'] ?? true) as bool,
+      porraActiva: (m['porra_activa'] ?? false) as bool,
+      porraModo: (m['porra_modo'] ?? 'puntos') as String,
+      porraMax: toDouble(m['porra_max']),
       valoracionAvanzada: (m['valoracion_avanzada'] ?? false) as bool,
       modalidad: (m['modalidad'] ?? 'f7') as String,
       recordatorioDeudas: (m['recordatorio_deudas'] ?? 'mensual') as String,

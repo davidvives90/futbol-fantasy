@@ -91,6 +91,69 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
     if (hecho) ref.invalidate(miembrosProvider(mi.liga.id));
   }
 
+  /// 0055: porra del partido (activar, solo puntos o dinero Fantasy, tope por partido).
+  Future<void> _porra(MiLiga mi) async {
+    final l = mi.liga;
+    var activa = l.porraActiva;
+    var modo = l.porraModo;
+    final tope = TextEditingController(text: l.porraMax == null ? '' : l.porraMax!.toStringAsFixed(0));
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => StatefulBuilder(
+        builder: (d, setD) => AlertDialog(
+          title: const Tx('Porra del partido'),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Tx('Activar la porra'),
+                subtitle: const Tx('Con los equipos hechos, cada uno pronostica 1-X-2, goleador o MVP hasta el pitido inicial.'),
+                value: activa,
+                onChanged: (v) => setD(() => activa = v),
+              ),
+              RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                value: 'puntos',
+                groupValue: modo,
+                title: const Tx('Solo puntos'),
+                subtitle: const Tx('Ranking de Mejor pronosticador. Cada uno tiene 100 puntos por partido.'),
+                onChanged: (v) => setD(() => modo = v!),
+              ),
+              RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                value: 'dinero',
+                groupValue: modo,
+                title: const Tx('Con dinero Fantasy'),
+                subtitle: const Tx('Se apuesta del saldo del Fantasy y se cobra en el saldo.'),
+                onChanged: l.fantasyActivo ? (v) => setD(() => modo = v!) : null,
+              ),
+              TextField(
+                controller: tope,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: tr('Tope por partido (opcional)'),
+                  helperText: modo == 'dinero'
+                      ? trf('Vacío = {x} M (la mitad del valor base)', {'x': (l.fantasy.valorBase / 2).toStringAsFixed(0)})
+                      : tr('Vacío = 100 puntos'),
+                ),
+              ),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(d, false), child: const Tx('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(d, true), child: const Tx('Guardar')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final max = double.tryParse(tope.text.trim().replaceAll(',', '.'));
+    final hecho = await ejecutar(context,
+        () => LigasRepo.actualizarLiga(l.id, {'porra_activa': activa, 'porra_modo': modo, 'porra_max': max != null && max > 0 ? max : null}),
+        ok: tr('Guardado'));
+    if (hecho) refrescarLigas(ref);
+  }
+
   /// «El árbitro (Juan)», «Los capitanes»…
   String _textoActa(MiLiga mi) {
     final l = mi.liga;
@@ -233,6 +296,15 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
           subtitle: Text(_textoActa(mi)),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _elegirActa(mi),
+        ),
+        ListTile(
+          leading: const Icon(Icons.casino_outlined),
+          title: const Tx('Porra del partido'),
+          subtitle: Text(mi.liga.porraActiva
+              ? (mi.liga.porraModo == 'dinero' ? tr('Activada · con dinero Fantasy') : tr('Activada · solo puntos'))
+              : tr('Desactivada')),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _porra(mi),
         ),
         opcion(Icons.emoji_events_outlined, 'Votación tras el partido',
             mi.liga.votaPodio ? 'Podio Top 3 (1.º, 2.º y 3.º)' : 'Notas a cada compañero', '/liga/reglas'),
