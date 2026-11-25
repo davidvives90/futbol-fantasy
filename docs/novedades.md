@@ -14,6 +14,13 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Fantasy en escala de 50 M: un jugador medio vale 50 M y el presupuesto es de 260 M en F5 (360 M en F7, 560 M en F11). Las ligas que ya jugaban se han convertido manteniendo el valor de todo.
+- Copias según mánagers y jugadores: siempre hay copias para que todos tengan alineación completa + 1 reserva. Opcional: ediciones (Única ×1,25 pts, Titular ×1,10) e inflación por escasez.
+- Cuatro formas de empezar: reparto equilibrado (se paga del presupuesto), mercado libre, subasta diaria (abierta o ciega, con anti-sniping) y draft por turnos en serpiente.
+- Alineación táctica o libre, capitán (×2), ariete (+3 si marca) y 1-2 suplentes que entran solos si un titular no juega.
+- Cláusula automática del 150 % de lo pagado, jornadas especiales (doble puntuación o goles dobles) y prima inversa para los últimos.
+- Al cerrar la temporada se elige qué pasa con el Fantasy: seguir igual, reinicio total, heredar valor o heredar un bonus.
+- Asistente de configuración en Ajustes Fantasy.
 - Privacidad: al entrar se pide aceptar la política (con resumen claro) y se guarda la versión aceptada. Perfil › Privacidad y datos para consultarla, retirar los informes de errores o eliminar la cuenta.
 - Nueva votación «Podio Top 3»: cada uno elige 1.º, 2.º y 3.º mejor (5, 3 y 1 puntos, configurable). El que más suma es MVP.
 - Resumen del partido: MVP destacado con sus puntos Fantasy, el podio de los 3 mejores y el Equipo de la jornada.

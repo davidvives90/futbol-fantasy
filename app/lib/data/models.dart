@@ -362,12 +362,12 @@ class Liga {
 /// Parámetros del mercado Fantasy de una liga. Los valores por defecto son los de la especificación.
 class ParamsFantasy {
   const ParamsFantasy({
-    this.precioMin = 1,
-    this.precioMax = 12,
+    this.precioMin = 15,
+    this.precioMax = 155,
     this.maxPlantilla = 6,
     this.bonusNoHabitual = 1.5,
     this.horasCierreAlineacion = 2,
-    this.ingresoPorPunto = 0.10,
+    this.ingresoPorPunto = 0.5,
     this.comisionVenta = 0.05,
     this.kEncuesta = 5,
     this.maxVariacion = 0.15,
@@ -381,7 +381,53 @@ class ParamsFantasy {
     this.horasCaducidadOferta = 48,
     this.partidosMinRendimiento = 3,
     this.cesionesActivas = false,
+    this.valorBase = 50,
+    this.presupuestoFijo,
+    this.presupuestoInicial,
+    this.modoInicio = 'reparto',
+    this.modoCopias = 'clasico',
+    this.inflacionEscasez = false,
+    this.clausulaPct = 1.5,
+    this.modoAlineacion = 'tactico',
+    this.suplentes = 1,
+    this.capitanActivo = true,
+    this.arieteActivo = true,
+    this.primaInversa = 0,
+    this.subastaTipo = 'abierta',
+    this.subastaLote = 1,
+    this.subastaHoras = 24,
+    this.subastaHora = '10:00',
+    this.subastaPujaMin,
+    this.autoFichaje = true,
+    this.herenciaTemporada = 'ninguna',
   });
+
+  // ---- Fase 2 (0054) ----
+  /// Valor de un jugador medio (M). Presupuesto por defecto = jugadores por equipo × base + base / 5.
+  final double valorBase;
+  final double? presupuestoFijo, presupuestoInicial, subastaPujaMin;
+
+  /// 'reparto' | 'mercado' | 'subasta' | 'draft'
+  final String modoInicio;
+
+  /// 'clasico' | 'rareza'
+  final String modoCopias;
+  final bool inflacionEscasez, capitanActivo, arieteActivo, autoFichaje;
+
+  /// Cláusula al fichar = precio pagado × clausulaPct.
+  final double clausulaPct, primaInversa;
+
+  /// 'tactico' | 'libre'
+  final String modoAlineacion;
+  final int suplentes, subastaLote, subastaHoras;
+
+  /// 'abierta' | 'ciega'
+  final String subastaTipo;
+  final String subastaHora;
+
+  /// 'ninguna' | 'reinicio' | 'valor' | 'bonus'
+  final String herenciaTemporada;
+  bool get tactica => modoAlineacion == 'tactico';
 
   final double precioMin, precioMax, bonusNoHabitual, horasCierreAlineacion, ingresoPorPunto, comisionVenta;
   final double kEncuesta, maxVariacion;
@@ -438,6 +484,25 @@ class ParamsFantasy {
         horasCaducidadOferta: toInt(m['horas_caducidad_oferta'], 48),
         partidosMinRendimiento: toInt(m['partidos_min_rendimiento'], 3),
         cesionesActivas: (m['cesiones_activas'] ?? false) as bool,
+        valorBase: toDouble(m['valor_base']) ?? 50,
+        presupuestoFijo: toDouble(m['presupuesto_fijo']),
+        presupuestoInicial: toDouble(m['presupuesto_inicial']),
+        modoInicio: (m['modo_inicio'] ?? 'reparto') as String,
+        modoCopias: (m['modo_copias'] ?? 'clasico') as String,
+        inflacionEscasez: (m['inflacion_escasez'] ?? false) as bool,
+        clausulaPct: toDouble(m['clausula_pct']) ?? 1.5,
+        modoAlineacion: (m['modo_alineacion'] ?? 'tactico') as String,
+        suplentes: toInt(m['suplentes'], 1),
+        capitanActivo: (m['capitan_activo'] ?? true) as bool,
+        arieteActivo: (m['ariete_activo'] ?? true) as bool,
+        primaInversa: toDouble(m['prima_inversa']) ?? 0,
+        subastaTipo: (m['subasta_tipo'] ?? 'abierta') as String,
+        subastaLote: toInt(m['subasta_lote'], 1),
+        subastaHoras: toInt(m['subasta_horas'], 24),
+        subastaHora: ((m['subasta_hora'] ?? '10:00') as String).substring(0, 5),
+        subastaPujaMin: toDouble(m['subasta_puja_min']),
+        autoFichaje: (m['auto_fichaje'] ?? true) as bool,
+        herenciaTemporada: (m['herencia_temporada'] ?? 'ninguna') as String,
       );
 
   Map<String, dynamic> toMap() => {
@@ -538,12 +603,16 @@ class Partido {
     this.votacionCierra,
     this.temporadaId,
     this.arbitroId,
+    this.eventoEspecial,
   });
 
   final String id, ligaId;
   final String? temporadaId;
   /// 0050: árbitro de este partido (si no, el de la liga).
   final String? arbitroId;
+
+  /// 0054: 'doble_puntos' | 'goles_dobles' | null.
+  final String? eventoEspecial;
   final DateTime fechaHora;
   final bool horaConfirmada;
   final String? campoMapsUrl;
@@ -565,6 +634,7 @@ class Partido {
         votacionCierra: m['votacion_cierra'] == null ? null : DateTime.parse(m['votacion_cierra'] as String),
         temporadaId: m['temporada_id'] as String?,
         arbitroId: m['arbitro_id'] as String?,
+        eventoEspecial: m['evento_especial'] as String?,
       );
 }
 

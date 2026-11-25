@@ -6,6 +6,7 @@ import '../../core/calendario.dart';
 import '../../core/compartir.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
+import '../../data/repos/fantasy_repo.dart';
 import '../../data/providers.dart';
 import '../../data/repos/partidos_repo.dart';
 import '../equipos/equipos_tab.dart';
@@ -56,7 +57,13 @@ class PartidoDetalleScreen extends ConsumerWidget {
             appBar: AppBar(
               title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(fechaHora(p.fechaHora)),
-                Text(p.estado.etiqueta, style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                    [
+                      p.estado.etiqueta,
+                      if (p.eventoEspecial == 'doble_puntos') tr('⚡ Doble puntuación'),
+                      if (p.eventoEspecial == 'goles_dobles') tr('⚽ Goles dobles'),
+                    ].join(' · '),
+                    style: Theme.of(context).textTheme.bodySmall),
               ]),
               actions: [
                 if (e != EstadoPartido.cancelado)
@@ -135,6 +142,30 @@ class _MenuAdmin extends ConsumerWidget {
               await ejecutar(context, () => PartidosRepo.cerrarPostPartido(partido.id),
                   ok: 'Partes cruzados: revisa el acta y las disputas');
             }
+          case 'evento':
+            final evento = await showDialog<String>(
+              context: context,
+              builder: (c) => SimpleDialog(
+                title: const Tx('Jornada especial'),
+                children: [
+                  for (final (v, t, d) in const [
+                    ('ninguno', 'Normal', 'Sin multiplicadores'),
+                    ('doble_puntos', '⚡ Doble puntuación', 'Los puntos de los mánagers valen el doble'),
+                    ('goles_dobles', '⚽ Goles dobles', 'Cada gol vale el doble en los puntos del jugador'),
+                  ])
+                    ListTile(
+                      leading: Icon((partido.eventoEspecial ?? 'ninguno') == v ? Icons.radio_button_checked : Icons.radio_button_off),
+                      title: Tx(t),
+                      subtitle: Tx(d),
+                      onTap: () => Navigator.pop(c, v),
+                    ),
+                ],
+              ),
+            );
+            if (evento == null || !context.mounted) return;
+            await ejecutar(context,
+                () => FantasyRepo.fijarEventoEspecial(partido.id, evento == 'ninguno' ? null : evento),
+                ok: evento == 'ninguno' ? tr('Jornada normal') : tr('Jornada especial activada: se ha avisado a la liga'));
           case 'cancelar':
             if (await confirmar(context, 'Cancelar partido', '¿Seguro? Se avisará a los inscritos.', accion: 'Cancelar partido', tipo: TipoConfirmacion.peligro)) {
               if (context.mounted) {
@@ -152,6 +183,11 @@ class _MenuAdmin extends ConsumerWidget {
           const PopupMenuItem(value: 'jugado', child: Tx('Partido jugado: cobrar y abrir post-partido')),
         if (e == EstadoPartido.post_partido)
           const PopupMenuItem(value: 'cerrar', child: Tx('Cerrar plazo y cruzar partes')),
+        if (e.antesDeJugar)
+          PopupMenuItem(
+            value: 'evento',
+            child: Tx(partido.eventoEspecial == null ? 'Jornada especial (doble puntuación…)' : 'Cambiar jornada especial'),
+          ),
         if (e.antesDeJugar) const PopupMenuItem(value: 'cancelar', child: Tx('Cancelar partido')),
       ],
     );

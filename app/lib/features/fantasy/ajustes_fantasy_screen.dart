@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/idioma.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme.dart';
 import '../../core/utils.dart';
@@ -181,6 +182,22 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        Card(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          child: ListTile(
+            leading: const Icon(Icons.auto_fix_high),
+            title: const Tx('Asistente de configuración'),
+            subtitle: Text([
+              tr(modosInicioFantasy.firstWhere((m) => m.$1 == mi.liga.fantasy.modoInicio, orElse: () => modosInicioFantasy.first).$2),
+              millones(mi.liga.fantasy.presupuestoFijo ?? mi.liga.jugadoresPorEquipo * mi.liga.fantasy.valorBase + mi.liga.fantasy.valorBase / 5),
+              mi.liga.fantasy.modoCopias == 'rareza' ? tr('ediciones') : tr('copias iguales'),
+              mi.liga.fantasy.tactica ? tr('táctica') : tr('libre'),
+            ].join(' · ')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/liga/fantasy/asistente'),
+          ),
+        ),
+        const SizedBox(height: 8),
         _ManagersCard(mi: mi, miembros: miembros.values.toList()),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -315,8 +332,8 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         const Divider(height: 32),
         Text('Empezar de cero', style: t.titleMedium),
         const SizedBox(height: 4),
-        const Text('Vacía todas las plantillas, saldos, ofertas y cesiones. Cada mánager recibe de nuevo 5 jugadores '
-            'al azar pero compensados y el dinero inicial. Los puntos de los partidos no se tocan.'),
+        const Tx('Vacía todas las plantillas, saldos, ofertas y cesiones. Cada mánager vuelve a empezar según el modo de '
+            'inicio de la liga (reparto, mercado, subasta o draft) con el presupuesto inicial.'),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           style: AppButtons.peligro(context),

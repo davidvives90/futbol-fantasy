@@ -60,9 +60,52 @@ class FantasyRepo {
   }
 
   /// Compra una ficha libre al precio de mercado (falla si no quedan: entonces cláusula u oferta).
-  static Future<void> comprar(String ligaId, String jugadorId) async {
-    await sb.rpc('comprar_ficha', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
+  static Future<void> comprar(String ligaId, String jugadorId, {int? numero}) async {
+    await sb.rpc('comprar_ficha', params: {'p_liga': ligaId, 'p_jugador': jugadorId, if (numero != null) 'p_numero': numero});
   }
+
+  // ---- Fase 2 (0054) ----------------------------------------------------------
+
+  /// Copias libres con su precio (rareza y escasez), la más barata primero.
+  static Future<List<CopiaLibre>> copiasLibres(String ligaId, String jugadorId) async {
+    final r = await sb.rpc('copias_libres', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
+    return [for (final x in (r as List? ?? const [])) CopiaLibre.fromMap(Map<String, dynamic>.from(x as Map))];
+  }
+
+  static Future<List<Subasta>> subastas(String ligaId) async {
+    final r = await sb.rpc('subastas_liga', params: {'p_liga': ligaId});
+    return [for (final x in (r as List? ?? const [])) Subasta.fromMap(Map<String, dynamic>.from(x as Map))];
+  }
+
+  static Future<void> pujar(String subastaId, double importe) =>
+      sb.rpc('pujar', params: {'p_subasta': subastaId, 'p_importe': importe});
+
+  static Future<void> retirarPuja(String subastaId) => sb.rpc('retirar_puja', params: {'p_subasta': subastaId});
+
+  static Future<int> lanzarSubasta(String ligaId) async =>
+      toInt(await sb.rpc('lanzar_subasta', params: {'p_liga': ligaId}));
+
+  static Future<EstadoDraft?> draft(String ligaId) async {
+    final r = await sb.rpc('estado_draft', params: {'p_liga': ligaId});
+    return r == null ? null : EstadoDraft.fromMap(Map<String, dynamic>.from(r as Map));
+  }
+
+  static Future<void> iniciarDraft(String ligaId, {int? rondas}) =>
+      sb.rpc('iniciar_draft', params: {'p_liga': ligaId, if (rondas != null) 'p_rondas': rondas});
+
+  static Future<void> draftElegir(String ligaId, String jugadorId) =>
+      sb.rpc('draft_elegir', params: {'p_liga': ligaId, 'p_jugador': jugadorId});
+
+  static Future<void> draftPasar(String ligaId) => sb.rpc('draft_pasar', params: {'p_liga': ligaId});
+
+  static Future<void> cambiarEscala(String ligaId, double valorBase) =>
+      sb.rpc('cambiar_escala', params: {'p_liga': ligaId, 'p_valor_base': valorBase});
+
+  static Future<void> fijarEventoEspecial(String partidoId, String? evento) =>
+      sb.rpc('fijar_evento_especial', params: {'p_partido': partidoId, 'p_evento': evento});
+
+  static Future<int> valorarPorHistorial(String ligaId) async =>
+      toInt(await sb.rpc('valorar_por_historial', params: {'p_liga': ligaId}));
 
   /// Vende mi ficha al mercado (precio − comisión). Si no se conoce la ficha, usa la firma 0.1.
   static Future<void> vender(String ligaId, String jugadorId, {String? fichaId}) async {
@@ -214,11 +257,15 @@ class FantasyRepo {
 
   /// La base de datos valida tamaño (plazas / num_equipos), pertenencia a la plantilla (o cesión recibida),
   /// hora de cierre y que haya exactamente un POR. [roles] va en el mismo orden que [jugadores].
-  static Future<void> guardarAlineacion(String partidoId, List<String> jugadores, List<RolAlineacion> roles) async {
+  static Future<void> guardarAlineacion(String partidoId, List<String> jugadores, List<RolAlineacion> roles,
+      {String? capitan, String? ariete, List<String> suplentes = const []}) async {
     await sb.rpc('guardar_alineacion', params: {
       'p_partido': partidoId,
       'p_jugadores': jugadores,
       'p_roles': [for (final r in roles) r.name],
+      'p_capitan': capitan,
+      'p_ariete': ariete,
+      'p_suplentes': suplentes,
     });
   }
 

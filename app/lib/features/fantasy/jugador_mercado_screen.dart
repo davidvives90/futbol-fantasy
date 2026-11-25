@@ -12,8 +12,13 @@ import '../../data/repos/fantasy_repo.dart';
 import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
 import 'tarjetas_jugador.dart';
+import 'subastas_draft.dart';
 import 'widgets_fantasy.dart';
 import '../../core/info.dart';
+
+final _copiasProvider = FutureProvider.autoDispose.family<List<CopiaLibre>, (String, String)>(
+  (ref, k) => FantasyRepo.copiasLibres(k.$1, k.$2),
+);
 
 /// Ficha de mercado de un jugador: precio, valoración por atributos, historial y comprar/vender.
 class JugadorMercadoScreen extends ConsumerWidget {
@@ -48,6 +53,8 @@ class JugadorMercadoScreen extends ConsumerWidget {
     if (fila != null && (enPlantilla == null || !enPlantilla.propia)) {
       if (!abierto) {
         motivoNoCompra = 'El mercado está cerrado.';
+      } else if (!p.autoFichaje && miembroId == mi.yo.id) {
+        motivoNoCompra = tr('En esta liga no puedes ficharte a ti mismo.');
       } else if (plantilla.length >= p.maxPlantilla) {
         motivoNoCompra = 'Tu plantilla ya tiene ${p.maxPlantilla} jugadores: vende uno antes.';
       } else if (fila.noHabitual && plantilla.any((j) => j.noHabitual)) {
@@ -154,20 +161,12 @@ class JugadorMercadoScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           if (fila.hayLibres)
-            FilledButton.icon(
-              style: AppButtons.premium(context),
-              icon: const Icon(Icons.add_shopping_cart),
-              label: Text(trf('Comprar copia libre · {p}', {'p': millones(fila.precio)})),
-              onPressed: motivoNoCompra != null
-                  ? null
-                  : () async {
-                      final ok = await ejecutar(context, () => FantasyRepo.comprar(ligaId, miembroId),
-                          ok: '${miembro?.nombre ?? 'Jugador'} fichado');
-                      if (ok) {
-                        refrescarFantasy(ref, kYo);
-                        if (context.mounted) context.pop();
-                      }
-                    },
+            _ComprarCopias(
+              mi: mi,
+              jugadorId: miembroId,
+              nombre: miembro?.nombre ?? 'Jugador',
+              motivoNoCompra: motivoNoCompra,
+              saldo: saldo,
             ),
           if (motivoNoCompra != null)
             Padding(
@@ -184,7 +183,7 @@ class JugadorMercadoScreen extends ConsumerWidget {
             bloqueado: motivoNoCompra != null,
           ),
         ],
-        if (miembroId == mi.yo.id && (enPlantilla == null || !enPlantilla.propia) && fila != null)
+        if (p.autoFichaje && miembroId == mi.yo.id && (enPlantilla == null || !enPlantilla.propia) && fila != null)
           const Padding(
             padding: EdgeInsets.only(top: 8),
             child: Tx('Sí, puedes ficharte a ti mismo.'),
@@ -405,6 +404,82 @@ class _Calidad extends StatelessWidget {
           style: t.bodySmall,
         ),
       ]),
+    );
+  }
+}
+
+
+/// Comprar una copia libre (0054): en modo rareza se elige cuál (única, titular o base); en subasta o draft,
+/// se explica dónde se consiguen los jugadores libres.
+class _ComprarCopias extends ConsumerWidget {
+  const _ComprarCopias({
+    required this.mi,
+    required this.jugadorId,
+    required this.nombre,
+    required this.motivoNoCompra,
+    required this.saldo,
+  });
+  final MiLiga mi;
+  final String jugadorId, nombre;
+  final String? motivoNoCompra;
+  final double? saldo;
+
+  Future<void> _comprar(BuildContext context, WidgetRef ref, CopiaLibre c) async {
+    final ok = await ejecutar(context, () => FantasyRepo.comprar(mi.liga.id, jugadorId, numero: c.numero),
+        ok: trf('{n} fichado', {'n': nombre}));
+    if (ok) {
+      refrescarFantasy(ref, (ligaId: mi.liga.id, miembroId: mi.yo.id));
+      if (context.mounted) context.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = mi.liga.fantasy;
+    final t = Theme.of(context).textTheme;
+    if (p.modoInicio == 'subasta') {
+      return Tx('En esta liga los jugadores libres salen en subasta: puja en la pestaña Mercado.', style: t.bodyMedium);
+    }
+    if (p.modoInicio == 'draft') {
+      final d = ref.watch(draftProvider(mi.liga.id)).valueOrNull;
+      if (d == null || d.enCurso) {
+        return Tx('Primero se hace el draft: los jugadores se eligen por turnos en la pestaña Mercado.', style: t.bodyMedium);
+      }
+    }
+    final copias = ref.watch(_copiasProvider((mi.liga.id, jugadorId)));
+    return copias.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(_copiasProvider((mi.liga.id, jugadorId)))),
+      data: (l) {
+        if (l.isEmpty) return const SizedBox.shrink();
+        Widget boton(CopiaLibre c, {String? texto}) => FilledButton.icon(
+              style: AppButtons.premium(context),
+              icon: const Icon(Icons.add_shopping_cart),
+              label: Text(texto ?? trf('Comprar copia libre · {p}', {'p': millones(c.precio)})),
+              onPressed: motivoNoCompra != null || (saldo != null && saldo! < c.precio)
+                  ? null
+                  : () => _comprar(context, ref, c),
+            );
+        if (p.modoCopias != 'rareza') {
+          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            boton(l.first),
+            if (p.inflacionEscasez)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Tx('Con escasez: cada copia que se ficha encarece la siguiente un 10 %.', style: t.bodySmall),
+              ),
+          ]);
+        }
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Tx('Ediciones: la Única puntúa ×1,25, las Titulares ×1,10 y las Base ×1.', style: t.bodySmall),
+          const SizedBox(height: 6),
+          for (final c in l)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: boton(c, texto: '#${c.numero} ${tr(c.edicion)} · ×${c.puntos.toStringAsFixed(2).replaceAll('.', ',')} · ${millones(c.precio)}'),
+            ),
+        ]);
+      },
     );
   }
 }

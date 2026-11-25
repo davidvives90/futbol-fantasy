@@ -13,6 +13,7 @@ import '../../core/supabase.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../data/repos/fantasy_repo.dart';
 
 /// Columnas de la plantilla oficial (en este orden).
 const columnasHistorial = [
@@ -294,6 +295,14 @@ class _ImportarHistorialScreenState extends ConsumerState<ImportarHistorialScree
                     onTap: () => _subirArchivo(mi.liga.id),
                   ),
                   const Divider(height: 32),
+                  if (mi.liga.fantasyActivo)
+                    ListTile(
+                      leading: const Icon(Icons.trending_up),
+                      title: const Tx('Valor de mercado según el historial'),
+                      subtitle: const Tx('Los jugadores con historial empiezan con un valor acorde a sus puntos por partido'),
+                      onTap: () => ejecutar(context, () => FantasyRepo.valorarPorHistorial(mi.liga.id),
+                          ok: tr('Valores actualizados')),
+                    ),
                   ListTile(
                     leading: const Icon(Icons.table_chart_outlined),
                     title: const Tx('O rellenar a mano en una tabla'),

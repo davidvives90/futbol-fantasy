@@ -48,8 +48,9 @@ class StatsRepo {
       List<Map<String, dynamic>>.from(
           await sb.from('logros').select().eq('miembro_id', miembroId).order('conseguido_en', ascending: false));
 
-  static Future<void> cerrarTemporada(String ligaId, String? nombre) =>
-      sb.rpc('cerrar_temporada', params: {'p_liga': ligaId, 'p_nombre': nombre});
+  /// [herencia] (0054): qué pasa con el Fantasy: 'ninguna', 'reinicio', 'valor' o 'bonus'.
+  static Future<void> cerrarTemporada(String ligaId, String? nombre, {String? herencia}) =>
+      sb.rpc('cerrar_temporada', params: {'p_liga': ligaId, 'p_nombre': nombre, if (herencia != null) 'p_herencia': herencia});
 
   static Future<void> reabrirTemporada(String ligaId) => sb.rpc('reabrir_temporada', params: {'p_liga': ligaId});
 }

@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../core/avatar.dart';
+import '../../core/idioma.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
@@ -239,7 +240,11 @@ class DesgloseManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    final orden = [...lineas]..sort((a, b) => (a.rol?.index ?? 9).compareTo(b.rol?.index ?? 9));
+    final orden = [...lineas]
+      ..sort((a, b) {
+        final s = (a.suplente ?? 0).compareTo(b.suplente ?? 0);
+        return s != 0 ? s : (a.rol?.index ?? 9).compareTo(b.rol?.index ?? 9);
+      });
     return Column(children: [
       for (final l in orden)
         Padding(
@@ -251,19 +256,24 @@ class DesgloseManager extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(nombres[l.jugadorId] ?? '…', overflow: TextOverflow.ellipsis),
                 Text(
-                  !l.jugo
-                      ? 'No jugó'
-                      : [
-                          '${fmt(l.puntos)} pts',
-                          if (l.bonusRol != 0) '${l.bonusRol > 0 ? '+' : ''}${fmt(l.bonusRol)} rol',
-                          if (l.multiplicador != 1) '×${fmt(l.multiplicador)} invitado',
-                          if (l.cedido) 'cedido',
-                        ].join(' · '),
+                  [
+                    if (l.suplente != null && l.entraPor == null) tr('Suplente (no hizo falta)'),
+                    if (l.entraPor != null) trf('Entra por {n}', {'n': nombres[l.entraPor] ?? '…'}),
+                    if (!l.jugo) tr('No jugó'),
+                    if (l.jugo) '${fmt(l.puntos)} pts',
+                    if (l.jugo && l.bonusRol != 0) '${l.bonusRol > 0 ? '+' : ''}${fmt(l.bonusRol)} rol',
+                    if (l.multiplicador != 1) '×${fmt(l.multiplicador)} invitado',
+                    if (l.rareza != 1) '×${fmt(l.rareza)} copia',
+                    if (l.capitan) tr('×2 capitán'),
+                    if (l.ariete) tr('+3 ariete'),
+                    if (l.doble) tr('×2 jornada especial'),
+                    if (l.cedido) 'cedido',
+                  ].join(' · '),
                   style: t.bodySmall,
                 ),
               ]),
             ),
-            Text(fmt(l.total), style: t.titleSmall),
+            Text(l.cuenta ? fmt(l.total) : '—', style: t.titleSmall),
           ]),
         ),
     ]);

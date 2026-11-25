@@ -227,9 +227,15 @@ class Alineado {
     this.multiplicador = 1,
     this.rol = RolAlineacion.MED,
     this.bonusRol,
+    this.capitan = false,
+    this.ariete = false,
+    this.suplente,
   });
   final String managerId, jugadorId;
-  final bool noHabitual;
+  final bool noHabitual, capitan, ariete;
+
+  /// 1 o 2 si es suplente (0054).
+  final int? suplente;
   final double multiplicador;
   final RolAlineacion rol;
   final double? bonusRol;
@@ -241,6 +247,9 @@ class Alineado {
         multiplicador: toDouble(m['multiplicador']) ?? 1,
         rol: RolAlineacionX.desde(m['rol']),
         bonusRol: toDouble(m['bonus_rol']),
+        capitan: (m['capitan'] ?? false) as bool,
+        ariete: (m['ariete'] ?? false) as bool,
+        suplente: m['suplente'] == null ? null : toInt(m['suplente']),
       );
 }
 
@@ -255,11 +264,20 @@ class LineaDesglose {
     this.multiplicador = 1,
     this.jugo = true,
     this.cedido = false,
+    this.capitan = false,
+    this.ariete = false,
+    this.suplente,
+    this.entraPor,
+    this.cuenta = true,
+    this.rareza = 1,
+    this.doble = false,
   });
   final String jugadorId;
-  final double puntos, total, bonusRol, multiplicador;
+  final double puntos, total, bonusRol, multiplicador, rareza;
   final RolAlineacion? rol;
-  final bool jugo, cedido;
+  final bool jugo, cedido, capitan, ariete, cuenta, doble;
+  final int? suplente;
+  final String? entraPor;
 
   factory LineaDesglose.fromMap(Map<String, dynamic> m) => LineaDesglose(
         jugadorId: m['jugador_id'] as String,
@@ -270,6 +288,13 @@ class LineaDesglose {
         multiplicador: toDouble(m['multiplicador']) ?? 1,
         jugo: (m['jugo'] ?? true) as bool,
         cedido: (m['cedido'] ?? false) as bool,
+        capitan: (m['capitan'] ?? false) as bool,
+        ariete: (m['ariete'] ?? false) as bool,
+        suplente: m['suplente'] == null ? null : toInt(m['suplente']),
+        entraPor: m['entra_por'] as String?,
+        cuenta: (m['cuenta'] ?? true) as bool,
+        rareza: toDouble(m['rareza']) ?? 1,
+        doble: (m['doble'] ?? false) as bool,
       );
 }
 
@@ -479,3 +504,127 @@ class CesionDisponible {
 
 /// "15 %" a partir de una fracción 0–1.
 String pctTexto(double f) => '${(f * 100).toStringAsFixed(f * 100 % 1 == 0 ? 0 : 1).replaceAll('.', ',')} %';
+
+// ---- Fase 2 (0054) ------------------------------------------------------------
+
+/// Copia libre de un jugador con su precio y su multiplicador de puntos (rareza).
+class CopiaLibre {
+  CopiaLibre(this.fichaId, this.numero, this.precio, this.puntos);
+  final String fichaId;
+  final int numero;
+  final double precio, puntos;
+
+  factory CopiaLibre.fromMap(Map<String, dynamic> m) =>
+      CopiaLibre(m['ficha_id'] as String, toInt(m['numero']), toDouble(m['precio']) ?? 0, toDouble(m['puntos']) ?? 1);
+
+  /// «Única», «Titular» o «Base» en modo rareza.
+  String get edicion => numero == 1 ? 'Única' : numero <= 3 ? 'Titular' : 'Base';
+}
+
+/// Subasta de una copia (abierta o ciega).
+class Subasta {
+  Subasta({
+    required this.id,
+    required this.jugadorId,
+    required this.numero,
+    required this.tipo,
+    required this.precioSalida,
+    required this.cierraEn,
+    required this.estado,
+    required this.numPujas,
+    this.mejor,
+    this.voyGanando,
+    this.miPuja,
+    this.ganadorId,
+    this.importe,
+  });
+  final String id, jugadorId, tipo, estado;
+  final int numero, numPujas;
+  final double precioSalida;
+  final double? mejor, miPuja, importe;
+  final bool? voyGanando;
+  final String? ganadorId;
+  final DateTime cierraEn;
+
+  bool get abierta => estado == 'abierta' && cierraEn.isAfter(DateTime.now());
+  bool get ciega => tipo == 'ciega';
+
+  /// Mínimo para pujar ahora (en la abierta hay que superar la mejor puja).
+  double get minimo {
+    if (ciega || mejor == null) return precioSalida;
+    final paso = (mejor! * 0.02 * 100).round() / 100;
+    return mejor! + (paso < 0.5 ? 0.5 : paso);
+  }
+
+  factory Subasta.fromMap(Map<String, dynamic> m) => Subasta(
+        id: m['id'] as String,
+        jugadorId: m['jugador_id'] as String,
+        numero: toInt(m['numero']),
+        tipo: m['tipo'] as String,
+        precioSalida: toDouble(m['precio_salida']) ?? 0,
+        cierraEn: DateTime.parse(m['cierra_en'] as String).toLocal(),
+        estado: m['estado'] as String,
+        numPujas: toInt(m['num_pujas']),
+        mejor: toDouble(m['mejor']),
+        voyGanando: m['voy_ganando'] as bool?,
+        miPuja: toDouble(m['mi_puja']),
+        ganadorId: m['ganador_id'] as String?,
+        importe: toDouble(m['importe']),
+      );
+}
+
+/// Estado del draft por turnos (orden en serpiente).
+class EstadoDraft {
+  EstadoDraft({
+    required this.estado,
+    required this.orden,
+    required this.rondas,
+    required this.pick,
+    required this.total,
+    required this.ronda,
+    this.turno,
+    this.picks = const [],
+  });
+  final String estado;
+  final List<String> orden;
+  final int rondas, pick, total, ronda;
+  final String? turno;
+  final List<({String managerId, String? jugadorId, double? importe})> picks;
+
+  bool get enCurso => estado == 'en_curso';
+
+  factory EstadoDraft.fromMap(Map<String, dynamic> m) => EstadoDraft(
+        estado: m['estado'] as String,
+        orden: [for (final x in (m['orden'] as List? ?? const [])) x as String],
+        rondas: toInt(m['rondas']),
+        pick: toInt(m['pick']),
+        total: toInt(m['total']),
+        ronda: toInt(m['ronda']),
+        turno: m['turno'] as String?,
+        picks: [
+          for (final p in (m['picks'] as List? ?? const []))
+            (
+              managerId: (p as Map)['manager_id'] as String,
+              jugadorId: p['jugador_id'] as String?,
+              importe: toDouble(p['importe']),
+            ),
+        ],
+      );
+}
+
+/// Qué pasa con el Fantasy al cerrar la temporada (0054).
+const herenciasTemporada = <(String, String, String)>[
+  ('ninguna', 'Seguir igual', 'Plantillas, dinero y precios continúan en la nueva temporada.'),
+  ('reinicio', 'Reinicio total', 'Todos empiezan de cero: presupuesto inicial y precios iguales.'),
+  ('valor', 'Heredar valor de mercado', 'Se vacían plantillas y dinero, pero cada jugador conserva su valor.'),
+  ('bonus', 'Heredar bonus económico', 'Como «heredar valor» y cada mánager recibe el 10 % de su patrimonio final.'),
+];
+
+/// Modos de inicio del Fantasy (0054).
+const modosInicioFantasy = <(String, String, String)>[
+  ('reparto', 'Reparto equilibrado', 'Cada mánager recibe una alineación al azar de valor parecido, pagada de su presupuesto.'),
+  ('mercado', 'Mercado libre', 'Todos empiezan sin jugadores y fichan en el mercado con su presupuesto.'),
+  ('subasta', 'Subasta diaria', 'Sin jugadores. Cada día salen N copias a subasta: el precio lo ponen las pujas.'),
+  ('draft', 'Draft por turnos', 'Sin jugadores. Antes del primer partido se eligen por turnos en serpiente.'),
+];
+

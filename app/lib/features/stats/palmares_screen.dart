@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/models_fantasy.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -68,11 +69,15 @@ class PalmaresScreen extends ConsumerWidget {
 
   Future<void> _cerrar(BuildContext context, WidgetRef ref, MiLiga mi) async {
     final nombre = TextEditingController();
+    var herencia = mi.liga.fantasy.herenciaTemporada;
+    final conFantasy = mi.liga.fantasyActivo;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
+      builder: (c) => StatefulBuilder(
+        builder: (c, setD) => AlertDialog(
         title: const Tx('Cerrar temporada'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Se guarda la clasificación, se reparten los premios y la clasificación de la nueva temporada '
               'empieza de cero (el histórico se conserva).'),
           const SizedBox(height: 12),
@@ -81,15 +86,29 @@ class PalmaresScreen extends ConsumerWidget {
             maxLength: 60,
             decoration:  InputDecoration(labelText: tr('Nombre'), hintText: tr('p. ej. Temporada 25/26')),
           ),
+          if (conFantasy) ...[
+            Tx('Fantasy', style: Theme.of(c).textTheme.titleSmall),
+            for (final (v, titulo, texto) in herenciasTemporada)
+              RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                value: v,
+                groupValue: herencia,
+                title: Tx(titulo),
+                subtitle: Tx(texto),
+                onChanged: (x) => setD(() => herencia = x!),
+              ),
+          ],
         ]),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
           FilledButton(onPressed: () => Navigator.pop(c, true), child: const Tx('Cerrar y dar premios')),
         ],
       ),
+      ),
     );
     if (ok != true || !context.mounted) return;
-    final hecho = await ejecutar(context, () => StatsRepo.cerrarTemporada(mi.liga.id, nombre.text.trim()),
+    final hecho = await ejecutar(context, () => StatsRepo.cerrarTemporada(mi.liga.id, nombre.text.trim(), herencia: conFantasy ? herencia : null),
         ok: '🏆 Temporada cerrada');
     if (hecho) {
       ref.invalidate(temporadasProvider(mi.liga.id));

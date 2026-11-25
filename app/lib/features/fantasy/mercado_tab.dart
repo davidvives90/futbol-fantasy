@@ -10,6 +10,7 @@ import '../../data/providers.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
 import 'tarjetas_jugador.dart';
+import 'subastas_draft.dart';
 
 enum _Orden { media, precio, variacion, forma, fichado, libres }
 
@@ -52,8 +53,17 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
     };
     final saldo = ref.watch(miManagerProvider(k)).valueOrNull?.saldo;
 
+    final modo = widget.mi.liga.fantasy.modoInicio;
     return Column(children: [
       if (!abierto) BannerMercadoCerrado(mi: widget.mi),
+      // 0054: subasta diaria o draft por turnos
+      if (modo == 'subasta' || modo == 'draft')
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
+          child: SingleChildScrollView(
+            child: modo == 'subasta' ? SubastasPanel(mi: widget.mi) : DraftPanel(mi: widget.mi),
+          ),
+        ),
       Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
         child: TextField(

@@ -29,6 +29,9 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
   /// Jugador → rol, en orden de inserción. null = aún no cargada.
   Map<String, RolAlineacion>? _sel;
   Map<String, RolAlineacion> _guardada = {};
+  // 0054: capitán (×2), ariete (+3 si marca) y suplentes que entran solos si un titular no juega
+  String? _capitan, _ariete, _capitanG, _arieteG;
+  List<String> _suplentes = [], _suplentesG = [];
   bool _guardando = false;
   Timer? _timer;
 
@@ -62,8 +65,15 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
       final a = await FantasyRepo.alineacion(widget.partido.id, widget.mi.yo.id);
       if (!mounted) return;
       setState(() {
-        _guardada = {for (final x in a) x.jugadorId: x.rol};
+        _guardada = {for (final x in a.where((x) => x.suplente == null)) x.jugadorId: x.rol};
         _sel = {..._guardada};
+        _capitan = _capitanG = a.where((x) => x.capitan).map((x) => x.jugadorId).firstOrNull;
+        _ariete = _arieteG = a.where((x) => x.ariete).map((x) => x.jugadorId).firstOrNull;
+        _suplentesG = [
+          for (final x in [...a.where((x) => x.suplente != null)]..sort((p, q) => p.suplente!.compareTo(q.suplente!)))
+            x.jugadorId,
+        ];
+        _suplentes = [..._suplentesG];
       });
     } catch (e) {
       if (!mounted) return;
@@ -74,9 +84,17 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
 
   int get _porteros => _sel?.values.where((r) => r == RolAlineacion.POR).length ?? 0;
 
+  bool get _tactica => widget.mi.liga.fantasy.tactica;
+
   String? get _errorRoles {
     final s = _sel;
     if (s == null || s.isEmpty) return null;
+    if (!_tactica) return null;
+    if (s.length >= 4 &&
+        (!s.values.contains(RolAlineacion.DEF) || !s.values.contains(RolAlineacion.DEL)) &&
+        _porteros == 1) {
+      return 'Con 4 o más jugadores, la alineación táctica lleva al menos un defensa y un delantero.';
+    }
     if (_porteros == 0) return 'Elige un portero (toca un jugador del campo y márcalo como POR).';
     if (_porteros > 1) return 'Solo puede haber un portero.';
     return null;
@@ -86,6 +104,8 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
     final s = _sel;
     if (s == null) return false;
     if (s.length != _guardada.length) return true;
+    if (_capitan != _capitanG || _ariete != _arieteG) return true;
+    if (_suplentes.join(',') != _suplentesG.join(',')) return true;
     return s.entries.any((e) => _guardada[e.key] != e.value);
   }
 
@@ -94,24 +114,37 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
     setState(() => _guardando = true);
     final ok = await ejecutar(
       context,
-      () => FantasyRepo.guardarAlineacion(widget.partido.id, s.keys.toList(), s.values.toList()),
+      () => FantasyRepo.guardarAlineacion(widget.partido.id, s.keys.toList(), s.values.toList(),
+          capitan: s.containsKey(_capitan) ? _capitan : null,
+          ariete: s.containsKey(_ariete) ? _ariete : null,
+          suplentes: _suplentes),
       ok: 'Alineación guardada',
     );
     if (!mounted) return;
     setState(() {
       _guardando = false;
-      if (ok) _guardada = {...s};
+      if (ok) {
+        _guardada = {...s};
+        _capitanG = _capitan;
+        _arieteG = _ariete;
+        _suplentesG = [..._suplentes];
+      }
     });
   }
 
   void _anadir(String jugadorId) {
     final s = _sel!;
     if (s.length >= _tam) {
-      mostrarError(context, 'Máximo $_tam jugadores en la alineación');
+      // Titulares completos: va al banquillo si queda sitio
+      if (_suplentes.length < widget.mi.liga.fantasy.suplentes) {
+        setState(() => _suplentes.add(jugadorId));
+        return;
+      }
+      mostrarError(context, trf('Máximo {n} titulares y {s} suplentes', {'n': _tam, 's': widget.mi.liga.fantasy.suplentes}));
       return;
     }
-    // El primero que entra va de portero; los demás de medio (se cambia tocándolos en el campo).
-    setState(() => s[jugadorId] = _porteros == 0 ? RolAlineacion.POR : RolAlineacion.MED);
+    // El primero que entra va de portero (en la táctica); los demás de medio (se cambia tocándolos en el campo).
+    setState(() => s[jugadorId] = _tactica && _porteros == 0 ? RolAlineacion.POR : RolAlineacion.MED);
   }
 
   Future<void> _editar(String jugadorId, String nombre) async {
@@ -127,6 +160,24 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
               title: Text('${rol.etiqueta} (${rol.name})'),
               onTap: () => Navigator.pop(c, rol),
             ),
+          if (widget.mi.liga.fantasy.capitanActivo)
+            ListTile(
+              leading: Icon(_capitan == jugadorId ? Icons.check_circle : Icons.copyright_outlined),
+              title: const Tx('Capitán (puntos ×2)'),
+              onTap: () => Navigator.pop(c, 'capitan'),
+            ),
+          if (widget.mi.liga.fantasy.arieteActivo)
+            ListTile(
+              leading: Icon(_ariete == jugadorId ? Icons.check_circle : Icons.sports_soccer),
+              title: const Tx('Ariete (+3 si marca)'),
+              onTap: () => Navigator.pop(c, 'ariete'),
+            ),
+          if (widget.mi.liga.fantasy.suplentes > 0)
+            ListTile(
+              leading: const Icon(Icons.event_seat_outlined),
+              title: const Tx('Al banquillo (suplente)'),
+              onTap: () => Navigator.pop(c, 'banquillo'),
+            ),
           ListTile(
             leading: const Icon(Icons.remove_circle_outline),
             title: const Tx('Quitar de la alineación'),
@@ -139,6 +190,21 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
     setState(() {
       if (r == 'quitar') {
         s.remove(jugadorId);
+        if (_capitan == jugadorId) _capitan = null;
+        if (_ariete == jugadorId) _ariete = null;
+      } else if (r == 'capitan') {
+        _capitan = _capitan == jugadorId ? null : jugadorId;
+      } else if (r == 'ariete') {
+        _ariete = _ariete == jugadorId ? null : jugadorId;
+      } else if (r == 'banquillo') {
+        if (_suplentes.length >= widget.mi.liga.fantasy.suplentes) {
+          mostrarError(context, tr('El banquillo está lleno: quita antes a un suplente'));
+          return;
+        }
+        s.remove(jugadorId);
+        if (_capitan == jugadorId) _capitan = null;
+        if (_ariete == jugadorId) _ariete = null;
+        _suplentes.add(jugadorId);
       } else if (r is RolAlineacion) {
         // Si se elige un nuevo portero, el anterior pasa a defensa.
         if (r == RolAlineacion.POR) {
@@ -187,6 +253,17 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
             Stack(clipBehavior: Clip.none, children: [
               AvatarMiembro(miembros[id], radio: 20, dorsal: true),
               Positioned(right: -4, bottom: -4, child: IconoConvocatoria(estado[id])),
+              if (_capitan == id || _ariete == id)
+                Positioned(
+                  left: -6,
+                  top: -6,
+                  child: CircleAvatar(
+                    radius: 9,
+                    backgroundColor: _capitan == id ? Colors.amber : Colors.deepOrange,
+                    child: Text(_capitan == id ? 'C' : 'A',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.black)),
+                  ),
+                ),
             ]),
             const SizedBox(height: 2),
             Container(
@@ -229,7 +306,13 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
             Expanded(child: Text('Alineación · ${fechaHora(widget.partido.fechaHora)}', style: t.titleMedium)),
           ]),
           const SizedBox(height: 4),
-          Text('${_cuentaAtras()} · hasta $_tam jugadores, uno de portero', style: t.bodySmall),
+          Text(
+              [
+                _cuentaAtras(),
+                _tactica ? trf('hasta {n} jugadores, uno de portero', {'n': _tam}) : trf('hasta {n} jugadores', {'n': _tam}),
+                if (params.suplentes > 0) trf('{s} suplentes', {'s': params.suplentes}),
+              ].join(' · '),
+              style: t.bodySmall),
           const SizedBox(height: 12),
           if (s == null)
             const LinearProgressIndicator()
@@ -252,20 +335,53 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
                 ),
               ),
             ),
+            if (params.suplentes > 0) ...[
+              const SizedBox(height: 8),
+              Row(children: [
+                const Icon(Icons.event_seat_outlined, size: 18),
+                const SizedBox(width: 6),
+                Tx('Banquillo', style: t.labelLarge),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _suplentes.isEmpty
+                      ? Tx('Entran solos si un titular no juega', style: t.bodySmall)
+                      : Wrap(spacing: 6, children: [
+                          for (final (i, id) in _suplentes.indexed)
+                            InputChip(
+                              avatar: CircleAvatar(child: Text('${i + 1}')),
+                              label: Text(nombre(id)),
+                              onDeleted: bloqueada ? null : () => setState(() => _suplentes.remove(id)),
+                            ),
+                        ]),
+                ),
+              ]),
+            ],
+            if (params.capitanActivo || params.arieteActivo)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                    [
+                      if (params.capitanActivo)
+                        _capitan != null && s.containsKey(_capitan) ? 'C: ${nombre(_capitan!)} ×2' : tr('Sin capitán'),
+                      if (params.arieteActivo)
+                        _ariete != null && s.containsKey(_ariete) ? 'A: ${nombre(_ariete!)} +3' : tr('Sin ariete'),
+                    ].join(' · '),
+                    style: t.bodySmall),
+              ),
             if (errorRoles != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(errorRoles, style: t.bodySmall?.copyWith(color: cs.error)),
               ),
             const SizedBox(height: 12),
-            Text(bloqueada ? 'Plantilla' : 'Toca para alinear · toca en el campo para cambiar el rol',
+            Text(bloqueada ? 'Plantilla' : 'Toca para alinear · toca en el campo para el rol, capitán o ariete',
                 style: t.labelLarge),
             const SizedBox(height: 6),
             if (widget.plantilla.isEmpty)
               const Tx('Ficha jugadores para poder alinearlos.')
             else
               Wrap(spacing: 8, runSpacing: 8, children: [
-                for (final j in widget.plantilla.where((j) => !s.containsKey(j.jugadorId)))
+                for (final j in widget.plantilla.where((j) => !s.containsKey(j.jugadorId) && !_suplentes.contains(j.jugadorId)))
                   ActionChip(
                     avatar: IconoConvocatoria(estado[j.jugadorId]),
                     label: Text([

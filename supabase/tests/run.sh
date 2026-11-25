@@ -69,3 +69,4 @@ aplicar tests/escenario_tienda.sql
 aplicar tests/escenario_postpartido_ponderado.sql
 aplicar tests/escenario_modos.sql
 aplicar tests/escenario_fase1.sql
+aplicar tests/escenario_fase2.sql

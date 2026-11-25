@@ -11,6 +11,7 @@ import '../features/auth/login_screen.dart';
 import '../features/auth/perfil_form_screen.dart';
 import '../features/caja/caja_screen.dart';
 import '../features/fantasy/ajustes_fantasy_screen.dart';
+import '../features/fantasy/asistente_fantasy_screen.dart';
 import '../features/fantasy/encuesta_screen.dart';
 import '../features/fantasy/fantasy_screen.dart';
 import '../features/fantasy/jugador_mercado_screen.dart';
@@ -100,6 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Perfil sale de la barra inferior (se abre desde el avatar de la barra superior).
       GoRoute(path: '/perfil', builder: (_, __) => const PerfilScreen()),
       GoRoute(path: '/liga/fantasy', builder: (_, __) => const AjustesFantasyScreen()),
+      GoRoute(path: '/liga/fantasy/asistente', builder: (_, __) => const AsistenteFantasyScreen()),
       GoRoute(path: '/master', builder: (_, __) => const MasterScreen()),
       GoRoute(path: '/avisos', builder: (_, __) => const NotificacionesScreen()),
       GoRoute(path: '/tienda', builder: (_, __) => const TiendaScreen()),
