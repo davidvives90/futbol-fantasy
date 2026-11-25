@@ -170,6 +170,7 @@ class Liga {
     this.porraActiva = false,
     this.porraModo = 'puntos',
     this.porraMax,
+    this.avisosHumor = true,
     this.valoracionAvanzada = false,
     this.modalidad = 'f7',
     this.recordatorioDeudas = 'mensual',
@@ -236,6 +237,8 @@ class Liga {
   final bool porraActiva;
   final String porraModo;
   final double? porraMax;
+  /// 0056: avisos con humor (títulos con gracia). Cada jugador también puede quitarlos en su perfil.
+  final bool avisosHumor;
   double get porraTope => porraMax ?? (porraModo == 'dinero' ? fantasy.valorBase / 2 : 100);
 
   /// Fin del partido anterior + X horas (null si no hay partido anterior). Igual que `_base_convocatoria` (0050).
@@ -354,6 +357,7 @@ class Liga {
       porraActiva: (m['porra_activa'] ?? false) as bool,
       porraModo: (m['porra_modo'] ?? 'puntos') as String,
       porraMax: toDouble(m['porra_max']),
+      avisosHumor: (m['avisos_humor'] ?? true) as bool,
       valoracionAvanzada: (m['valoracion_avanzada'] ?? false) as bool,
       modalidad: (m['modalidad'] ?? 'f7') as String,
       recordatorioDeudas: (m['recordatorio_deudas'] ?? 'mensual') as String,

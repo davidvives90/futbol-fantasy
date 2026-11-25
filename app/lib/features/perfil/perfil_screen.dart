@@ -114,6 +114,13 @@ class PerfilScreen extends ConsumerWidget {
               builder: (_) => SinPublicidad(child: Bienvenida(fantasy: mi.liga.fantasyActivo)))),
         ),
         ListTile(
+          leading: const Icon(Icons.help_outline),
+          title: const Tx('Preguntas frecuentes'),
+          subtitle: const Tx('Respuestas rápidas con buscador'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/ayuda'),
+        ),
+        ListTile(
           leading: const Icon(Icons.menu_book_outlined),
           title: const Tx('Guía y normas'),
           subtitle: const Tx('Palabras de la app, puntos y reglas de tu liga'),
@@ -164,6 +171,18 @@ class PerfilScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.sentiment_very_satisfied_outlined),
+          title: const Tx('Avisos con humor'),
+          subtitle: const Tx('Títulos con gracia en las notificaciones (la información no cambia)'),
+          value: ref.watch(avisosHumorProvider).valueOrNull ?? true,
+          onChanged: (v) async {
+            final uid = sb.auth.currentUser?.id;
+            if (uid == null) return;
+            await sb.from('perfiles').update({'avisos_humor': v}).eq('id', uid);
+            ref.invalidate(avisosHumorProvider);
+          },
         ),
         ListTile(
           leading: const Icon(Icons.palette_outlined),
@@ -294,3 +313,12 @@ Future<void> eliminarCuenta(BuildContext context, WidgetRef ref) async {
     } catch (_) {}
   });
 }
+
+
+/// 0056: si el jugador quiere avisos con humor.
+final avisosHumorProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final uid = sb.auth.currentUser?.id;
+  if (uid == null) return true;
+  final m = await sb.from('perfiles').select('avisos_humor').eq('id', uid).maybeSingle();
+  return (m?['avisos_humor'] ?? true) as bool;
+});

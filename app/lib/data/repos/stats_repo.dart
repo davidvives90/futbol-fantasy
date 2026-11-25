@@ -1,3 +1,5 @@
+import '../../core/idioma.dart';
+import '../../core/utils.dart';
 import '../../core/supabase.dart';
 import '../models.dart';
 
@@ -44,9 +46,9 @@ class StatsRepo {
     return [for (final r in rows) Premio(r)];
   }
 
-  static Future<List<Map<String, dynamic>>> logrosDe(String miembroId) async =>
-      List<Map<String, dynamic>>.from(
-          await sb.from('logros').select().eq('miembro_id', miembroId).order('conseguido_en', ascending: false));
+  /// 0056: los 150 logros con progreso, en el idioma de la app.
+  static Future<Logros> logrosDe(String miembroId) async => Logros(Map<String, dynamic>.from(
+      await sb.rpc('logros_de', params: {'p_miembro': miembroId, 'p_idioma': idiomaActual}) as Map));
 
   /// [herencia] (0054): qué pasa con el Fantasy: 'ninguna', 'reinicio', 'valor' o 'bonus'.
   static Future<void> cerrarTemporada(String ligaId, String? nombre, {String? herencia}) =>
@@ -92,23 +94,44 @@ final premiosInfo = <String, ({String icono, String titulo, String Function(num?
   'ganador': (icono: '🥇', titulo: 'Más ganador', dato: (v) => '${_n(v)} % victorias'),
 };
 
-/// Insignias: icono y nombre de cada logro (el servidor decide cuándo se consigue).
-const logrosInfo = <String, (String, String)>{
-  'primer_gol': ('⚽', 'Primer gol'),
-  'hat_trick': ('🎩', 'Hat-trick'),
-  'manita': ('🖐️', 'Manita'),
-  'goles_10': ('🔟', '10 goles'),
-  'goles_25': ('🎯', '25 goles'),
-  'goles_50': ('💥', '50 goles'),
-  'goles_100': ('👑', '100 goles'),
-  'mvp_1': ('⭐', 'Primer MVP'),
-  'mvp_5': ('🌟', '5 MVPs'),
-  'mvp_10': ('💫', '10 MVPs'),
-  'partidos_10': ('👟', '10 partidos'),
-  'partidos_25': ('🏃', '25 partidos'),
-  'partidos_50': ('🎖️', '50 partidos'),
-  'partidos_100': ('🏛️', '100 partidos'),
-  'racha_10': ('🔥', '10 seguidos sin faltar'),
-  'invicto_5': ('🛡️', '5 sin perder'),
-  'muro_5': ('🧱', '5 porterías a cero'),
-};
+/// 0056: un logro del catálogo (30 familias × 5 niveles) con el progreso del jugador.
+class Logro {
+  Logro(Map<String, dynamic> m)
+      : codigo = m['codigo'] as String,
+        familia = m['familia'] as String,
+        categoria = m['categoria'] as String,
+        emoji = m['emoji'] as String,
+        nivel = toInt(m['nivel']),
+        umbral = toDouble(m['umbral']) ?? 0,
+        oculto = (m['oculto'] ?? false) as bool,
+        nombre = m['nombre'] as String,
+        nivelNombre = m['nivel_nombre'] as String,
+        descripcion = m['descripcion'] as String,
+        valor = toDouble(m['valor']) ?? 0,
+        conseguidoEn = m['conseguido_en'] == null ? null : DateTime.parse(m['conseguido_en'] as String),
+        pct = toInt(m['pct']);
+  final String codigo, familia, categoria, emoji, nombre, nivelNombre, descripcion;
+  final int nivel, pct;
+  final double umbral, valor;
+  final bool oculto;
+  final DateTime? conseguidoEn;
+  bool get conseguido => conseguidoEn != null;
+
+  /// Medalla de cada nivel: Bronce, Plata, Oro, Diamante, Leyenda.
+  static const medallas = ['🥉', '🥈', '🥇', '💎', '👑'];
+  String get medalla => medallas[(nivel - 1).clamp(0, 4)];
+}
+
+class Logros {
+  Logros(Map<String, dynamic> m)
+      : total = toInt(m['total']),
+        conseguidos = toInt(m['conseguidos']),
+        lista = [for (final x in (m['logros'] as List? ?? const [])) Logro(Map<String, dynamic>.from(x as Map))];
+  final int total, conseguidos;
+  final List<Logro> lista;
+
+  /// Últimos conseguidos, del más reciente al más antiguo.
+  List<Logro> get recientes => lista.where((l) => l.conseguido).toList()
+    ..sort((a, b) => b.conseguidoEn!.compareTo(a.conseguidoEn!));
+}
+

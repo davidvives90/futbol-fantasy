@@ -306,6 +306,14 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _porra(mi),
         ),
+        _Interruptor(
+          titulo: 'Avisos con humor',
+          activo: mi.liga.avisosHumor,
+          on: 'Títulos con gracia en las notificaciones de la liga',
+          off: 'Avisos serios para todos',
+          campo: 'avisos_humor',
+          ligaId: mi.liga.id,
+        ),
         opcion(Icons.emoji_events_outlined, 'Votación tras el partido',
             mi.liga.votaPodio ? 'Podio Top 3 (1.º, 2.º y 3.º)' : 'Notas a cada compañero', '/liga/reglas'),
         if (mi.liga.esAvanzada || _verTodo) ...[

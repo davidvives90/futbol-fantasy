@@ -9,6 +9,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 psql -q -d postgres -c "drop database if exists ff_test" -c "create database ff_test"
+# Los escenarios antiguos comprueban títulos serios: sin avisos con humor salvo en escenario_fase4.sql
+export PGOPTIONS="-c ff.sin_humor=1"
 aplicar() { echo "== $1"; psql -q -d ff_test -v ON_ERROR_STOP=1 -f "$1"; }
 
 aplicar tests/00_stubs.sql
@@ -71,3 +73,4 @@ aplicar tests/escenario_modos.sql
 aplicar tests/escenario_fase1.sql
 aplicar tests/escenario_fase2.sql
 aplicar tests/escenario_fase3.sql
+PGOPTIONS="" aplicar tests/escenario_fase4.sql

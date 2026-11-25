@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme.dart';
 import '../../core/utils.dart';
@@ -10,14 +11,12 @@ import '../../data/repos/stats_repo.dart';
 import '../../core/avatar.dart';
 import '../../data/repos/reglamento_repo.dart';
 import '../liga/asistencia_screen.dart';
+import 'logros_screen.dart';
 
 final historialProvider = FutureProvider.autoDispose.family<List<PuntosFantasy>, String>(
   (ref, miembroId) => StatsRepo.historial(miembroId),
 );
 
-final logrosMiembroProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-  (ref, miembroId) => StatsRepo.logrosDe(miembroId),
-);
 
 final premiosMiembroProvider = FutureProvider.autoDispose.family<List<Premio>, String>(
   (ref, miembroId) => StatsRepo.premiosDe(miembroId),
@@ -75,25 +74,34 @@ class FichaScreen extends ConsumerWidget {
             _Dato('% victorias', rend.pctVictorias == null ? '—' : '${rend.pctVictorias!.toStringAsFixed(0)} %'),
           ],
         ),
-      // Logros (insignias)
+      // Logros (0056: 150, con pantalla propia)
       ...() {
-        final logros = ref.watch(logrosMiembroProvider(miembroId)).valueOrNull ?? const [];
-        if (logros.isEmpty) return const <Widget>[];
+        final l = ref.watch(logrosProvider(miembroId)).valueOrNull;
+        if (l == null) return const <Widget>[];
+        final recientes = l.recientes.take(6).toList();
         return <Widget>[
           const SizedBox(height: 16),
-          Text('Logros (${logros.length}/${logrosInfo.length})', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            for (final l in logros)
-              Tooltip(
-                message: 'Conseguido el ${fechaCorta(DateTime.parse(l['conseguido_en'] as String))}',
-                child: Chip(
-                  avatar: Text(logrosInfo[l['tipo']]?.$1 ?? '🏅'),
-                  label: Text(tr(logrosInfo[l['tipo']]?.$2 ?? '${l['tipo']}')),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
+          Row(children: [
+            Expanded(child: Text(trf('Logros ({x}/{y})', {'x': l.conseguidos, 'y': l.total}),
+                style: Theme.of(context).textTheme.titleMedium)),
+            TextButton(onPressed: () => context.push('/logros/$miembroId'), child: const Tx('Ver todos')),
           ]),
+          const SizedBox(height: 6),
+          if (recientes.isEmpty)
+            Tx('Aún sin logros. ¡El primer gol ya cuenta!', style: Theme.of(context).textTheme.bodySmall)
+          else
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final x in recientes)
+                Tooltip(
+                  message: trf('Conseguido el {x}', {'x': fechaCorta(x.conseguidoEn!)}),
+                  child: ActionChip(
+                    avatar: Text(x.emoji),
+                    label: Text('${x.nombre} ${x.medalla}'),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => context.push('/logros/$miembroId'),
+                  ),
+                ),
+            ]),
         ];
       }(),
       // Palmarés del jugador

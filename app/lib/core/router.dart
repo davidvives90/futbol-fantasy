@@ -34,6 +34,8 @@ import '../features/partidos/partidos_screen.dart';
 import '../features/partidos/temporada_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/shell/home_shell.dart';
+import '../features/stats/logros_screen.dart';
+import '../features/perfil/ayuda_screen.dart';
 import '../features/stats/clasificacion_screen.dart';
 import '../features/stats/ficha_screen.dart';
 import '../features/liga/reglamento_screen.dart';
@@ -107,6 +109,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/tienda', builder: (_, __) => const TiendaScreen()),
       // Ficha fuera de las pestañas: se abre desde pantallas que están encima (Perfil, avisos…)
       GoRoute(path: '/ficha/:miembroId', builder: (_, state) => FichaScreen(miembroId: state.pathParameters['miembroId']!)),
+      GoRoute(path: '/logros/:miembroId', builder: (_, state) => LogrosScreen(miembroId: state.pathParameters['miembroId']!)),
+      GoRoute(path: '/ayuda', builder: (_, __) => const AyudaScreen()),
       GoRoute(
         path: '/master/liga/:ligaId',
         builder: (_, state) => MasterLigaScreen(
