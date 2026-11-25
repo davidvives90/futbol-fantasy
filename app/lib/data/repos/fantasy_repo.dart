@@ -327,4 +327,8 @@ class FantasyRepo {
       return null;
     }
   }
+
+  /// 0053: crea los equipos Fantasy de los jugadores indicados (null = todos los registrados activos).
+  static Future<int> crearManagers(String ligaId, [List<String>? miembros]) async =>
+      toInt(await sb.rpc('crear_managers', params: {'p_liga': ligaId, 'p_miembros': miembros}));
 }

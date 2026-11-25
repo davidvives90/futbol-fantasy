@@ -50,6 +50,7 @@ class PostPartidoRepo {
     required List<Map<String, dynamic>>? jugadores,
     required List<Map<String, dynamic>>? notas,
     String? mvp,
+    List<String>? podio,
   }) async {
     await sb.rpc('enviar_post_partido', params: {
       'p_partido': partidoId,
@@ -57,6 +58,7 @@ class PostPartidoRepo {
       'p_jugadores': jugadores,
       'p_notas': notas,
       'p_mvp': mvp,
+      if (podio != null) 'p_podio': podio,
     });
   }
 
@@ -117,5 +119,11 @@ class PostPartidoRepo {
   static Future<Map<String, Map<String, dynamic>>> acta(String partidoId) async {
     final rows = await sb.from('acta_jugador').select().eq('partido_id', partidoId);
     return {for (final r in rows) r['miembro_id'] as String: r};
+  }
+
+  /// 0053: equipo de la jornada (los mejores por puntos Fantasy, con posiciones si las hay).
+  static Future<List<Map<String, dynamic>>> equipoJornada(String partidoId) async {
+    final r = await sb.rpc('equipo_jornada', params: {'p_partido': partidoId});
+    return [for (final x in r as List) Map<String, dynamic>.from(x as Map)];
   }
 }

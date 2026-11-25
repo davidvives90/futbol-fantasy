@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'features/privacidad/consentimiento.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -163,7 +164,8 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           child: EquipacionesScope(
             equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
             // Al cambiar de idioma se reconstruye toda la interfaz (fechas y textos incluidos)
-            child: MarcoWeb(
+            child: PuertaConsentimiento(
+              child: MarcoWeb(
               onQuitarAnuncios: () => ref.read(routerProvider).push('/tienda'),
               // Android dibuja de borde a borde: sin esto, los botones de abajo quedan bajo la barra del sistema.
               // La app termina encima de la barra (el hueco se pinta con el color de fondo).
@@ -178,6 +180,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
                         child: KeyedSubtree(key: ValueKey(ref.watch(idiomaProvider)), child: child!),
                       ),
                     ),
+              ),
             ),
           ),
         );

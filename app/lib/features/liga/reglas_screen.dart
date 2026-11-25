@@ -184,38 +184,78 @@ class _Aspectos extends ConsumerWidget {
 }
 
 
-/// v0.3b: rápida (una nota general por compañero + destacados) o detallada (nota por aspecto).
+/// Cómo se vota tras el partido: podio Top 3 (0053), notas del 1 al 5 o detallada por aspectos.
 class _ModoValoracion extends ConsumerWidget {
   const _ModoValoracion();
+
+  Future<void> _cambiar(BuildContext context, WidgetRef ref, MiLiga mi, String modo) async {
+    final ok = await ejecutar(context, () => LigasRepo.actualizarLiga(mi.liga.id, {'modo_valoracion': modo}),
+        ok: tr('Votación cambiada'));
+    if (ok) ref.invalidate(misLigasProvider);
+  }
+
+  Future<void> _puntos(BuildContext context, WidgetRef ref, MiLiga mi) async {
+    final c = [for (final p in mi.liga.puntosPodio) TextEditingController(text: '$p')];
+    final r = await showDialog<List<int>>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Tx('Puntos del podio'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          for (var i = 0; i < 3; i++)
+            TextField(
+              controller: c[i],
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: ['🥇 1.º', '🥈 2.º', '🥉 3.º'][i]),
+            ),
+          const SizedBox(height: 8),
+          const Tx('Son puntos de votación y también puntos Fantasy según el puesto final. Máximo 20.'),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: const Tx('Cancelar')),
+          FilledButton(
+            onPressed: () => Navigator.pop(d, [for (final x in c) int.tryParse(x.text.trim()) ?? -1]),
+            child: const Tx('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (r == null || !context.mounted) return;
+    if (r.any((x) => x < 0 || x > 20) || r[0] < r[1] || r[1] < r[2]) {
+      mostrarError(context, tr('Pon números de 0 a 20, de mayor a menor.'));
+      return;
+    }
+    final ok = await ejecutar(context, () => LigasRepo.actualizarLiga(mi.liga.id, {'puntos_podio': r}), ok: tr('Guardado'));
+    if (ok) ref.invalidate(misLigasProvider);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const SizedBox.shrink();
-    final detallada = mi.liga.valoracionDetallada;
-    if (!mi.liga.valoracionAvanzada) {
-      return const ListTile(
-        title: Tx('Valoración'),
-        subtitle: Text('Simple: nota del 1 al 5 por compañero y estrella MVP. Para la valoración por aspectos, '
-            'activa «Post-partido avanzado» en Ajustes de la liga.'),
-      );
-    }
-    return SwitchListTile(
-      title: const Tx('Valoración detallada'),
-      subtitle: Text(detallada
-          ? 'Cada compañero se puntúa del 1 al 5 en cada aspecto (más lento).'
-          : 'Rápida: una nota del 1 al 5 por compañero (3 = normal), «Destacó en…» y voto MVP. ~1 minuto.'),
-      value: detallada,
-      onChanged: mi.soyAdmin
-          ? (v) async {
-              final ok = await ejecutar(
-                context,
-                () => LigasRepo.actualizarLiga(mi.liga.id, {'modo_valoracion': v ? 'detallada' : 'rapida'}),
-                ok: v ? 'Valoración detallada activada' : 'Valoración rápida activada',
-              );
-              if (ok) ref.invalidate(misLigasProvider);
-            }
-          : null,
-    );
+    final modo = mi.liga.modoValoracion == 'detallada' && !mi.liga.valoracionAvanzada ? 'rapida' : mi.liga.modoValoracion;
+    final opciones = [
+      ('podio', 'Podio Top 3 (recomendado)', 'Cada uno elige a los 3 mejores por orden. Rápido: 3 toques.'),
+      ('rapida', 'Notas del 1 al 5', 'Una nota a cada compañero (3 = normal) y estrella MVP.'),
+      if (mi.liga.valoracionAvanzada) ('detallada', 'Detallada por aspectos', 'Nota del 1 al 5 en cada aspecto (más lento).'),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const ListTile(title: Tx('Votación tras el partido')),
+      for (final (valor, titulo, texto) in opciones)
+        RadioListTile<String>(
+          value: valor,
+          groupValue: modo,
+          title: Tx(titulo),
+          subtitle: Tx(texto),
+          onChanged: mi.soyAdmin && valor != modo ? (v) => _cambiar(context, ref, mi, v!) : null,
+        ),
+      if (modo == 'podio')
+        ListTile(
+          leading: const Icon(Icons.emoji_events_outlined),
+          title: const Tx('Puntos del podio'),
+          subtitle: Text('🥇 ${mi.liga.puntosPodio[0]} · 🥈 ${mi.liga.puntosPodio[1]} · 🥉 ${mi.liga.puntosPodio[2]}'),
+          trailing: mi.soyAdmin ? const Icon(Icons.edit_outlined) : null,
+          onTap: mi.soyAdmin ? () => _puntos(context, ref, mi) : null,
+        ),
+    ]);
   }
 }

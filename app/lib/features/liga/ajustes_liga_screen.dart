@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/exportar.dart';
+import '../../core/supabase.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -39,6 +40,55 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
         ok: trf('Modo {n} activado', {'n': nombre}))) {
       refrescarLigas(ref);
     }
+  }
+
+  /// 0053: une la ficha creada a mano (sin cuenta, con su historial) con la cuenta real del jugador.
+  Future<void> _unirFichas(MiLiga mi) async {
+    final todos = ref.read(miembrosPorIdProvider(mi.liga.id)).values.toList()..sort((a, b) => a.nombre.compareTo(b.nombre));
+    final fantasmas = todos.where((m) => !m.registrado && m.estado != EstadoMiembro.expulsado).toList();
+    final reales = todos.where((m) => m.registrado && m.estado == EstadoMiembro.activo).toList();
+    if (fantasmas.isEmpty) {
+      mostrarOk(context, tr('No hay jugadores sin cuenta en la liga'));
+      return;
+    }
+    Miembro? f;
+    Miembro? r;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => StatefulBuilder(
+        builder: (d, setState) => AlertDialog(
+          title: const Tx('Unir fichas duplicadas'),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Tx('Para quien se registró con el código de la liga en vez de con su enlace personal. '
+                'Todo su historial (partidos, goles, logros, pagos, Fantasy) pasa a su cuenta.'),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<Miembro>(
+              value: f,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: tr('Ficha sin cuenta (la antigua)')),
+              items: [for (final m in fantasmas) DropdownMenuItem(value: m, child: Text(m.nombre))],
+              onChanged: (v) => setState(() => f = v),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<Miembro>(
+              value: r,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: tr('Cuenta del jugador')),
+              items: [for (final m in reales) DropdownMenuItem(value: m, child: Text(m.nombre))],
+              onChanged: (v) => setState(() => r = v),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(d, false), child: const Tx('Cancelar')),
+            FilledButton(onPressed: f != null && r != null ? () => Navigator.pop(d, true) : null, child: const Tx('Unir')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || f == null || r == null || !mounted) return;
+    final hecho = await ejecutar(context, () => sb.rpc('fusionar_fichas', params: {'p_fantasma': f!.id, 'p_jugador': r!.id}),
+        ok: trf('{a} ya es {b}', {'a': f!.nombre, 'b': r!.nombre}));
+    if (hecho) ref.invalidate(miembrosProvider(mi.liga.id));
   }
 
   /// «El árbitro (Juan)», «Los capitanes»…
@@ -184,6 +234,8 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _elegirActa(mi),
         ),
+        opcion(Icons.emoji_events_outlined, 'Votación tras el partido',
+            mi.liga.votaPodio ? 'Podio Top 3 (1.º, 2.º y 3.º)' : 'Notas a cada compañero', '/liga/reglas'),
         if (mi.liga.esAvanzada || _verTodo) ...[
         grupo(tr('Módulos')),
         _Interruptor(
@@ -215,6 +267,15 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
         opcion(Icons.gavel_outlined, 'Reglamento', 'Modalidad (${mi.liga.nombreModalidad}) y reglas del partido', '/reglamento'),
         opcion(Icons.how_to_vote_outlined, 'Votaciones', 'Pregunta a la liga o somete a votación un cambio de regla', '/votaciones'),
         opcion(Icons.event_busy_outlined, 'Asistencia y bajas', 'Historial de cada jugador y bajas temporales', '/asistencia'),
+        opcion(Icons.history_edu_outlined, 'Importar historial', 'Estadísticas de temporadas anteriores (CSV, Excel o a mano)',
+            '/liga/historial'),
+        ListTile(
+          leading: const Icon(Icons.merge_type),
+          title: const Tx('Unir fichas duplicadas'),
+          subtitle: const Tx('Un jugador sin cuenta y su cuenta real'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _unirFichas(mi),
+        ),
         ListTile(
           leading: const Icon(Icons.table_view_outlined),
           title: const Tx('Exportar a Excel'),

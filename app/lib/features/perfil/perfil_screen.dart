@@ -3,7 +3,6 @@ import '../onboarding/bienvenida.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/anuncios.dart';
 import '../../core/ventajas.dart';
@@ -201,13 +200,10 @@ class PerfilScreen extends ConsumerWidget {
         ),
         ListTile(
           leading: const Icon(Icons.policy_outlined),
-          title: const Tx('Política de privacidad'),
-          onTap: () => launchUrl(Uri.parse(urlPrivacidad), mode: LaunchMode.externalApplication),
-        ),
-        ListTile(
-          leading: Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
-          title: Tx('Eliminar mi cuenta', style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          onTap: () => _eliminarCuenta(context, ref),
+          title: const Tx('Privacidad y datos'),
+          subtitle: const Tx('Política, permisos opcionales y eliminar la cuenta'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/privacidad'),
         ),
         const SizedBox(height: 24),
       ]),
@@ -249,9 +245,8 @@ Future<void> _comentarios(BuildContext context) async {
   );
 }
 
-const urlPrivacidad = 'https://davidvives90.github.io/futbol-fantasy/privacidad.html';
 
-Future<void> _eliminarCuenta(BuildContext context, WidgetRef ref) async {
+Future<void> eliminarCuenta(BuildContext context, WidgetRef ref) async {
   final ctrl = TextEditingController();
   final ok = await showDialog<bool>(
     context: context,

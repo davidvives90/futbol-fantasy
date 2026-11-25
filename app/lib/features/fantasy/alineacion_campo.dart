@@ -185,7 +185,7 @@ class _AlineacionCampoState extends ConsumerState<AlineacionCampo> {
           width: 72,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Stack(clipBehavior: Clip.none, children: [
-              AvatarMiembro(miembros[id], radio: 20),
+              AvatarMiembro(miembros[id], radio: 20, dorsal: true),
               Positioned(right: -4, bottom: -4, child: IconoConvocatoria(estado[id])),
             ]),
             const SizedBox(height: 2),

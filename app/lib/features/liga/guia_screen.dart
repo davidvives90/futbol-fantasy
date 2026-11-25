@@ -150,7 +150,7 @@ class GuiaScreen extends ConsumerWidget {
         dato(Icons.format_list_numbered, 'Lista de espera', l.fijosPrimero ? 'Los fijos primero' : 'Por orden de apuntarse'),
         dato(Icons.assignment_outlined, 'Acta del partido',
             tr(modosActa.firstWhere((m) => m.$1 == l.quienRellena, orElse: () => modosActa.first).$2)),
-        dato(Icons.how_to_vote_outlined, 'Valoración', l.valoracionDetallada ? 'Detallada (por aspectos)' : 'Rápida (1 a 5)'),
+        dato(Icons.how_to_vote_outlined, 'Valoración', l.votaPodio ? 'Podio Top 3 (1.º, 2.º y 3.º)' : l.valoracionDetallada ? 'Detallada (por aspectos)' : 'Rápida (1 a 5)'),
         dato(Icons.shield_outlined, 'Fantasy', l.fantasyActivo ? 'Plantillas de hasta ${f.maxPlantilla} jugadores' : 'Desactivado'),
         if (l.fantasyActivo) dato(Icons.verified_user_outlined, 'Protección tras fichar', '${f.proteccionDias} días'),
         dato(Icons.lock_clock, 'Cierre de alineación', '${f.horasCierreAlineacion.toStringAsFixed(0)} h antes'),

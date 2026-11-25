@@ -76,6 +76,10 @@ abstract final class Ayuda {
   static const mvp = ('MVP',
       'Cada uno vota a su MVP (no puedes votarte). El MVP del partido es el de mejor nota media; si hay empate, '
           'decide quién tiene más votos de MVP y después goles + asistencias. Suma 3 puntos.');
+  static const podio = ('Podio Top 3',
+      'Cada uno elige a los 3 mejores del partido por orden (no puedes votarte). Cada voto suma puntos de votación '
+          '(5, 3 y 1 por defecto). El que más suma es el MVP; si empatan, decide quién tiene más votos de 1.º, '
+          'luego de 2.º y luego goles + asistencias. Los 3 primeros suman puntos Fantasy según su puesto.');
   static const destacados = ('«Destacó en…»',
       'Opcional: marca en qué destacó un compañero (hasta 2 cosas). No suma puntos, pero alimenta sus estadísticas '
           '(«Destacó en defensa ×5») y ayuda a hacer equipos equilibrados.');

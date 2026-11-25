@@ -56,6 +56,9 @@ class _Borrador {
   final sinValorar = <String>{};
   final abiertos = <String>{};
   String? mvp;
+
+  /// Modo podio (0053): 1.º, 2.º y 3.º mejor del partido.
+  final podio = <String?>[null, null, null];
 }
 
 final _borradores = <String, _Borrador>{};
@@ -132,6 +135,10 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       if (notasPrevias.isNotEmpty && n == null) b.sinValorar.add(a.miembroId);
     }
     b.mvp = previo['mvp'] as String?;
+    final pp = previo['podio'] as List? ?? const [];
+    for (var i = 0; i < 3 && i < pp.length; i++) {
+      b.podio[i] = pp[i] as String?;
+    }
     _borradores[_clave] = b;
   }
 
@@ -222,6 +229,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     final avanzado = widget.mi.liga.valoracionAvanzada;
     final masDatos = avanzado && b.masDatos;
     final sinValorar = avanzado ? b.sinValorar : const <String>{};
+    final esPodio = widget.mi.liga.modoValoracion == 'podio';
+    final podio = b.podio.whereType<String>().toList();
     setState(() => _enviando = true);
     final ok = await ejecutar(
       context,
@@ -248,7 +257,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 'penaltis_fallados': masDatos ? (b.penFallados[a.miembroId] ?? 0) : null,
               },
         ],
-        notas: !notas
+        notas: !notas || esPodio
             ? null
             : [
           for (final id in b.notas.keys)
@@ -262,7 +271,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                 'destacados': avanzado ? (b.destacados[id] ?? const <String>{}).toList() : const <String>[],
               },
         ],
-        mvp: notas && b.mvp != null && !sinValorar.contains(b.mvp) ? b.mvp : null,
+        mvp: !esPodio && notas && b.mvp != null && !sinValorar.contains(b.mvp) ? b.mvp : null,
+        podio: esPodio && notas && podio.isNotEmpty ? podio : null,
       ),
       ok: widget.mi.liga.quienRellena == 'jugadores' ? '¡Enviado! Se cruzará con lo que pongan los demás' : '¡Enviado!',
     );
@@ -322,7 +332,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     }
     final previo = miEnvio.value ?? const <String, dynamic>{};
     final yaEnviado = (previo['resultados'] as List? ?? const []).isNotEmpty ||
-        (previo['notas'] as List? ?? const []).isNotEmpty;
+        (previo['notas'] as List? ?? const []).isNotEmpty ||
+        (previo['podio'] as List? ?? const []).isNotEmpty;
 
     if (yaEnviado && !_editando) {
       return ListView(padding: const EdgeInsets.all(24), children: [
@@ -365,6 +376,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     final t = Theme.of(context).textTheme;
     final equipos = asistentes.map((a) => a.equipo!).toSet().toList()..sort();
     final companeros = asistentes.where((a) => a.miembroId != widget.mi.yo.id).toList();
+    final esPodio = widget.mi.liga.modoValoracion == 'podio';
+    final sinNadaQueEnviar = !hagoActa && esPodio && b.podio.every((x) => x == null);
 
     return Column(children: [
       Expanded(
@@ -492,8 +505,50 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           const SizedBox(height: 12),
           ],
 
+          // ───── 3. Podio (modo Top 3): solo quien jugó
+          if (asisto && esPodio) ...[
+            _Titulo(hagoActa ? '3' : '1', 'Los 3 mejores del partido', ayuda: Ayuda.podio),
+            Text(
+              trf('Elige por orden. 1.º = {a} pts, 2.º = {b}, 3.º = {c}. No puedes votarte. El que más sume es el MVP.', {
+                'a': widget.mi.liga.puntosPodio[0],
+                'b': widget.mi.liga.puntosPodio[1],
+                'c': widget.mi.liga.puntosPodio[2],
+              }),
+              style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
+            for (var i = 0; i < 3; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: DropdownButtonFormField<String?>(
+                  key: ValueKey('podio-$i-${b.podio[i]}'),
+                  value: b.podio[i],
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: ['🥇 1.º mejor', '🥈 2.º mejor', '🥉 3.º mejor'].map(tr).toList()[i],
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    DropdownMenuItem<String?>(value: null, child: Tx('— Sin elegir —')),
+                    for (final a in companeros)
+                      if (b.podio[i] == a.miembroId || !b.podio.contains(a.miembroId))
+                        DropdownMenuItem<String?>(
+                          value: a.miembroId,
+                          child: Row(children: [
+                            AvatarMiembro(miembros[a.miembroId], radio: 12),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(miembros[a.miembroId]?.nombre ?? '…', overflow: TextOverflow.ellipsis)),
+                            PuntoEquipo(a.equipo!),
+                          ]),
+                        ),
+                  ],
+                  onChanged: (v) => setState(() => b.podio[i] = v),
+                ),
+              ),
+          ],
+
           // ───── 3. Notas (solo quien jugó)
-          if (asisto) ...[
+          if (asisto && !esPodio) ...[
           _Titulo(hagoActa ? '3' : '1', detallada ? 'Valora a tus compañeros' : 'Notas de tus compañeros', ayuda: Ayuda.notas),
           Text(
             detallada
@@ -581,7 +636,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                   ),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _enviando || (hagoActa && (cotejo.error != null || b.encuentros.isEmpty))
+                    onPressed: _enviando || sinNadaQueEnviar || (hagoActa && (cotejo.error != null || b.encuentros.isEmpty))
                         ? null
                         : () => _enviar(asistentes, listaAspectos, acta: hagoActa, notas: asisto),
                     icon: _enviando

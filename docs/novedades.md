@@ -14,6 +14,13 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Privacidad: al entrar se pide aceptar la política (con resumen claro) y se guarda la versión aceptada. Perfil › Privacidad y datos para consultarla, retirar los informes de errores o eliminar la cuenta.
+- Nueva votación «Podio Top 3»: cada uno elige 1.º, 2.º y 3.º mejor (5, 3 y 1 puntos, configurable). El que más suma es MVP.
+- Resumen del partido: MVP destacado con sus puntos Fantasy, el podio de los 3 mejores y el Equipo de la jornada.
+- Jugadores creados a mano: si alguien entra con el código de la liga y luego usa su enlace personal, se unen las fichas sin duplicar. El admin también puede unirlas (Ajustes › Unir fichas duplicadas).
+- Fantasy: el admin crea de golpe los equipos de todos los mánagers y puede añadir uno tardío (Ajustes Fantasy).
+- Importar historial de temporadas anteriores (CSV, Excel o a mano). Cuenta en clasificación, equipos nivelados y logros.
+- Dorsal en el perfil (sale en la carta y en las alineaciones) y selector de idioma con banderas al entrar.
 - Capitanes: cada capitán se queda en su equipo al generar, nuevo «Elegir por turnos» y ya no se dan por hechos unos equipos con solo los capitanes.
 - Fantasy: 5 copias de cada jugador. Comprar una copia libre no se la quita a nadie; pagar la cláusula de otro sí (lo pierde y cobra).
 - Los avisos de abajo («Cambiado», notificaciones con «Ver») se van solos y ya no tapan el botón de enviar.

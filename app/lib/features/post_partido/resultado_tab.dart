@@ -15,10 +15,11 @@ import '../../core/avatar.dart';
 import '../../core/equipaciones.dart';
 
 class _DatosResultado {
-  _DatosResultado(this.encuentros, this.puntos, this.acta);
+  _DatosResultado(this.encuentros, this.puntos, this.acta, this.equipoJornada);
   final List<Encuentro> encuentros;
   final List<PuntosFantasy> puntos;
   final Map<String, Map<String, dynamic>> acta;
+  final List<Map<String, dynamic>> equipoJornada;
 }
 
 final _resultadoProvider = FutureProvider.autoDispose.family<_DatosResultado, String>((ref, partidoId) async {
@@ -26,11 +27,13 @@ final _resultadoProvider = FutureProvider.autoDispose.family<_DatosResultado, St
     PartidosRepo.encuentros(partidoId),
     PostPartidoRepo.puntos(partidoId),
     PostPartidoRepo.acta(partidoId),
+    PostPartidoRepo.equipoJornada(partidoId).catchError((_) => <Map<String, dynamic>>[]),
   ]);
   return _DatosResultado(
     r[0] as List<Encuentro>,
     r[1] as List<PuntosFantasy>,
     r[2] as Map<String, Map<String, dynamic>>,
+    r[3] as List<Map<String, dynamic>>,
   );
 });
 
@@ -53,6 +56,7 @@ class ResultadoTab extends ConsumerWidget {
         'autogoles' => 'Autogoles',
         'valoracion' || 'nota' => 'Valoración',
         'mvp' => 'MVP',
+        'podio' => 'Podio (2.º / 3.º)',
         _ => clave,
       };
 
@@ -65,7 +69,7 @@ class ResultadoTab extends ConsumerWidget {
       loading: () => const Cargando(),
       error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(_resultadoProvider(partido.id))),
       data: (d) {
-        final mvps = d.puntos.where((p) => p.esMvp).toList();
+        final podio = d.puntos.where((p) => p.puesto != null).toList()..sort((a, b) => a.puesto!.compareTo(b.puesto!));
         return ListView(padding: const EdgeInsets.all(16), children: [
           for (final e in d.encuentros)
             Card(
@@ -78,22 +82,17 @@ class ResultadoTab extends ConsumerWidget {
                 ]),
               ),
             ),
-          for (final m in mvps)
-            Card(
-              color: Theme.of(context).colorScheme.tertiaryContainer,
-              child: ListTile(
-                leading: Icon(Icons.star, color: Theme.of(context).colorScheme.tertiary, size: 36),
-                title: Text('${mvps.length > 1 ? 'MVP compartido' : 'MVP'}: ${miembros[m.miembroId]?.nombre ?? '…'}'),
-                subtitle: Text('Valoración media ${m.notaMedia?.toStringAsFixed(1) ?? '—'}'),
-              ),
-            ),
+          if (podio.isNotEmpty)
+            _TarjetaPodio(podio: podio, miembros: miembros, acta: d.acta, porVotos: mi.liga.votaPodio),
+          if (d.equipoJornada.isNotEmpty)
+            _TarjetaEquipoJornada(filas: d.equipoJornada, miembros: miembros),
           _PuntosManagerSeccion(partido: partido, mi: mi, puntos: d.puntos),
           const SizedBox(height: 8),
           Tx('Puntos Fantasy', style: Theme.of(context).textTheme.titleMedium),
           for (final (i, p) in d.puntos.indexed)
             ExpansionTile(
               leading: AvatarMiembro(miembros[p.miembroId], anillo: p.esMvp ? Theme.of(context).colorScheme.tertiary : null),
-              title: Text('${i + 1}. ${miembros[p.miembroId]?.nombre ?? '…'}'),
+              title: Text('${i + 1}. ${miembros[p.miembroId]?.nombre ?? '…'}${_medalla(p.puesto)}'),
               subtitle: Text([
                 if ((d.acta[p.miembroId]?['goles'] ?? 0) as num > 0) '⚽ ${d.acta[p.miembroId]!['goles']}',
                 if ((d.acta[p.miembroId]?['asistencias'] ?? 0) as num > 0) '🅰️ ${d.acta[p.miembroId]!['asistencias']}',
@@ -104,7 +103,8 @@ class ResultadoTab extends ConsumerWidget {
               trailing: Text(p.total.toStringAsFixed(p.total % 1 == 0 ? 0 : 1),
                   style: AppTheme.numero(context, size: 22)),
               children: [
-                for (final e in p.desglose.entries.where((e) => (e.value is num) && e.value != 0 && e.key != 'votos_mvp'))
+                for (final e in p.desglose.entries.where((e) =>
+                    (e.value is num) && e.value != 0 && !const {'votos_mvp', 'votos_podio', 'votos_primero'}.contains(e.key)))
                   ListTile(
                     dense: true,
                     title: Text(_etiqueta(e.key)),
@@ -208,4 +208,134 @@ String _destacados(PuntosFantasy p) {
   if (d is! Map || d.isEmpty) return '';
   final e = d.entries.toList()..sort((a, b) => (b.value as num).compareTo(a.value as num));
   return 'Destacó en ${e.map((x) => '${_nombreDestacado[x.key] ?? x.key} ×${x.value}').join(', ')}';
+}
+
+
+String _medalla(int? puesto) => switch (puesto) { 1 => '  🥇', 2 => '  🥈', 3 => '  🥉', _ => '' };
+
+/// Resumen del partido: MVP destacado con sus puntos Fantasy y el resto del podio (0053).
+class _TarjetaPodio extends StatelessWidget {
+  const _TarjetaPodio({required this.podio, required this.miembros, required this.acta, required this.porVotos});
+  final List<PuntosFantasy> podio;
+  final Map<String, Miembro> miembros;
+  final Map<String, Map<String, dynamic>> acta;
+  final bool porVotos;
+
+  String _pts(num v) => v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
+
+  String _detalle(PuntosFantasy p) {
+    final a = acta[p.miembroId] ?? const {};
+    return [
+      if (((a['goles'] ?? 0) as num) > 0) '⚽ ${a['goles']}',
+      if (((a['asistencias'] ?? 0) as num) > 0) '🅰️ ${a['asistencias']}',
+      if (porVotos && p.desglose['votos_podio'] != null) trf('{n} pts de votación', {'n': p.desglose['votos_podio']}),
+      if (!porVotos && p.notaMedia != null) trf('nota {n}', {'n': p.notaMedia!.toStringAsFixed(1)}),
+    ].join('  ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final mvps = podio.where((p) => p.puesto == 1).toList();
+    final resto = podio.where((p) => p.puesto != 1).toList();
+    return Card(
+      color: cs.tertiaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final m in mvps)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(children: [
+                AvatarMiembro(miembros[m.miembroId], radio: 28, anillo: cs.tertiary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(mvps.length > 1 ? tr('🏆 MVP compartido') : tr('🏆 MVP del partido'),
+                        style: t.labelLarge?.copyWith(color: cs.onTertiaryContainer)),
+                    Text(miembros[m.miembroId]?.nombre ?? '…', style: t.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                    if (_detalle(m).isNotEmpty) Text(_detalle(m), style: t.bodySmall),
+                  ]),
+                ),
+                Column(children: [
+                  Text(_pts(m.total), style: AppTheme.numero(context, size: 30)),
+                  Tx('pts Fantasy', style: t.labelSmall),
+                ]),
+              ]),
+            ),
+          if (resto.isNotEmpty) const Divider(),
+          for (final p in resto)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Text(_medalla(p.puesto).trim(), style: const TextStyle(fontSize: 24)),
+              title: Text(miembros[p.miembroId]?.nombre ?? '…', style: t.titleSmall),
+              subtitle: _detalle(p).isEmpty ? null : Text(_detalle(p)),
+              trailing: Text(_pts(p.total), style: AppTheme.numero(context, size: 20)),
+            ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Equipo de la jornada: los mejores por puntos Fantasy, colocados por posición si la liga las usa.
+class _TarjetaEquipoJornada extends StatelessWidget {
+  const _TarjetaEquipoJornada({required this.filas, required this.miembros});
+  final List<Map<String, dynamic>> filas;
+  final Map<String, Miembro> miembros;
+
+  static const _orden = ['delantero', 'medio', 'defensa', 'portero'];
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final conPosiciones = filas.any((f) => f['hueco'] != null);
+    final total = filas.fold<num>(0, (s, f) => s + ((f['total'] ?? 0) as num));
+    Widget jugador(Map<String, dynamic> f) {
+      final m = miembros[f['miembro_id']];
+      return SizedBox(
+        width: 76,
+        child: Column(children: [
+          AvatarMiembro(m, radio: 20, anillo: f['es_mvp'] == true ? cs.tertiary : null),
+          const SizedBox(height: 2),
+          Text(m?.nombre ?? '…', maxLines: 1, overflow: TextOverflow.ellipsis, style: t.labelSmall, textAlign: TextAlign.center),
+          Text('${f['total']}', style: AppTheme.tabular(t.labelMedium)),
+        ]),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.stars_outlined, color: cs.primary),
+            const SizedBox(width: 8),
+            Expanded(child: Tx('Equipo de la jornada', style: t.titleMedium)),
+            Text(trf('{n} pts', {'n': total.toStringAsFixed(total % 1 == 0 ? 0 : 1)}), style: t.labelLarge),
+          ]),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: 0.35), borderRadius: BorderRadius.circular(12)),
+            child: Column(children: [
+              if (conPosiciones) ...[
+                for (final pos in _orden.where((pos) => filas.any((f) => f['hueco'] == pos)))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Wrap(alignment: WrapAlignment.center, spacing: 4, children: [
+                      for (final f in filas.where((f) => f['hueco'] == pos)) jugador(f),
+                    ]),
+                  ),
+              ] else
+                Wrap(alignment: WrapAlignment.center, spacing: 4, runSpacing: 8, children: [for (final f in filas) jugador(f)]),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
 }

@@ -181,6 +181,8 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        _ManagersCard(mi: mi, miembros: miembros.values.toList()),
+        const SizedBox(height: 8),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           secondary: const Icon(Icons.storefront_outlined),
@@ -412,6 +414,112 @@ class _FilaEncuestaState extends ConsumerState<_FilaEncuesta> {
           },
           child: const Tx('Cerrar'),
         ),
+      ),
+    );
+  }
+}
+
+
+/// 0053: crear de golpe los equipos Fantasy de todos (o de los elegidos) y añadir mánagers tardíos.
+/// Antes cada mánager se creaba al entrar por primera vez en el Fantasy.
+class _ManagersCard extends ConsumerWidget {
+  const _ManagersCard({required this.mi, required this.miembros});
+  final MiLiga mi;
+  final List<Miembro> miembros;
+
+  Future<void> _crear(BuildContext context, WidgetRef ref, List<Miembro> sinEquipo, {required bool tardio}) async {
+    final elegidos = {for (final m in sinEquipo) m.id};
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => StatefulBuilder(
+        builder: (d, setState) => AlertDialog(
+          title: Tx(tardio ? 'Añadir mánager tardío' : '¿Cuántos mánagers participarán?'),
+          content: SizedBox(
+            width: 400,
+            child: ListView(shrinkWrap: true, children: [
+              Tx(tardio
+                  ? 'Empieza con el presupuesto inicial y su equipo de reparto, como los demás.'
+                  : 'Se crean todos a la vez, en orden aleatorio para que el reparto inicial sea justo.'),
+              const SizedBox(height: 8),
+              Text(trf('{n} mánagers', {'n': elegidos.length}), style: Theme.of(d).textTheme.titleMedium),
+              for (final m in sinEquipo)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: elegidos.contains(m.id),
+                  title: Text(m.nombre),
+                  onChanged: (v) => setState(() => v == true ? elegidos.add(m.id) : elegidos.remove(m.id)),
+                ),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(d, false), child: const Tx('Cancelar')),
+            FilledButton(
+              onPressed: elegidos.isEmpty ? null : () => Navigator.pop(d, true),
+              child: Text(trf('Crear {n} equipos', {'n': elegidos.length})),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final hecho = await ejecutar(
+      context,
+      () => FantasyRepo.crearManagers(mi.liga.id, elegidos.toList()),
+      ok: trf('{n} equipos creados', {'n': elegidos.length}),
+    );
+    if (hecho) {
+      ref.invalidate(clasificacionManagersProvider(mi.liga.id));
+      ref.invalidate(mercadoProvider(mi.liga.id));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final managers = ref.watch(clasificacionManagersProvider(mi.liga.id));
+    final ids = {for (final c in managers.valueOrNull ?? const <ClasManager>[]) c.managerId};
+    final registrados = miembros.where((m) => m.registrado && m.estado == EstadoMiembro.activo).toList()
+      ..sort((a, b) => a.nombre.compareTo(b.nombre));
+    final sinEquipo = registrados.where((m) => !ids.contains(m.id)).toList();
+    final fantasmas = miembros.where((m) => !m.registrado && m.estado != EstadoMiembro.expulsado).length;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.groups_outlined, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(child: Tx('Mánagers', style: Theme.of(context).textTheme.titleMedium)),
+            if (managers.hasValue) Text('${ids.length} / ${registrados.length}'),
+          ]),
+          const SizedBox(height: 6),
+          Tx(sinEquipo.isEmpty
+              ? 'Todos los jugadores registrados tienen su equipo Fantasy.'
+              : 'Hay jugadores registrados sin equipo Fantasy todavía.'),
+          if (fantasmas > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                  trf('{n} jugadores sin cuenta: tendrán equipo cuando se registren con su enlace.', {'n': fantasmas}),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ),
+          if (managers.hasValue && sinEquipo.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, children: [
+              if (ids.isEmpty)
+                FilledButton.icon(
+                  icon: const Icon(Icons.group_add_outlined),
+                  label: const Tx('Crear todos los equipos'),
+                  onPressed: () => _crear(context, ref, sinEquipo, tardio: false),
+                )
+              else
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.person_add_alt_outlined),
+                  label: const Tx('Añadir nuevo equipo / mánager tardío'),
+                  onPressed: () => _crear(context, ref, sinEquipo, tardio: true),
+                ),
+            ]),
+          ],
+        ]),
       ),
     );
   }

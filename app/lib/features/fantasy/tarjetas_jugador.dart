@@ -134,7 +134,7 @@ class TarjetaJugadorLista extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Row(children: [
             Stack(clipBehavior: Clip.none, children: [
-              AvatarMiembro(miembro, radio: 26),
+              AvatarMiembro(miembro, radio: 26, dorsal: true),
               if (mio)
                 Positioned(
                   right: -2,
@@ -243,7 +243,7 @@ class CartaJugador extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(3),
             decoration: const BoxDecoration(shape: BoxShape.circle, color: blanco),
-            child: AvatarMiembro(miembro, radio: 46),
+            child: AvatarMiembro(miembro, radio: 46, dorsal: true),
           ),
         ]),
         const SizedBox(height: 12),

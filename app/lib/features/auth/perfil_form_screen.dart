@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
   final _nombre = TextEditingController();
   final _apodo = TextEditingController();
   final _telefono = TextEditingController();
+  final _dorsal = TextEditingController();
   String? _posicion;
   String? _avatarUrl;
   DateTime? _nacimiento;
@@ -37,6 +39,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
     _nombre.dispose();
     _apodo.dispose();
     _telefono.dispose();
+    _dorsal.dispose();
     super.dispose();
   }
 
@@ -53,6 +56,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
     _apodo.text = p.apodo ?? '';
     _telefono.text = p.telefono ?? '';
     _posicion = p.posicion;
+    _dorsal.text = p.dorsal?.toString() ?? '';
     _avatarUrl = p.avatarUrl;
     _nacimiento = p.fechaNacimiento;
   }
@@ -134,6 +138,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
         posicion: _posicion,
         avatarUrl: _avatarUrl,
         fechaNacimiento: _nacimiento,
+        dorsal: int.tryParse(_dorsal.text.trim()),
       )),
     );
     if (!mounted) return;
@@ -152,11 +157,14 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
       body: Form(
         key: _form,
         child: ListView(padding: const EdgeInsets.all(16), children: [
-          if (widget.inicial)
+          if (widget.inicial) ...[
+            const SelectorIdioma(),
+            const SizedBox(height: 12),
             const Padding(
               padding: EdgeInsets.only(bottom: 16),
               child: Tx('Así te verán tus compañeros en las convocatorias y en la clasificación.'),
             ),
+          ],
           Center(
             child: Stack(children: [
               CircleAvatar(
@@ -205,6 +213,23 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
             items: [for (final p in posiciones) DropdownMenuItem(value: p, child: Text(etiquetaPosicion(p)))],
             onChanged: (v) => setState(() => _posicion = v),
             validator: (v) => v == null ? 'Elige una posición' : null,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _dorsal,
+            keyboardType: TextInputType.number,
+            maxLength: 2,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: tr('Dorsal (opcional)'),
+              helperText: tr('Del 1 al 99. Sale en tu carta y en las alineaciones'),
+              prefixIcon: const Icon(Icons.tag),
+              counterText: '',
+            ),
+            validator: (v) {
+              final n = int.tryParse((v ?? '').trim());
+              return (v ?? '').trim().isEmpty || (n != null && n >= 1 && n <= 99) ? null : tr('Del 1 al 99');
+            },
           ),
           const SizedBox(height: 12),
           InkWell(

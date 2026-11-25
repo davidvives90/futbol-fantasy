@@ -1,3 +1,5 @@
+import 'dart:ui' show FontFeature;
+
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
@@ -6,10 +8,13 @@ import '../data/models.dart';
 /// (siempre el mismo para la misma persona, para reconocerla de un vistazo).
 /// [anillo] dibuja un borde (color de equipo, selección, MVP…).
 class AvatarMiembro extends StatelessWidget {
-  const AvatarMiembro(this.miembro, {super.key, this.radio = 20, this.anillo});
+  const AvatarMiembro(this.miembro, {super.key, this.radio = 20, this.anillo, this.dorsal = false});
   final Miembro? miembro;
   final double radio;
   final Color? anillo;
+
+  /// Muestra el dorsal (0053) en una esquina, si el jugador lo tiene.
+  final bool dorsal;
 
   static const _tonos = [
     (Color(0xFFDCEBE4), Color(0xFF0A3A2D)),
@@ -41,12 +46,37 @@ class AvatarMiembro extends StatelessWidget {
         ),
       ),
     );
-    if (anillo == null) return avatar;
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: anillo!, width: 2)),
-      child: avatar,
-    );
+    final Widget base = anillo == null
+        ? avatar
+        : Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: anillo!, width: 2)),
+            child: avatar,
+          );
+    final n = miembro?.perfil?.dorsal;
+    if (!dorsal || n == null) return base;
+    final cs = Theme.of(context).colorScheme;
+    return Stack(clipBehavior: Clip.none, children: [
+      base,
+      Positioned(
+        right: -4,
+        bottom: -2,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(
+            color: cs.inverseSurface,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: cs.surface, width: 1.5),
+          ),
+          child: Text('$n',
+              style: TextStyle(
+                  fontSize: (radio * 0.5).clamp(9, 16).toDouble(),
+                  fontWeight: FontWeight.w800,
+                  color: cs.onInverseSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()])),
+        ),
+      ),
+    ]);
   }
 }
 

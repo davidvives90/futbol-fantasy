@@ -87,6 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              const SelectorIdioma(),
+              const SizedBox(height: 16),
               Icon(Icons.sports_soccer, size: 72, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 12),
               Tx('Fútbol Fantasy', textAlign: TextAlign.center, style: t.headlineMedium),

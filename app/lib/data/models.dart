@@ -91,11 +91,15 @@ class Perfil {
     this.posicion,
     this.telefono,
     this.fechaNacimiento,
+    this.dorsal,
   });
   final String id;
   final String nombre;
   final String? apodo, avatarUrl, posicion, telefono;
   final DateTime? fechaNacimiento;
+
+  /// 0053: número de camiseta (1-99).
+  final int? dorsal;
 
   /// Edad en años cumplidos (null si no la ha indicado).
   int? get edad {
@@ -115,6 +119,7 @@ class Perfil {
         posicion: m['posicion'] as String?,
         telefono: m['telefono'] as String?,
         fechaNacimiento: m['fecha_nacimiento'] == null ? null : DateTime.parse(m['fecha_nacimiento'] as String),
+        dorsal: m['dorsal'] == null ? null : toInt(m['dorsal']),
       );
 
   Map<String, dynamic> toMap() => {
@@ -124,6 +129,7 @@ class Perfil {
         'avatar_url': avatarUrl,
         'posicion': posicion,
         'telefono': telefono,
+        'dorsal': dorsal,
         'fecha_nacimiento': fechaNacimiento == null
             ? null
             : '${fechaNacimiento!.year.toString().padLeft(4, '0')}-${fechaNacimiento!.month.toString().padLeft(2, '0')}-${fechaNacimiento!.day.toString().padLeft(2, '0')}',
@@ -152,6 +158,7 @@ class Liga {
     this.precioInvitado,
     this.plazasFijas,
     this.modoValoracion = 'rapida',
+    this.puntosPodio = const [5, 3, 1],
     this.equipaciones = Equipacion.porDefecto,
     this.normas,
     this.modoConvocatoria = 'apertura',
@@ -267,6 +274,10 @@ class Liga {
 
   /// v0.3b: 'rapida' (una nota general por compañero) | 'detallada' (nota por aspecto).
   final String modoValoracion;
+
+  /// 0053: puntos de votación del podio (1.º, 2.º, 3.º) en modo 'podio'.
+  final List<int> puntosPodio;
+  bool get votaPodio => modoValoracion == 'podio';
   bool get valoracionDetallada => valoracionAvanzada && modoValoracion == 'detallada';
 
   // ---- v0.3: convocatoria con fijos y cobro ----
@@ -318,6 +329,9 @@ class Liga {
       precioInvitado: toDouble(m['precio_invitado']),
       plazasFijas: m['plazas_fijas'] == null ? null : toInt(m['plazas_fijas']),
       modoValoracion: (m['modo_valoracion'] ?? 'rapida') as String,
+      puntosPodio: m['puntos_podio'] is List && (m['puntos_podio'] as List).length == 3
+          ? [for (final x in m['puntos_podio'] as List) toInt(x)]
+          : const [5, 3, 1],
       equipaciones: m['equipaciones'] is List
           ? [for (final e in m['equipaciones'] as List) Equipacion.fromMap((e as Map).cast<String, dynamic>())]
           : Equipacion.porDefecto,
@@ -487,7 +501,7 @@ class Miembro {
   /// Select con el perfil embebido (FK miembros.perfil_id → perfiles.id).
   /// Columnas explícitas: `token_invitacion` y `contacto` no son legibles (ver `enlaces_invitacion`).
   static const select = 'id, liga_id, perfil_id, nombre_provisional, posicion, rol, estado, rango, invitado_por, unido_en, '
-      'perfil:perfiles!miembros_perfil_id_fkey(id, nombre, apodo, avatar_url, posicion, telefono, fecha_nacimiento)';
+      'perfil:perfiles!miembros_perfil_id_fkey(id, nombre, apodo, avatar_url, posicion, telefono, fecha_nacimiento, dorsal)';
 
   factory Miembro.fromMap(Map<String, dynamic> m) => Miembro(
         id: m['id'] as String,
@@ -735,6 +749,7 @@ class PuntosFantasy {
     required this.esMvp,
     this.partidoId,
     this.fecha,
+    this.puesto,
   });
   final String miembroId;
   final String? partidoId;
@@ -744,6 +759,9 @@ class PuntosFantasy {
   final bool esMvp;
   final DateTime? fecha;
 
+  /// 0053: 1 (MVP), 2 o 3 si quedó en el podio del partido.
+  final int? puesto;
+
   factory PuntosFantasy.fromMap(Map<String, dynamic> m) => PuntosFantasy(
         miembroId: m['miembro_id'] as String,
         partidoId: m['partido_id'] as String?,
@@ -751,6 +769,7 @@ class PuntosFantasy {
         desglose: (m['desglose'] as Map?)?.cast<String, dynamic>() ?? const {},
         notaMedia: toDouble(m['nota_media']),
         esMvp: (m['es_mvp'] ?? false) as bool,
+        puesto: m['puesto'] == null ? null : toInt(m['puesto']),
         fecha: (m['partido'] is Map && m['partido']['fecha_hora'] != null)
             ? DateTime.parse(m['partido']['fecha_hora'] as String)
             : null,

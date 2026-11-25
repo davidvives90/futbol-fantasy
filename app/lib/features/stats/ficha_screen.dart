@@ -45,7 +45,7 @@ class FichaScreen extends ConsumerWidget {
 
     final cuerpo = ListView(padding: const EdgeInsets.all(16), children: [
       Row(children: [
-        AvatarMiembro(miembro, radio: 36),
+        AvatarMiembro(miembro, radio: 36, dorsal: true),
         const SizedBox(width: 16),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

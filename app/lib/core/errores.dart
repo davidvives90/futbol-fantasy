@@ -10,6 +10,9 @@ class Errores {
   static String pantalla = '';
   static int _enviados = 0;
 
+  /// Permiso opcional del usuario (0053). Hasta conocerlo, se envían (caso de cuentas antiguas sin decidir).
+  static bool activo = true;
+
   static void instalar() {
     final anterior = FlutterError.onError;
     FlutterError.onError = (d) {
@@ -28,7 +31,7 @@ class Errores {
       e is AuthException;
 
   static void registrar(Object e, [StackTrace? s]) {
-    if (esperado(e) || _enviados > 50) return;
+    if (!activo || esperado(e) || _enviados > 50) return;
     _enviados++;
     try {
       final c = Supabase.instance.client;
