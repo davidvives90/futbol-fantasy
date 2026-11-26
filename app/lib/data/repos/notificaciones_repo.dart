@@ -1,4 +1,5 @@
 import '../../core/supabase.dart';
+import '../../core/tiempo_real.dart';
 
 class Notificacion {
   Notificacion.fromMap(Map<String, dynamic> m)
@@ -23,13 +24,16 @@ class NotificacionesRepo {
   static Stream<List<Notificacion>> stream() {
     final uid = uidActual;
     if (uid == null) return Stream.value(const []);
-    return sb
-        .from('notificaciones')
-        .stream(primaryKey: ['id'])
-        .eq('perfil_id', uid)
-        .order('creado_en', ascending: false)
-        .limit(60)
-        .map((rows) => [for (final r in rows) Notificacion.fromMap(r)]);
+    return datoVivo(
+      cargar: () async {
+        final rows = await sb.from('notificaciones').select().eq('perfil_id', uid).order('creado_en', ascending: false).limit(60);
+        return [for (final r in rows) Notificacion.fromMap(r)];
+      },
+      tabla: 'notificaciones',
+      columna: 'perfil_id',
+      valor: uid,
+      respaldo: const Duration(seconds: 90),
+    );
   }
 
   static Future<void> marcarLeidas([List<int>? ids]) async {

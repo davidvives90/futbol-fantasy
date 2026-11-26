@@ -36,6 +36,8 @@ class ResumenFantasy {
 
   final int partidos, goles, asistencias, mvps;
   final double media, maximo;
+  /// Puntos Fantasy totales (media × partidos).
+  double get total => (media * partidos).roundToDouble();
 
   /// Nota media de los compañeros en estrellas (1–5).
   final double? nota;
@@ -180,7 +182,9 @@ class TarjetaJugadorLista extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(millones(precio), style: t.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+              PuntosTotales(r == null || r.partidos == 0 ? null : r.total),
+              const SizedBox(height: 4),
+              Text(millones(precio), style: t.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
               VariacionTexto(variacion),
             ]),
           ]),
@@ -257,25 +261,39 @@ class CartaJugador extends StatelessWidget {
         if (precio != null)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),
+          // Fondo blanco: así el verde (sube) y el rojo (baja) se leen bien sobre la carta roja
+          decoration: BoxDecoration(color: blanco, borderRadius: BorderRadius.circular(14)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.sell_outlined, color: blanco, size: 18),
+            Icon(Icons.sell_outlined, color: AppTheme.texto, size: 18),
             const SizedBox(width: 6),
-            Text(millones(precio), style: const TextStyle(color: blanco, fontSize: 20, fontWeight: FontWeight.w800)),
+            Text(millones(precio), style: const TextStyle(color: AppTheme.texto, fontSize: 20, fontWeight: FontWeight.w800)),
             if (variacion != null && variacion != 0) ...[
               const SizedBox(width: 8),
-              Icon(variacion! > 0 ? Icons.trending_up : Icons.trending_down,
-                  color: variacion! > 0 ? const Color(0xFF9CF2B5) : const Color(0xFFFFB4A9), size: 18),
+              Icon(variacion! > 0 ? Icons.trending_up : Icons.trending_down, color: colorVariacion(context, variacion), size: 18),
               Text('${variacion! > 0 ? '+' : ''}${millones(variacion)}',
-                  style: TextStyle(
-                      color: variacion! > 0 ? const Color(0xFF9CF2B5) : const Color(0xFFFFB4A9), fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: colorVariacion(context, variacion, sobreBlanco: true), fontWeight: FontWeight.w800)),
             ],
             if (valoracion != null) ...[
               const SizedBox(width: 10),
-              Text('· ${valoracion!.round()}/100', style: TextStyle(color: blanco.withValues(alpha: 0.85))),
+              Text('· ${valoracion!.round()}/100', style: const TextStyle(color: AppTheme.textoSecundario)),
             ],
           ]),
         ),
+        if (r != null && r.partidos > 0) ...[
+          const SizedBox(height: 10),
+          // Puntos Fantasy totales: lo más importante para fichar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(color: AppTheme.oroMarca, borderRadius: BorderRadius.circular(14)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.star_rounded, color: Color(0xFF2A1A00), size: 20),
+              const SizedBox(width: 6),
+              Text(_num(r.total), style: const TextStyle(color: Color(0xFF2A1A00), fontSize: 22, fontWeight: FontWeight.w900)),
+              const SizedBox(width: 6),
+              Text(tr('puntos Fantasy en total'), style: const TextStyle(color: Color(0xFF2A1A00), fontWeight: FontWeight.w700)),
+            ]),
+          ),
+        ],
         const SizedBox(height: 14),
         Divider(color: blanco.withValues(alpha: 0.25), height: 1),
         const SizedBox(height: 10),
@@ -358,5 +376,33 @@ class UltimasPuntuaciones extends StatelessWidget {
       ]),
       ),
     ]);
+  }
+}
+
+
+/// Puntos Fantasy totales, bien grandes (mercado y plantilla).
+class PuntosTotales extends StatelessWidget {
+  const PuntosTotales(this.total, {super.key});
+  final double? total;
+
+  @override
+  Widget build(BuildContext context) {
+    const tinta = Color(0xFF2A1A00);
+    return Semantics(
+      label: total == null ? tr('Sin partidos') : trf('{x} puntos Fantasy', {'x': _num(total!)}),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 58),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: total == null ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.oroMarca,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(total == null ? '–' : _num(total!),
+              style: AppTheme.tabular(const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, height: 1.1, color: tinta))),
+          Text(tr('pts'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: tinta)),
+        ]),
+      ),
+    );
   }
 }

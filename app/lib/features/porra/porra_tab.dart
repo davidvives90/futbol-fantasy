@@ -156,7 +156,11 @@ class _PorraTabState extends ConsumerState<PorraTab> {
                 if (e.maxGanancia != null) trf('ganancia máxima {x} por boleto', {'x': _fmt(e, e.maxGanancia!)}),
                 if (e.conDinero && e.saldo != null) trf('saldo {s}', {'s': _fmt(e, e.saldo!)}),
               ].join(' · ')
-            : tr('Se abre al hacer los equipos y se liquida al cerrar el acta.')),
+            : switch (e.motivo) {
+                'menores' => tr('No disponible: en esta liga hay jugadores menores de 18 años.'),
+                'desactivada' => tr('La porra no está disponible ahora mismo.'),
+                _ => tr('Se abre al hacer los equipos y se liquida al cerrar el acta.'),
+              }),
       ),
     );
   }

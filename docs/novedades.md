@@ -1,9 +1,9 @@
 ## Versión de pruebas
 
-Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en la versión web desde el móvil o el ordenador.
+Gracias por probar Pachanga Fantasy. Instala el APK de abajo (Android) o entra en la versión web desde el móvil o el ordenador.
 
 ### Qué probar
-1. **Entrar**: escribe tu email y abre el enlace o pon el código que te llega. No hay contraseña.
+1. **Entrar**: con Google, con email y contraseña o con un código que te llega al correo.
 2. **Unirte a la liga** con el código o el enlace que te pasen por WhatsApp.
 3. **Apuntarte**: en Inicio pulsa «Voy», «Duda» o «No voy». También desde la notificación.
 4. **Después del partido**: pon el resultado, quién marcó y estrellas a tus compañeros.
@@ -14,6 +14,14 @@ Gracias por probar Fútbol Fantasy. Instala el APK de abajo (Android) o entra en
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Entrar con Google o con email y contraseña (además del código al correo). Crea o cambia tu contraseña en Perfil › Cuenta › Contraseña.
+- Condiciones del servicio y política de privacidad visibles desde la pantalla de entrada y en www.pachangafantasy.com. Perfil › Privacidad › Descargar mis datos.
+- Inicio con selector de liga: «Todas mis ligas» o una en concreto.
+- Ficha de tu jugador con todas las opciones: subir cláusula, vender ya al mercado, ponerlo en subasta con tu precio de salida (12, 24 o 48 h) y cederlo una jornada.
+- Valor de mercado en verde cuando sube y en rojo cuando baja; los puntos Fantasy totales, bien visibles en Mercado y Mi equipo.
+- Alineación en lista: toca para poner titulares y banquillo, sin campo. Modo sencillo del Fantasy (Ajustes del Fantasy): sin roles, sin ariete y sin cesiones.
+- Porra: se desactiva sola si en la liga hay algún menor de 18 años.
+- Arreglado: la convocatoria a veces no se actualizaba hasta pulsar «refrescar».
 - Nueva imagen: la app pasa a llamarse Pachanga Fantasy, con el logo nuevo como icono y los colores de la marca (rojo y oro) en toda la app y en la web.
 - Porra más prudente: como mucho se ganan 10 M por boleto (100 pts en modo puntos) y por defecto se apuestan hasta 5 M por partido. Nuevo pronóstico «no marca»; «marca» y «no marca» pagan muy poco, el valor está en acertar el resultado y el MVP.
 - Idiomas con bandera: senyera para el catalán, bandera de Galicia para el gallego e ikurriña para el euskera.

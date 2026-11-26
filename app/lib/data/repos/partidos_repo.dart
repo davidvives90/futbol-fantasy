@@ -1,4 +1,5 @@
 import '../../core/supabase.dart';
+import '../../core/tiempo_real.dart';
 import '../../core/utils.dart';
 import '../models.dart';
 
@@ -17,11 +18,17 @@ class PartidosRepo {
   }
 
   /// El partido en tiempo real (cambios de estado, hora confirmada...).
-  static Stream<Partido?> partidoStream(String partidoId) => sb
-      .from('partidos')
-      .stream(primaryKey: ['id'])
-      .eq('id', partidoId)
-      .map((rows) => rows.isEmpty ? null : Partido.fromMap(rows.first));
+  static Stream<Partido?> partidoStream(String partidoId) => datoVivo(
+        cargar: () => partido(partidoId),
+        tabla: 'partidos',
+        columna: 'id',
+        valor: partidoId,
+      );
+
+  static Future<Partido?> partido(String partidoId) async {
+    final r = await sb.from('partidos').select().eq('id', partidoId).maybeSingle();
+    return r == null ? null : Partido.fromMap(r);
+  }
 
   /// Devuelve el id del partido creado. Plazas y nº de equipos nulos = los de la liga.
   static Future<String> crear(
@@ -99,12 +106,19 @@ class PartidosRepo {
 
   // ---- Convocatoria --------------------------------------------------------
 
-  static Stream<List<Inscripcion>> convocatoriaStream(String partidoId) => sb
-      .from('convocatorias')
-      .stream(primaryKey: ['partido_id', 'miembro_id'])
-      .eq('partido_id', partidoId)
-      .order('inscrito_en', ascending: true)
-      .map((rows) => [for (final r in rows) Inscripcion.fromMap(r)]);
+  /// Convocatoria en vivo (ver [datoVivo]: carga normal + aviso de cambios en tiempo real, con reintentos).
+  static Stream<List<Inscripcion>> convocatoriaStream(String partidoId) => datoVivo(
+        cargar: () => convocatoria(partidoId),
+        tabla: 'convocatorias',
+        columna: 'partido_id',
+        valor: partidoId,
+      );
+
+  /// Convocatoria sin tiempo real (para las tarjetas de las listas: un canal por tarjeta saturaba la conexión).
+  static Future<List<Inscripcion>> convocatoria(String partidoId) async {
+    final rows = await sb.from('convocatorias').select().eq('partido_id', partidoId).order('inscrito_en', ascending: true);
+    return [for (final r in rows) Inscripcion.fromMap(r)];
+  }
 
   /// El trigger de la base de datos pasa a 'espera' si no queda sitio.
   static Future<void> cambiarEstado(String partidoId, String miembroId, EstadoInscripcion estado) async {

@@ -43,6 +43,9 @@ final _votacionesPendientesProvider =
   return pendientes;
 });
 
+/// Filtro de Inicio: null = todas mis ligas; si no, solo esa liga.
+final inicioLigaProvider = StateProvider<String?>((ref) => null);
+
 /// Inicio: el próximo partido (con «Voy» a un toque y quién va), lo que tengo pendiente y el calendario.
 class PartidosScreen extends ConsumerStatefulWidget {
   const PartidosScreen({super.key});
@@ -58,27 +61,6 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
     final h = DateTime.now().hour;
     final s = tr(h < 6 ? 'Buenas noches' : (h < 14 ? 'Buenos días' : (h < 21 ? 'Buenas tardes' : 'Buenas noches')));
     return '$s, ${mi.yo.nombre.split(' ').first}';
-  }
-
-  Future<void> _elegirLiga(BuildContext context) async {
-    final ligas = ref.read(misLigasProvider).valueOrNull ?? const <MiLiga>[];
-    final actual = ref.read(ligaActualProvider)?.liga.id;
-    final id = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (c) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          for (final l in ligas)
-            ListTile(
-              leading: CircleAvatar(radius: 8, backgroundColor: colorDeLiga(ligas, l.liga.id)),
-              title: Text(l.liga.nombre),
-              trailing: l.liga.id == actual ? const Icon(Icons.check) : null,
-              onTap: () => Navigator.pop(c, l.liga.id),
-            ),
-        ]),
-      ),
-    );
-    if (id != null) await ref.read(ligaActivaIdProvider.notifier).elegir(id);
   }
 
   @override
@@ -120,11 +102,16 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
               ..sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
             final anterioresVisibles = _verTodosAnteriores ? anteriores : anteriores.take(3).toList();
 
+            final ligas = ref.watch(misLigasProvider).valueOrNull ?? const <MiLiga>[];
+            // Con una sola liga no hay selector: siempre es esa liga
+            final filtro = ligas.length > 1 ? ref.watch(inicioLigaProvider) : mi.liga.id;
+            final unaLiga = filtro != null;
             return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
-              // Lo urgente arriba; luego mis partidos de TODAS mis ligas (calendario + Voy / No voy)
-              _Pendientes(mi: mi),
-              const AgendaPersonal(),
-              if (proximos.isEmpty && mi.soyAdmin)
+              if (ligas.length > 1) _SelectorLigaInicio(ligas: ligas, filtro: filtro),
+              // Lo urgente arriba; luego mis partidos (de todas mis ligas o de la elegida)
+              _Pendientes(mi: mi, soloLiga: filtro),
+              AgendaPersonal(ligaId: filtro),
+              if (unaLiga && proximos.isEmpty && mi.soyAdmin)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Vacio(
@@ -137,10 +124,8 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
                     onAccion: mi.soyAdmin ? () => context.push('/temporada') : null,
                   ),
                 ),
-              if (anteriores.isNotEmpty) ...[
-                _Cabecera(trf('Resultados · {l}', {'l': mi.liga.nombre}),
-                    accion: (ref.watch(misLigasProvider).valueOrNull?.length ?? 0) > 1 ? 'Otra liga' : null,
-                    onAccion: () => _elegirLiga(context)),
+              if (unaLiga && anteriores.isNotEmpty) ...[
+                _Cabecera(trf('Resultados · {l}', {'l': mi.liga.nombre})),
                 for (final p in anterioresVisibles) _FilaPartido(p, mi: mi),
                 if (anteriores.length > 3)
                   Center(
@@ -151,6 +136,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
                   ),
               ],
               const SizedBox(height: 8),
+              if (unaLiga)
               Center(
                 child: TextButton.icon(
                   onPressed: () => suscribirCalendario(context, mi.liga, lista),
@@ -189,7 +175,7 @@ class _ProximoPartido extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final conv = ref.watch(convocatoriaProvider(partido.id)).valueOrNull ?? const [];
+    final conv = ref.watch(convocatoriaResumenProvider(partido.id)).valueOrNull ?? const [];
     final miembros = ref.watch(miembrosPorIdProvider(mi.liga.id));
     // 0042: van = confirmados + fijos sin confirmar + en duda (ocupan plaza)
     final confirmados = conv.where((i) => i.estado.ocupaPlaza).toList();
@@ -310,16 +296,19 @@ class _ProximoPartido extends ConsumerWidget {
 /// Lo urgente de TODAS mis ligas (votar, pagar, votaciones, solicitudes, baja), por orden de urgencia.
 /// Con varias ligas, cada tarea lleva su etiqueta de color; al tocarla se cambia a esa liga.
 class _Pendientes extends ConsumerWidget {
-  const _Pendientes({required this.mi});
+  const _Pendientes({required this.mi, this.soloLiga});
   final MiLiga mi;
+  /// Si no es null, solo lo pendiente de esa liga.
+  final String? soloLiga;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ligas = ref.watch(misLigasProvider).valueOrNull ?? [mi];
+    final todas = ref.watch(misLigasProvider).valueOrNull ?? [mi];
+    final ligas = soloLiga == null ? todas : todas.where((l) => l.liga.id == soloLiga).toList();
     final varias = ligas.length > 1;
     final tareas = <_Tarea>[
       for (final l in ligas)
-        ..._tareasDe(context, ref, l, etiqueta: varias ? l.liga.nombre : null, colorLiga: colorDeLiga(ligas, l.liga.id)),
+        ..._tareasDe(context, ref, l, etiqueta: varias ? l.liga.nombre : null, colorLiga: colorDeLiga(todas, l.liga.id)),
     ]..sort((a, b) => a.prioridad.compareTo(b.prioridad));
     if (tareas.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -557,6 +546,48 @@ class _FilaPartido extends ConsumerWidget {
       subtitle: Text(p.estado.etiqueta + (!p.horaConfirmada && p.estado.antesDeJugar ? ' · hora por confirmar' : '')),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/partidos/${p.id}'),
+    );
+  }
+}
+
+
+/// Selector de Inicio: «Todas mis ligas» o una liga concreta (que pasa a ser la liga activa de la app).
+class _SelectorLigaInicio extends ConsumerWidget {
+  const _SelectorLigaInicio({required this.ligas, required this.filtro});
+  final List<MiLiga> ligas;
+  final String? filtro;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    Future<void> elegir(String? id) async {
+      ref.read(inicioLigaProvider.notifier).state = id;
+      if (id != null) await ref.read(ligaActivaIdProvider.notifier).elegir(id);
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+      child: Row(children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: ChoiceChip(
+            avatar: const Icon(Icons.layers_outlined, size: 18),
+            label: const Tx('Todas mis ligas'),
+            selected: filtro == null,
+            onSelected: (_) => elegir(null),
+          ),
+        ),
+        for (final l in ligas)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              avatar: CircleAvatar(radius: 6, backgroundColor: colorDeLiga(ligas, l.liga.id)),
+              label: Text(l.liga.nombre),
+              selected: filtro == l.liga.id,
+              onSelected: (_) => elegir(l.liga.id),
+            ),
+          ),
+      ]),
     );
   }
 }

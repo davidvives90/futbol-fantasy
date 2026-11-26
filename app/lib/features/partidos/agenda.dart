@@ -91,7 +91,9 @@ Color colorDeLiga(List<MiLiga> ligas, String ligaId) {
 /// Inicio: mi agenda de TODAS mis ligas. Un calendario de 2 semanas con un punto por partido (de color según
 /// si voy o no) y, debajo, cada partido con Voy / Duda / No voy a un toque. Tocar un partido lleva a él.
 class AgendaPersonal extends ConsumerStatefulWidget {
-  const AgendaPersonal({super.key});
+  const AgendaPersonal({super.key, this.ligaId});
+  /// Si no es null, solo los partidos de esa liga.
+  final String? ligaId;
 
   @override
   ConsumerState<AgendaPersonal> createState() => _AgendaPersonalState();
@@ -115,8 +117,9 @@ class _AgendaPersonalState extends ConsumerState<AgendaPersonal> {
     return agenda.when(
       loading: () => const Padding(padding: EdgeInsets.all(16), child: Cargando(filas: 2)),
       error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(agendaProvider)),
-      data: (citas) {
-        _actualizarWidget(citas);
+      data: (todas) {
+        _actualizarWidget(todas); // el widget de la pantalla de inicio del móvil siempre con todas
+        final citas = widget.ligaId == null ? todas : todas.where((c) => c.ligaId == widget.ligaId).toList();
         final hoy = DateTime.now();
         final dias = [for (var i = 0; i < 14; i++) DateTime(hoy.year, hoy.month, hoy.day + i)];
         bool mismoDia(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
@@ -235,7 +238,7 @@ class _TarjetaCita extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Mientras llega el tiempo real (o si viene vacío), vale lo que dijo el servidor
-    final vivo = ref.watch(convocatoriaProvider(cita.partidoId)).valueOrNull;
+    final vivo = ref.watch(convocatoriaResumenProvider(cita.partidoId)).valueOrNull;
     final conv = (vivo == null || vivo.isEmpty) ? null : vivo;
     final mia = conv?.where((i) => i.miembroId == cita.miembroId).firstOrNull;
     final estado = conv == null ? cita.miEstado : mia?.estado;

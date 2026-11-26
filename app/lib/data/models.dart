@@ -406,6 +406,7 @@ class ParamsFantasy {
     this.clausulaPct = 1.5,
     this.modoAlineacion = 'tactico',
     this.suplentes = 1,
+    this.sencillo = false,
     this.capitanActivo = true,
     this.arieteActivo = true,
     this.primaInversa = 0,
@@ -444,6 +445,8 @@ class ParamsFantasy {
   /// 'ninguna' | 'reinicio' | 'valor' | 'bonus'
   final String herenciaTemporada;
   bool get tactica => modoAlineacion == 'tactico';
+  /// 0059: modo sencillo (sin roles, ariete ni cesiones; alineación en lista).
+  final bool sencillo;
 
   final double precioMin, precioMax, bonusNoHabitual, horasCierreAlineacion, ingresoPorPunto, comisionVenta;
   final double kEncuesta, maxVariacion;
@@ -509,6 +512,7 @@ class ParamsFantasy {
         clausulaPct: toDouble(m['clausula_pct']) ?? 1.5,
         modoAlineacion: (m['modo_alineacion'] ?? 'tactico') as String,
         suplentes: toInt(m['suplentes'], 1),
+        sencillo: (m['fantasy_sencillo'] ?? false) as bool,
         capitanActivo: (m['capitan_activo'] ?? true) as bool,
         arieteActivo: (m['ariete_activo'] ?? true) as bool,
         primaInversa: toDouble(m['prima_inversa']) ?? 0,

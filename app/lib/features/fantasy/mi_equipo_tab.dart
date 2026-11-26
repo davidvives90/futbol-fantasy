@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,15 +8,12 @@ import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/models_fantasy.dart';
 import '../../data/providers.dart';
-import '../../data/repos/fantasy_repo.dart';
-import 'alineacion_campo.dart';
-import 'fantasy_dialogs.dart';
+import 'alineacion_lista.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
 import 'tarjetas_jugador.dart';
 import '../../core/info.dart';
 
-enum _Accion { clausula, vender, ceder, retirarCesion, ficha }
 
 /// Saldo, plantilla (fichas propias + la recibida en cesión) y alineación del próximo partido.
 class MiEquipoTab extends ConsumerWidget {
@@ -29,6 +25,7 @@ class MiEquipoTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final k = _k;
+    final resumen = ref.watch(resumenFantasyProvider(mi.liga.id)).valueOrNull ?? const <String, ResumenFantasy>{};
     final manager = ref.watch(miManagerProvider(k));
     // La primera visita crea el mánager (y puede arrancar el Fantasy): hay que volver a mirar el mercado
     ref.listen(miManagerProvider(k), (antes, ahora) {
@@ -124,64 +121,22 @@ class MiEquipoTab extends ConsumerWidget {
             padding: EdgeInsets.all(16),
             child: Tx('Aún no tienes jugadores. Ficha en la pestaña Mercado.'),
           ),
+        // Toca un jugador para ver su ficha con todas las opciones: cláusula, vender, subasta y cesión
         for (final j in propias)
-          Card(
-            child: ListTile(
-              leading: AvatarMiembro(miembros[j.jugadorId]),
-              title: Row(children: [
-                Flexible(child: Text(miembros[j.jugadorId]?.nombre ?? '…', overflow: TextOverflow.ellipsis)),
-                if (j.noHabitual) ...[const SizedBox(width: 6), InsigniaNoHabitual(bonus: params.bonusNoHabitual)],
-              ]),
-              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _Rendimiento(ligaId: mi.liga.id, jugadorId: j.jugadorId),
-                Text('Cláusula ${millones(j.clausula)} · ${variacionM(j.plusvalia)} desde la compra'),
-                Wrap(spacing: 6, children: [
-                  if (j.protegida) const _Etiqueta(Icons.shield, 'Protegida'),
-                  if (j.cedidaAOtro) const _Etiqueta(Icons.swap_horiz, 'Cedida esta jornada'),
-                  if (j.enCesionOfrecida) const _Etiqueta(Icons.campaign_outlined, 'Ofrecida en cesión'),
-                ]),
-              ]),
-              isThreeLine: j.protegida || j.cedidaAOtro || j.enCesionOfrecida,
-              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text(millones(j.precio), style: t.titleSmall),
-                  VariacionTexto(j.variacion),
-                ]),
-                PopupMenuButton<_Accion>(
-                  onSelected: (a) => _accion(context, ref, a, j, miembros[j.jugadorId]?.nombre ?? 'jugador', m.saldo),
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: _Accion.clausula,
-                      enabled: abierto && !j.cedidaAOtro,
-                      child: const ListTile(leading: Icon(Icons.gavel), title: Tx('Cambiar cláusula')),
-                    ),
-                    PopupMenuItem(
-                      value: _Accion.vender,
-                      enabled: abierto && !j.cedidaAOtro && !j.enCesionOfrecida,
-                      child: const ListTile(leading: Icon(Icons.sell_outlined), title: Tx('Vender al mercado')),
-                    ),
-                    if (!mi.liga.fantasy.cesionesActivas)
-                      ...[]
-                    else if (j.enCesionOfrecida)
-                      const PopupMenuItem(
-                        value: _Accion.retirarCesion,
-                        child: ListTile(leading: Icon(Icons.undo), title: Tx('Retirar cesión')),
-                      )
-                    else
-                      PopupMenuItem(
-                        value: _Accion.ceder,
-                        enabled: !j.cedidaAOtro && proximo != null,
-                        child: const ListTile(leading: Icon(Icons.swap_horiz), title: Tx('Ofrecer en cesión')),
-                      ),
-                    const PopupMenuItem(
-                      value: _Accion.ficha,
-                      child: ListTile(leading: Icon(Icons.insights), title: Tx('Ver jugador')),
-                    ),
-                  ],
-                ),
-              ]),
-              onTap: () => context.push('/fantasy/jugador/${j.jugadorId}'),
-            ),
+          TarjetaJugadorLista(
+            miembro: miembros[j.jugadorId],
+            precio: j.precio,
+            variacion: j.variacion,
+            resumen: resumen[j.jugadorId],
+            insignia: j.noHabitual ? InsigniaNoHabitual(bonus: params.bonusNoHabitual, corta: true) : null,
+            extra: [
+              trf('Cláusula {x}', {'x': millones(j.clausula)}),
+              trf('{v} desde la compra', {'v': variacionM(j.plusvalia)}),
+              if (j.protegida) tr('protegida'),
+              if (j.cedidaAOtro) tr('cedida esta jornada'),
+              if (j.enCesionOfrecida) tr('ofrecida en cesión'),
+            ].join(' · '),
+            onTap: () => context.push('/fantasy/jugador/${j.jugadorId}'),
           ),
         if (recibida.isNotEmpty) ...[
           Padding(
@@ -206,62 +161,11 @@ class MiEquipoTab extends ConsumerWidget {
         if (proximo == null)
           const Card(child: ListTile(leading: Icon(Icons.event_busy), title: Tx('No hay ningún partido convocado para alinear.')))
         else
-          AlineacionCampo(mi: mi, partido: proximo, plantilla: lista),
+          AlineacionLista(mi: mi, partido: proximo, plantilla: lista),
       ]),
     );
   }
-
-  Future<void> _accion(
-      BuildContext context, WidgetRef ref, _Accion a, JugadorPlantilla j, String nombre, double saldo) async {
-    final p = mi.liga.fantasy;
-    final fichaId = j.fichaId;
-    switch (a) {
-      case _Accion.ficha:
-        context.push('/fantasy/jugador/${j.jugadorId}');
-      case _Accion.clausula:
-        if (fichaId == null) return;
-        final nueva = await dialogoClausula(context,
-            jugador: nombre, params: p, actual: j.clausula ?? j.precio, precioMercado: j.precio, saldo: saldo);
-        if (nueva == null || !context.mounted) return;
-        final ok = await ejecutar(context, () => FantasyRepo.fijarClausula(fichaId, nueva),
-            ok: 'Cláusula de $nombre: ${millones(nueva)}');
-        if (ok) refrescarFantasy(ref, _k);
-      case _Accion.vender:
-        final recibes = p.precioVenta(j.precio);
-        if (!await confirmar(
-          context,
-          'Vender a $nombre',
-          'La ficha vuelve al mercado. Precio actual ${millones(j.precio)} − '
-              '${(p.comisionVenta * 100).toStringAsFixed(0)} % de comisión: recibes ${millones(recibes)}'
-              '${j.precioCompra != null ? ' (lo compraste a ${millones(j.precioCompra)})' : ''}.',
-          accion: 'Vender',
-          tipo: TipoConfirmacion.peligro,
-        )) {
-          return;
-        }
-        if (!context.mounted) return;
-        final ok = await ejecutar(context, () => FantasyRepo.vender(mi.liga.id, j.jugadorId, fichaId: fichaId),
-            ok: '$nombre vendido');
-        if (ok) refrescarFantasy(ref, _k);
-      case _Accion.ceder:
-        if (fichaId == null) return;
-        final pct = await dialogoCesion(context, jugador: nombre, params: p, precioMercado: j.precio);
-        if (pct == null || !context.mounted) return;
-        final ok = await ejecutar(context, () => FantasyRepo.ofrecerCesion(fichaId, pct),
-            ok: '$nombre ofrecido en cesión al ${pctTexto(pct)}');
-        if (ok) refrescarFantasy(ref, _k);
-      case _Accion.retirarCesion:
-        if (fichaId == null) return;
-        final ok = await ejecutar(context, () async {
-          final id = await FantasyRepo.miCesionOfrecida(mi.liga.id, fichaId);
-          if (id == null) throw 'La cesión ya no está disponible (aceptada o cerrada).';
-          await FantasyRepo.cancelarCesion(id);
-        }, ok: 'Cesión retirada');
-        if (ok) refrescarFantasy(ref, _k);
-    }
-  }
 }
-
 class _Cifra extends StatelessWidget {
   const _Cifra(this.etiqueta, this.valor, {this.premium = false});
   final String etiqueta, valor;
@@ -275,37 +179,3 @@ class _Cifra extends StatelessWidget {
       ]);
 }
 
-class _Etiqueta extends StatelessWidget {
-  const _Etiqueta(this.icono, this.texto);
-  final IconData icono;
-  final String texto;
-  @override
-  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icono, size: 14, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 2),
-        Text(texto, style: Theme.of(context).textTheme.labelSmall),
-      ]);
-}
-
-
-/// Media por partido y últimas 5 puntuaciones del jugador (en la plantilla).
-class _Rendimiento extends ConsumerWidget {
-  const _Rendimiento({required this.ligaId, required this.jugadorId});
-  final String ligaId, jugadorId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final r = (ref.watch(resumenFantasyProvider(ligaId)).valueOrNull ?? const <String, ResumenFantasy>{})[jugadorId];
-    if (r == null || r.partidos == 0) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(children: [
-        Text(trf('{m} pts/partido', {'m': NumberFormat('#0.#', idiomaActual).format(r.media)}),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w800, color: colorPuntos(context, r.media))),
-        const SizedBox(width: 8),
-        MiniUltimos(r.ultimos, alto: 14, conNumeros: false),
-      ]),
-    );
-  }
-}

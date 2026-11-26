@@ -80,6 +80,10 @@ class FantasyRepo {
   static Future<void> pujar(String subastaId, double importe) =>
       sb.rpc('pujar', params: {'p_subasta': subastaId, 'p_importe': importe});
 
+  /// 0059: poner un jugador propio en subasta (tú fijas el precio de salida).
+  static Future<void> ponerEnSubasta(String fichaId, double precioSalida, int horas) =>
+      sb.rpc('poner_en_subasta', params: {'p_ficha': fichaId, 'p_precio': precioSalida, 'p_horas': horas});
+  static Future<void> cancelarSubasta(String subastaId) => sb.rpc('cancelar_mi_subasta', params: {'p_subasta': subastaId});
   static Future<void> retirarPuja(String subastaId) => sb.rpc('retirar_puja', params: {'p_subasta': subastaId});
 
   static Future<int> lanzarSubasta(String ligaId) async =>

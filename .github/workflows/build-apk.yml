@@ -157,6 +157,8 @@ jobs:
           flutter build apk --release
           --dart-define=SUPABASE_URL=$SUPABASE_URL
           --dart-define=APP_VERSION=0.1.${{ github.run_number }}
+          --dart-define=APP_BUILD=${{ github.run_number }}
+          --dart-define=GOOGLE_LOGIN=true
           --dart-define=ADMOB_INTERSTICIAL=${{ vars.ADMOB_INTERSTICIAL || 'ca-app-pub-3940256099942544/1033173712' }}
           --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
           --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY || 'AIzaSyCg5t9gSuzifQ4FbxSqj4s3GmBtTVRK8l8' }}
@@ -172,6 +174,8 @@ jobs:
           flutter build appbundle --release
           --dart-define=SUPABASE_URL=$SUPABASE_URL
           --dart-define=APP_VERSION=0.1.${{ github.run_number }}
+          --dart-define=APP_BUILD=${{ github.run_number }}
+          --dart-define=GOOGLE_LOGIN=true
           --dart-define=ADMOB_INTERSTICIAL=${{ vars.ADMOB_INTERSTICIAL || 'ca-app-pub-3940256099942544/1033173712' }}
           --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
           --dart-define=FIREBASE_API_KEY=${{ vars.FIREBASE_API_KEY || 'AIzaSyCg5t9gSuzifQ4FbxSqj4s3GmBtTVRK8l8' }}
@@ -213,8 +217,6 @@ jobs:
     env:
       SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://wyybdsxnmxgfntyrzjmq.supabase.co' }}
       SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_nbc_WP9tz7KfkMSKioXptg_QQNtjTlu' }}
-      # Con dominio propio (variable WEB_DOMINIO, p. ej. app.midominio.es) la web vive en la raíz; si no, en /futbol-fantasy/
-      WEB_DOMINIO: ${{ vars.WEB_DOMINIO }}
     steps:
       - uses: actions/checkout@v4
 
@@ -228,33 +230,52 @@ jobs:
 
       - run: flutter pub get
 
+      # Revisión estática: avisa de errores en el código sin parar la compilación por avisos menores
+      - name: Análisis del código
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
       - name: Iconos web
         run: dart run flutter_launcher_icons -f flutter_launcher_icons_web.yaml
 
-      - name: Compilar web
+      - name: Compilar web (app en /app/)
         run: |
-          if [ -n "$WEB_DOMINIO" ]; then BASE=/; else BASE=/futbol-fantasy/; fi
-          flutter build web --release --no-web-resources-cdn --base-href "$BASE" \
+          flutter build web --release --no-web-resources-cdn --source-maps --base-href /app/ \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
             --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
             --dart-define=APP_VERSION=0.1.${{ github.run_number }} \
+            --dart-define=APP_BUILD=${{ github.run_number }} \
+            --dart-define=GOOGLE_LOGIN=true \
             --dart-define=ADSENSE_CLIENT=${{ vars.ADSENSE_CLIENT }} \
             --dart-define=ADSENSE_SLOT_SUPERIOR=${{ vars.ADSENSE_SLOT_SUPERIOR }} \
             --dart-define=ADSENSE_SLOT_LATERAL=${{ vars.ADSENSE_SLOT_LATERAL }}
-          cp ../docs/web/privacidad.html build/web/privacidad.html
-          if [ -n "$WEB_DOMINIO" ]; then echo "$WEB_DOMINIO" > build/web/CNAME; fi
+
+      - name: Montar el sitio (portada, privacidad y condiciones + app web en /app/)
+        run: |
+          rm -rf ../sitio && mkdir -p ../sitio
+          cp -r ../web_publica/. ../sitio/
+          cp -r build/web ../sitio/app
           # AdSense exige ads.txt en la raíz del dominio
           if [ -n "${{ vars.ADSENSE_CLIENT }}" ]; then
-            echo "google.com, $(echo '${{ vars.ADSENSE_CLIENT }}' | sed 's/^ca-//'), DIRECT, f08c47fec0942fa0" > build/web/ads.txt
+            echo "google.com, $(echo '${{ vars.ADSENSE_CLIENT }}' | sed 's/^ca-//'), DIRECT, f08c47fec0942fa0" > ../sitio/ads.txt
           fi
-          touch build/web/.nojekyll
-          ls build/web
+          touch ../sitio/.nojekyll
+          find ../sitio -maxdepth 2 | sort | head -40
+
+      - name: Publicar en Netlify (si existen los secretos NETLIFY_AUTH_TOKEN y NETLIFY_SITE_ID)
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "Sin secretos de Netlify: descarga el sitio de la rama gh-pages y arrástralo a Netlify"; exit 0
+          fi
+          npx --yes netlify-cli@17 deploy --prod --dir ../sitio --site "$NETLIFY_SITE_ID" --message "Versión ${{ github.run_number }}"
 
       - name: Publicar en GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: app/build/web
+          publish_dir: sitio
           publish_branch: gh-pages
           force_orphan: true
           commit_message: Web ${{ github.sha }}

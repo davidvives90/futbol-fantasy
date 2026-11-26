@@ -63,7 +63,10 @@ class EstadoPorra {
     required this.todas,
     this.saldo,
     this.maxGanancia,
+    this.motivo,
   });
+  /// 0059: por qué no se puede jugar ('menores' | 'desactivada'), si es el caso.
+  final String? motivo;
   final bool abierta;
   final String modo;
   final double tope, apostado;
@@ -83,6 +86,7 @@ class EstadoPorra {
         apostado: toDouble(m['apostado']) ?? 0,
         saldo: toDouble(m['saldo']),
         maxGanancia: toDouble(m['max_ganancia']),
+        motivo: m['motivo'] as String?,
         cuotas: [for (final x in (m['cuotas'] as List? ?? const [])) Pronostico.fromMap(Map<String, dynamic>.from(x as Map))],
         mias: [for (final x in (m['mias'] as List? ?? const [])) Boleto.fromMap(Map<String, dynamic>.from(x as Map))],
         todas: [for (final x in (m['todas'] as List? ?? const [])) Boleto.fromMap(Map<String, dynamic>.from(x as Map))],

@@ -182,6 +182,25 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        // 0059: Fantasy sencillo
+        Card(
+          child: SwitchListTile(
+            secondary: const Icon(Icons.spa_outlined),
+            title: const Tx('Modo sencillo'),
+            subtitle: Tx(mi.liga.fantasy.sencillo
+                ? 'Alineación en lista (titulares y banquillo), sin roles, sin ariete y sin cesiones. Ideal para empezar.'
+                : 'Actívalo para quitar roles, ariete y cesiones: solo fichar, vender, subastar y alinear.'),
+            value: mi.liga.fantasy.sencillo,
+            onChanged: (v) async {
+              if (await ejecutar(context, () => LigasRepo.fantasySencillo(mi.liga.id, v),
+                  ok: v ? 'Modo sencillo activado' : 'Modo sencillo desactivado')) {
+                refrescarLigas(ref);
+                if (mounted) setState(() => _bonusRoles = v ? false : _bonusRoles);
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
         Card(
           color: Theme.of(context).colorScheme.primaryContainer,
           child: ListTile(
@@ -238,6 +257,7 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
               decoration:  InputDecoration(labelText: tr('Multiplicador'), prefixText: '×', helperText: tr('Entre 1,05 y 3 (p. ej. 1,5)')),
             ),
           ),
+        if (!mi.liga.fantasy.sencillo)
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Row(children: [

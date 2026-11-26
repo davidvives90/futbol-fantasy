@@ -46,6 +46,10 @@ class LigasRepo {
   static Future<String> crearLiga(Map<String, dynamic> datos) async =>
       (await sb.rpc('crear_liga', params: {'p': datos})) as String;
 
+  /// 0059: Fantasy sencillo (el servidor ajusta alineación libre, sin roles, ariete ni cesiones).
+  static Future<void> fantasySencillo(String ligaId, bool activo) =>
+      sb.rpc('fantasy_modo_sencillo', params: {'p_liga': ligaId, 'p_activo': activo});
+
   static Future<void> actualizarLiga(String ligaId, Map<String, dynamic> datos) async {
     await sb.from('ligas').update(datos).eq('id', ligaId);
   }

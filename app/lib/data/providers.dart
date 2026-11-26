@@ -59,6 +59,11 @@ final convocatoriaProvider = StreamProvider.autoDispose.family<List<Inscripcion>
   (ref, partidoId) => PartidosRepo.convocatoriaStream(partidoId),
 );
 
+/// Convocatoria para tarjetas de listas (Partidos, agenda de Inicio): una consulta, sin canal de tiempo real.
+final convocatoriaResumenProvider = FutureProvider.autoDispose.family<List<Inscripcion>, String>(
+  (ref, partidoId) => PartidosRepo.convocatoria(partidoId),
+);
+
 final rendimientoProvider = FutureProvider.autoDispose.family<List<Rendimiento>, String>(
   (ref, ligaId) => StatsRepo.rendimiento(ligaId),
 );

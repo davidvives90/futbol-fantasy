@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthState;
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/anuncios.dart';
@@ -254,6 +256,27 @@ class PrivacidadScreen extends ConsumerWidget {
                   )
                 : const SizedBox.shrink(),
           ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Tx('Condiciones del servicio'),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => launchUrl(Uri.parse(urlCondiciones), mode: LaunchMode.externalApplication),
+          ),
+          // 0059: portabilidad (RGPD): todos tus datos en un archivo JSON
+          ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: const Tx('Descargar mis datos'),
+            subtitle: const Tx('Tu perfil, ligas, partidos, logros, pagos y Fantasy en un archivo'),
+            onTap: () => ejecutar(context, () async {
+              final datos = await sb.rpc('exportar_mis_datos');
+              final texto = const JsonEncoder.withIndent('  ').convert(datos);
+              await Share.shareXFiles(
+                [XFile.fromData(Uint8List.fromList(utf8.encode(texto)), mimeType: 'application/json', name: 'mis_datos_pachanga.json')],
+                fileNameOverrides: ['mis_datos_pachanga.json'],
+                subject: tr('Mis datos de Pachanga Fantasy'),
+              );
+            }),
+          ),
           const Divider(),
           ListTile(
             leading: Icon(Icons.person_remove_outlined, color: cs.error),
@@ -267,4 +290,5 @@ class PrivacidadScreen extends ConsumerWidget {
   }
 }
 
-const urlPoliticaPrivacidad = 'https://davidvives90.github.io/futbol-fantasy/privacidad.html';
+const urlPoliticaPrivacidad = 'https://www.pachangafantasy.com/privacidad';
+const urlCondiciones = 'https://www.pachangafantasy.com/condiciones';

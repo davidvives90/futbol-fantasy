@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Te han invitado · Pachanga Fantasy</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+<div class="heroe">
+  <div class="contenedor" style="grid-template-columns:1fr">
+    <div>
+      <h1>¡Te han invitado a una liga!</h1>
+      <p>Únete a tu grupo en Pachanga Fantasy. Elige cómo quieres entrar:</p>
+      <div class="botones">
+        <a class="boton blanco" id="app">Abrir en la app de Android</a>
+        <a class="boton oro" id="web">Entrar desde el navegador</a>
+      </div>
+      <p style="margin-top:20px;font-size:.95rem">¿No tienes la app? <a style="color:#fff" href="https://github.com/davidvives90/futbol-fantasy/releases/latest/download/app-release.apk">Descárgala para Android</a> y vuelve a abrir este enlace.</p>
+    </div>
+  </div>
+</div>
+<script>
+  // /i/<código> → app (io.futbolfantasy://invite/<código>) o web (/app/#/unirse?codigo=<código>)
+  var token = decodeURIComponent((location.pathname.split('/')[2] || '').trim());
+  document.getElementById('app').href = 'io.futbolfantasy://invite/' + encodeURIComponent(token);
+  document.getElementById('web').href = '/app/#/unirse?codigo=' + encodeURIComponent(token);
+  if (!/Android/i.test(navigator.userAgent) && token) location.replace('/app/#/unirse?codigo=' + encodeURIComponent(token));
+</script>
+</body>
+</html>

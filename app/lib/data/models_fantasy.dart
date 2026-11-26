@@ -537,8 +537,12 @@ class Subasta {
     this.miPuja,
     this.ganadorId,
     this.importe,
+    this.vendedorId,
+    this.fichaId,
   });
   final String id, jugadorId, tipo, estado;
+  /// 0059: subasta que lanza un mánager con su propio jugador (null = subasta de la liga).
+  final String? vendedorId, fichaId;
   final int numero, numPujas;
   final double precioSalida;
   final double? mejor, miPuja, importe;
@@ -570,6 +574,8 @@ class Subasta {
         miPuja: toDouble(m['mi_puja']),
         ganadorId: m['ganador_id'] as String?,
         importe: toDouble(m['importe']),
+        vendedorId: m['vendedor_id'] as String?,
+        fichaId: m['ficha_id'] as String?,
       );
 }
 

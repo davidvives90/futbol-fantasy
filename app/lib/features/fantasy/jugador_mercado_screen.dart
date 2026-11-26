@@ -13,6 +13,7 @@ import 'fantasy_dialogs.dart';
 import 'fantasy_providers.dart';
 import 'tarjetas_jugador.dart';
 import 'subastas_draft.dart';
+import 'acciones_ficha.dart';
 import 'widgets_fantasy.dart';
 import '../../core/info.dart';
 
@@ -101,10 +102,16 @@ class JugadorMercadoScreen extends ConsumerWidget {
             data: (h) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 _Cifra(tr('Ahora'), millones(fila?.precio)),
+                _Cifra(tr('Último cambio'), fila?.variacion == null ? '–' : variacionM(fila!.variacion!),
+                    color: colorVariacion(context, fila?.variacion)),
+                _Cifra(tr('Desde el inicio'), h.isEmpty || fila == null ? '–' : variacionM(fila.precio - h.first.precio),
+                    color: h.isEmpty || fila == null ? null : colorVariacion(context, fila.precio - h.first.precio)),
+              ]),
+              const SizedBox(height: 4),
+              Row(children: [
                 _Cifra(tr('Máximo'), h.isEmpty ? '–' : millones(h.map((x) => x.precio).reduce((a, b) => a > b ? a : b))),
                 _Cifra(tr('Mínimo'), h.isEmpty ? '–' : millones(h.map((x) => x.precio).reduce((a, b) => a < b ? a : b))),
-                _Cifra(tr('Desde el inicio'),
-                    h.isEmpty || fila == null ? '–' : variacionM(fila.precio - h.first.precio)),
+                const Spacer(),
               ]),
               const SizedBox(height: 12),
               GraficoPrecios(puntos: h, alto: 180),
@@ -124,30 +131,12 @@ class JugadorMercadoScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
         if (enPlantilla != null && enPlantilla.propia)
-          OutlinedButton.icon(
-            style: AppButtons.peligro(context),
-            icon: const Icon(Icons.sell_outlined),
-            label: Text('Vender por ${millones(p.precioVenta(enPlantilla.precio))}'),
-            onPressed: !abierto || enPlantilla.cedidaAOtro || enPlantilla.enCesionOfrecida
-                ? null
-                : () async {
-                    if (!await confirmar(
-                      context,
-                      'Vender a ${miembro?.nombre ?? 'jugador'}',
-                      'La ficha vuelve al mercado. Precio actual ${millones(enPlantilla.precio)} − '
-                          '${(p.comisionVenta * 100).toStringAsFixed(0)} % de comisión: '
-                          'recibes ${millones(p.precioVenta(enPlantilla.precio))}.',
-                      accion: 'Vender',
-                      tipo: TipoConfirmacion.peligro,
-                    )) {
-                      return;
-                    }
-                    if (!context.mounted) return;
-                    final ok = await ejecutar(
-                        context, () => FantasyRepo.vender(ligaId, miembroId, fichaId: enPlantilla.fichaId),
-                        ok: 'Vendido');
-                    if (ok) refrescarFantasy(ref, kYo);
-                  },
+          AccionesMiJugador(
+            mi: mi,
+            jugador: enPlantilla,
+            nombre: miembro?.nombre ?? tr('jugador'),
+            saldo: saldo,
+            abierto: abierto,
           )
         else if (fila != null) ...[
           Row(children: [Tx('Fichas', style: t.titleMedium), const InfoBoton(Ayuda.fichas)]),
@@ -334,13 +323,14 @@ class _Seccion extends StatelessWidget {
 }
 
 class _Cifra extends StatelessWidget {
-  const _Cifra(this.etiqueta, this.valor);
+  const _Cifra(this.etiqueta, this.valor, {this.color});
   final String etiqueta, valor;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(valor, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+          Text(valor, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: color)),
           Text(etiqueta, style: Theme.of(context).textTheme.labelSmall),
         ]),
       );

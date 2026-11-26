@@ -212,6 +212,13 @@ class PerfilScreen extends ConsumerWidget {
           subtitle: Text(etiquetaPosicion(perfil.posicion)),
         ),
         ListTile(
+          leading: const Icon(Icons.key_outlined),
+          title: const Tx('Contraseña'),
+          subtitle: const Tx('Crea o cambia tu contraseña para entrar con email'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/contrasena'),
+        ),
+        ListTile(
           leading: const Icon(Icons.logout),
           title: const Tx('Cerrar sesión'),
           onTap: () async {

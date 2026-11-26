@@ -112,14 +112,16 @@ class _SubastasPanelState extends ConsumerState<SubastasPanel> {
             ),
           ]),
           Text(
-              trf('Cada día a las {h} salen {n} a subasta {t} durante {d} h. Gana la puja más alta que se pueda pagar.', {
-                'h': p.subastaHora,
-                'n': p.subastaLote,
-                't': p.subastaTipo == 'ciega' ? tr('ciega') : tr('abierta'),
-                'd': p.subastaHoras,
-              }),
+              p.modoInicio == 'subasta'
+                  ? trf('Cada día a las {h} salen {n} a subasta {t} durante {d} h. Gana la puja más alta que se pueda pagar.', {
+                      'h': p.subastaHora,
+                      'n': p.subastaLote,
+                      't': p.subastaTipo == 'ciega' ? tr('ciega') : tr('abierta'),
+                      'd': p.subastaHoras,
+                    })
+                  : tr('Jugadores que sus mánagers han puesto a la venta. Gana la puja más alta que se pueda pagar.'),
               style: t.bodySmall),
-          if (widget.mi.soyAdmin)
+          if (widget.mi.soyAdmin && p.modoInicio == 'subasta')
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -144,6 +146,10 @@ class _SubastasPanelState extends ConsumerState<SubastasPanel> {
                     title: Text('${miembros[s.jugadorId]?.nombre ?? '…'} · #${s.numero}'),
                     subtitle: Text(s.abierta
                         ? [
+                            if (s.vendedorId != null)
+                              s.vendedorId == widget.mi.yo.id
+                                  ? tr('Tu subasta')
+                                  : trf('Lo vende {v}', {'v': miembros[s.vendedorId]?.nombre ?? '…'}),
                             _queda(s.cierraEn),
                             trf('salida {x}', {'x': millones(s.precioSalida)}),
                             if (!s.ciega && s.mejor != null) trf('mejor {x}', {'x': millones(s.mejor)}),
@@ -154,7 +160,17 @@ class _SubastasPanelState extends ConsumerState<SubastasPanel> {
                         : s.estado == 'adjudicada'
                             ? trf('Para {g} por {x}', {'g': miembros[s.ganadorId]?.nombre ?? '…', 'x': millones(s.importe)})
                             : tr('Desierta: nadie pujó (o nadie podía pagarlo)')),
-                    trailing: s.abierta
+                    trailing: s.abierta && s.vendedorId == widget.mi.yo.id
+                        ? (s.numPujas == 0
+                            ? TextButton(
+                                onPressed: () async {
+                                  final ok = await ejecutar(context, () => FantasyRepo.cancelarSubasta(s.id),
+                                      ok: tr('Subasta cancelada'));
+                                  if (ok) ref.invalidate(subastasProvider(ligaId));
+                                },
+                                child: const Tx('Cancelar'))
+                            : const Icon(Icons.hourglass_top))
+                        : s.abierta
                         ? FilledButton.tonal(
                             onPressed: s.voyGanando == true ? null : () => _pujar(s, miembros[s.jugadorId]?.nombre ?? ''),
                             child: Text(s.miPuja == null ? tr('Pujar') : tr('Cambiar')),

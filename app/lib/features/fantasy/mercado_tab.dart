@@ -54,14 +54,17 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
     final saldo = ref.watch(miManagerProvider(k)).valueOrNull?.saldo;
 
     final modo = widget.mi.liga.fantasy.modoInicio;
+    // 0059: jugadores puestos en subasta por sus mánagers (en cualquier modo de inicio)
+    final hayVentas = (ref.watch(subastasProvider(widget.mi.liga.id)).valueOrNull ?? const [])
+        .any((s) => s.abierta && s.vendedorId != null);
     return Column(children: [
       if (!abierto) BannerMercadoCerrado(mi: widget.mi),
       // 0054: subasta diaria o draft por turnos
-      if (modo == 'subasta' || modo == 'draft')
+      if (modo == 'subasta' || modo == 'draft' || hayVentas)
         ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
           child: SingleChildScrollView(
-            child: modo == 'subasta' ? SubastasPanel(mi: widget.mi) : DraftPanel(mi: widget.mi),
+            child: modo == 'draft' && !hayVentas ? DraftPanel(mi: widget.mi) : SubastasPanel(mi: widget.mi),
           ),
         ),
       Padding(

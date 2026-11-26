@@ -36,6 +36,14 @@ class InsigniaNoHabitual extends StatelessWidget {
 }
 
 /// Variación de precio coloreada.
+/// Color de una variación de precio: verde si sube, rojo si baja, gris si no cambia.
+Color colorVariacion(BuildContext context, double? v, {bool sobreBlanco = false}) {
+  final oscuro = !sobreBlanco && Theme.of(context).brightness == Brightness.dark;
+  if ((v ?? 0) > 0) return oscuro ? const Color(0xFF6FD98F) : const Color(0xFF1B873F);
+  if ((v ?? 0) < 0) return oscuro ? const Color(0xFFFF6B6B) : const Color(0xFFD32F2F);
+  return Theme.of(context).colorScheme.outline;
+}
+
 class VariacionTexto extends StatelessWidget {
   const VariacionTexto(this.variacion, {super.key});
   final double? variacion;
@@ -43,11 +51,7 @@ class VariacionTexto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = variacion ?? 0;
-    final color = v > 0
-        ? AppColores.of(context).exito
-        : v < 0
-            ? Theme.of(context).colorScheme.error
-            : Theme.of(context).colorScheme.outline;
+    final color = colorVariacion(context, v);
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(v > 0 ? Icons.arrow_drop_up : (v < 0 ? Icons.arrow_drop_down : Icons.remove), size: 18, color: color),
       Text(variacionM(v), style: AppTheme.tabular(TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600))),
@@ -177,16 +181,23 @@ class _LineaPainter extends CustomPainter {
           colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0.02)],
         ).createShader(Rect.fromLTWH(izq, arriba, w, h)),
     );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..strokeWidth = 2.5
-        ..strokeJoin = StrokeJoin.round
-        ..style = PaintingStyle.stroke,
-    );
+    // Cada tramo en verde si sube y en rojo si baja (gris si se queda igual)
+    Color tramo(int i) => valores[i] > valores[i - 1]
+        ? const Color(0xFF2E7D32)
+        : (valores[i] < valores[i - 1] ? const Color(0xFFD32F2F) : rejilla);
+    for (var i = 1; i < valores.length; i++) {
+      canvas.drawLine(
+        Offset(x(i - 1), y(valores[i - 1])),
+        Offset(x(i), y(valores[i])),
+        Paint()
+          ..color = tramo(i)
+          ..strokeWidth = 2.5
+          ..strokeCap = StrokeCap.round,
+      );
+    }
     for (var i = 0; i < valores.length; i++) {
-      canvas.drawCircle(Offset(x(i), y(valores[i])), i == valores.length - 1 ? 5 : 2.5, Paint()..color = color);
+      canvas.drawCircle(Offset(x(i), y(valores[i])), i == valores.length - 1 ? 5 : 2.5,
+          Paint()..color = i == 0 ? color : tramo(i));
     }
     final tp = TextPainter(
       text: TextSpan(text: millones(valores.last), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),

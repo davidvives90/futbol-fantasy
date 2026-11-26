@@ -24,6 +24,7 @@ import 'core/router.dart';
 import 'core/supabase.dart';
 import 'core/tema.dart';
 import 'core/theme.dart';
+import 'core/version_minima.dart';
 
 Future<void> main() async {
   // Si algo falla al arrancar, la app se abre igual y muestra el error (en vez de cerrarse).
@@ -113,6 +114,10 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
         activarPush();
         unawaited(sincronizarIdioma());
       }
+      // Enlace de «¿Has olvidado la contraseña?»: pedir la nueva
+      if (e.event == AuthChangeEvent.passwordRecovery) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(routerProvider).push('/contrasena?recuperar=1'));
+      }
     }, onError: (_) {});
     if (_fallosArranque.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _mensajes.currentState?.showSnackBar(SnackBar(
@@ -124,7 +129,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
     _links = AppLinks().uriLinkStream.listen(_alRecibirEnlace);
   }
 
-  /// io.futbolfantasy://invite/<token>  o  https://futbolfantasy.app/i/<token>
+  /// io.futbolfantasy://invite/<token>  o  https://www.pachangafantasy.com/i/<token>
   void _alRecibirEnlace(Uri uri) {
     String? token;
     if (uri.scheme == Env.scheme && uri.host == 'invite' && uri.pathSegments.isNotEmpty) {
@@ -164,7 +169,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           child: EquipacionesScope(
             equipaciones: ref.watch(ligaActualProvider)?.liga.equipaciones ?? Equipacion.porDefecto,
             // Al cambiar de idioma se reconstruye toda la interfaz (fechas y textos incluidos)
-            child: PuertaConsentimiento(
+            child: PuertaVersion(child: PuertaConsentimiento(
               child: MarcoWeb(
               onQuitarAnuncios: () => ref.read(routerProvider).push('/tienda'),
               // Android dibuja de borde a borde: sin esto, los botones de abajo quedan bajo la barra del sistema.
@@ -181,7 +186,7 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
                       ),
                     ),
               ),
-            ),
+            )),
           ),
         );
       },
