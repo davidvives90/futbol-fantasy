@@ -171,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24),
               child: AutofillGroup(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const SelectorIdioma(),
+                  const Align(alignment: Alignment.centerRight, child: SelectorIdioma()),
                   const SizedBox(height: 16),
                   // Logo (ya lleva el nombre de la app)
                   Center(

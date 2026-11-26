@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../onboarding/bienvenida.dart';
 import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +18,7 @@ import '../../data/providers.dart';
 import '../master/master_screen.dart';
 import '../shell/home_shell.dart';
 import '../stats/ficha_screen.dart';
+import '../../core/guias.dart';
 
 class PerfilScreen extends ConsumerWidget {
   const PerfilScreen({super.key});
@@ -107,11 +107,10 @@ class PerfilScreen extends ConsumerWidget {
         ListTile(
           leading: const Icon(Icons.lightbulb_outline),
           title: const Tx('Cómo funciona'),
-          subtitle: const Tx('Las 3 tarjetas de bienvenida'),
+          subtitle: const Tx('Tarjetas explicativas de cada pantalla, para leer o compartir'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              fullscreenDialog: true,
-              builder: (_) => SinPublicidad(child: Bienvenida(fantasy: mi.liga.fantasyActivo)))),
+              builder: (_) => GuiasScreen(fantasy: mi.liga.fantasyActivo, porra: mi.liga.porraActiva))),
         ),
         ListTile(
           leading: const Icon(Icons.help_outline),

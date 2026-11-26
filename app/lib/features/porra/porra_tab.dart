@@ -10,6 +10,7 @@ import '../../core/utils.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/repos/porra_repo.dart';
+import '../../core/guias.dart';
 
 final porraProvider = FutureProvider.autoDispose.family<EstadoPorra, String>((ref, p) => PorraRepo.estado(p));
 final rankingPorraProvider =
@@ -115,6 +116,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
       data: (e) => RefreshIndicator(
         onRefresh: () async => ref.invalidate(porraProvider(widget.partido.id)),
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 120), children: [
+          const AvisoGuia('porra'),
           _cabecera(e),
           if (e.abierta) ..._mercados(e, miembros),
           if (e.abierta && _boleto.isNotEmpty) _tarjetaBoleto(e, miembros),

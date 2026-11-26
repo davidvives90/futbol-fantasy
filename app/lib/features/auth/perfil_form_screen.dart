@@ -158,7 +158,7 @@ class _PerfilFormScreenState extends ConsumerState<PerfilFormScreen> {
         key: _form,
         child: ListView(padding: const EdgeInsets.all(16), children: [
           if (widget.inicial) ...[
-            const SelectorIdioma(),
+            const Align(alignment: Alignment.centerRight, child: SelectorIdioma()),
             const SizedBox(height: 12),
             const Padding(
               padding: EdgeInsets.only(bottom: 16),

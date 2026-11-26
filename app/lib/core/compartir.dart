@@ -47,6 +47,10 @@ String textoPartido(Map<String, dynamic> r, Liga liga, String partidoId) {
     }
     final mvp = [for (final m in (r['mvp'] as List? ?? const [])) '$m'];
     if (mvp.isNotEmpty) b.writeln('⭐ MVP: ${mvp.join(' y ')}');
+    final mn = r['mejor_nota'] as Map?, ft = r['fantasy_top'] as Map?, fr = r['farolillo'] as Map?;
+    if (mn != null) b.writeln('🌟 ${tr('Mejor nota')}: ${mn['nombre']} (${mn['nota']})');
+    if (ft != null) b.writeln('🏆 ${tr('Fantasy')}: ${ft['nombre']} (${ft['puntos']} pts)');
+    if (fr != null) b.writeln('🏮 ${tr('Farolillo rojo')}: ${fr['nombre']} (${fr['nota']})');
   } else if (equipos.isNotEmpty) {
     final claves = equipos.keys.toList()..sort();
     for (final k in claves) {
@@ -319,6 +323,24 @@ class TarjetaPartido extends StatelessWidget {
                 style: const TextStyle(color: _verdeOscuro, fontWeight: FontWeight.w800, fontSize: 16)),
           ),
         ],
+        // 0060: mejor nota, mejor mánager del Fantasy y, con humor, el farolillo rojo
+        ...() {
+          Map<String, dynamic>? m(String k) => r[k] == null ? null : Map<String, dynamic>.from(r[k] as Map);
+          final filas = <String>[
+            if (m('mejor_nota') != null) '🌟 ${tr('Mejor nota')}: ${m('mejor_nota')!['nombre']} (${m('mejor_nota')!['nota']})',
+            if (m('fantasy_top') != null) '🏆 ${tr('Fantasy')}: ${m('fantasy_top')!['nombre']} (${m('fantasy_top')!['puntos']} pts)',
+            if (m('farolillo') != null) '🏮 ${tr('Farolillo rojo')}: ${m('farolillo')!['nombre']} (${m('farolillo')!['nota']})',
+          ];
+          if (filas.isEmpty) return const <Widget>[];
+          return <Widget>[
+            const SizedBox(height: 12),
+            for (final f in filas)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(f, textAlign: TextAlign.center, style: blanco.copyWith(fontSize: 13)),
+              ),
+          ];
+        }(),
       ]);
     } else if (equipos.isNotEmpty) {
       final claves = equipos.keys.toList()..sort();

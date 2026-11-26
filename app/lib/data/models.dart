@@ -444,7 +444,8 @@ class ParamsFantasy {
 
   /// 'ninguna' | 'reinicio' | 'valor' | 'bonus'
   final String herenciaTemporada;
-  bool get tactica => modoAlineacion == 'tactico';
+  // 0060: sin puntos por rol no hay posiciones (alineación libre aunque la liga diga táctica)
+  bool get tactica => modoAlineacion == 'tactico' && bonusRoles;
   /// 0059: modo sencillo (sin roles, ariete ni cesiones; alineación en lista).
   final bool sencillo;
 

@@ -12,6 +12,7 @@ import 'fantasy_providers.dart';
 import 'mercado_tab.dart';
 import 'mi_equipo_tab.dart';
 import 'ofertas_tab.dart';
+import '../../core/guias.dart';
 
 /// Pestaña inferior "Fantasy": Mi equipo · Mercado · Ofertas · Ranking.
 class FantasyScreen extends ConsumerWidget {
@@ -28,6 +29,7 @@ class FantasyScreen extends ConsumerWidget {
       length: 4,
       child: Scaffold(
         appBar: LigaAppBar(
+          actions: const [BotonGuia('fantasy')],
           bottom: TabBar(tabs: [
             Tab(icon: const Icon(Icons.shield_outlined), text: tr('Mi equipo')),
             Tab(icon: const Icon(Icons.storefront_outlined), text: tr('Mercado')),
@@ -43,6 +45,7 @@ class FantasyScreen extends ConsumerWidget {
           ]),
         ),
         body: Column(children: [
+          const AvisoGuia('fantasy'),
           EncuestaPendienteCard(mi: mi),
           Expanded(
             child: TabBarView(children: [

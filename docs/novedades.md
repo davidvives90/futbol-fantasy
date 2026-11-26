@@ -14,6 +14,16 @@ Gracias por probar Pachanga Fantasy. Instala el APK de abajo (Android) o entra e
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Tarjetas «Cómo funciona» en cada pantalla (botón ?): Inicio, convocatoria, después del partido, clasificación, Fantasy (5 tarjetas), porra y pagos. La primera vez sale un aviso pequeño; cada tarjeta se comparte como imagen en WhatsApp. Todas en Perfil › Cómo funciona.
+- Inicio: tu próximo partido en grande, con cuánto falta y botón para compartirlo en el grupo.
+- Ficha del jugador: «Todas sus ligas» o una en concreto, y nuevo «Cara a cara» con el balance contra cada compañero.
+- Clasificación › Equipo ideal de la última jornada o del último mes, para compartir como imagen.
+- El resumen del partido para WhatsApp añade la mejor nota, el mejor mánager del Fantasy y, si la liga tiene humor, el farolillo rojo.
+- Avisos automáticos: el día antes a quien no ha confirmado su plaza y un último aviso unas horas antes (y, si faltan jugadores, a quien no ha contestado).
+- Fantasy: si las posiciones no puntúan, la alineación ya no pide posiciones (solo titulares y banquillo).
+- Idioma: selector compacto en la entrada; castellano por defecto.
+
+#### Versión anterior
 - Entrar con Google o con email y contraseña (además del código al correo). Crea o cambia tu contraseña en Perfil › Cuenta › Contraseña.
 - Condiciones del servicio y política de privacidad visibles desde la pantalla de entrada y en www.pachangafantasy.com. Perfil › Privacidad › Descargar mis datos.
 - Inicio con selector de liga: «Todas mis ligas» o una en concreto.

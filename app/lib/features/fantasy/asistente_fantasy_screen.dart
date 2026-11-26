@@ -118,6 +118,8 @@ class _AsistenteFantasyScreenState extends ConsumerState<AsistenteFantasyScreen>
         'subasta_hora': '${_subastaHora.hour.toString().padLeft(2, '0')}:${_subastaHora.minute.toString().padLeft(2, '0')}',
         'auto_fichaje': _autoFichaje,
         'modo_alineacion': _modoAlineacion,
+        // 0060: posiciones solo tienen sentido si el rol puntúa
+        if (_modoAlineacion == 'tactico') 'bonus_roles': true,
         'suplentes': _suplentes,
         'capitan_activo': _capitan,
         'ariete_activo': _ariete,
@@ -306,7 +308,7 @@ class _AsistenteFantasyScreenState extends ConsumerState<AsistenteFantasyScreen>
         isActive: _paso >= 3,
         content: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _radio('tactico', _modoAlineacion, 'Táctica por posiciones',
-              'Un portero y, con 4 o más, al menos un defensa y un delantero.', (v) => _modoAlineacion = v),
+              'Un portero y, con 4 o más, al menos un defensa y un delantero. Cada rol puntúa distinto.', (v) => _modoAlineacion = v),
           _radio('libre', _modoAlineacion, 'Libre', 'Cualquier jugador en cualquier puesto, sin portero obligatorio.',
               (v) => _modoAlineacion = v),
           Tx('Se puede alinear con menos jugadores si no tienes más: los huecos puntúan 0.', style: t.bodySmall),

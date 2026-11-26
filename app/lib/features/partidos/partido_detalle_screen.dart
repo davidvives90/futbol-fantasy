@@ -15,6 +15,7 @@ import '../post_partido/resultado_tab.dart';
 import '../post_partido/revision_tab.dart';
 import 'convocatoria_tab.dart';
 import '../porra/porra_tab.dart';
+import '../../core/guias.dart';
 
 /// Detalle de un partido. Las pestañas visibles dependen del estado y del rol.
 class PartidoDetalleScreen extends ConsumerWidget {
@@ -72,6 +73,7 @@ class PartidoDetalleScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodySmall),
               ]),
               actions: [
+                const BotonGuia('partido'),
                 if (e != EstadoPartido.cancelado)
                   IconButton(
                     tooltip: tr('Compartir por WhatsApp'),

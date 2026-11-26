@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../data/repos/caja_repo.dart';
 import '../shell/home_shell.dart';
 import '../../core/avatar.dart';
+import '../../core/guias.dart';
 
 final _movimientosProvider = FutureProvider.autoDispose.family<List<Movimiento>, String>(
   (ref, miembroId) => CajaRepo.movimientos(miembroId),
@@ -36,7 +37,7 @@ class CajaScreen extends ConsumerWidget {
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
-        appBar: LigaAppBar(bottom: TabBar(tabs: tabs)),
+        appBar: LigaAppBar(actions: const [BotonGuia('caja')], bottom: TabBar(tabs: tabs)),
         body: TabBarView(children: [
           _MiSaldo(mi: mi),
           if (mi.soyAdmin) _Deudores(mi: mi),

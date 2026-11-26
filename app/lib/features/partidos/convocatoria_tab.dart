@@ -15,6 +15,7 @@ import '../../core/avatar.dart';
 import 'selector_asistencia.dart';
 import '../../core/compartir.dart';
 import '../../core/info.dart';
+import '../../core/guias.dart';
 
 /// Lista de inscritos en tiempo real + botones Voy / Duda / No voy.
 class ConvocatoriaTab extends ConsumerWidget {
@@ -65,6 +66,7 @@ class ConvocatoriaTab extends ConsumerWidget {
         String texto() => textoConvocatoria(liga: liga, partido: partido, lista: lista, suplentes: espera, nombre: nombre);
 
         return ListView(padding: const EdgeInsets.only(bottom: 32), children: [
+          const AvisoGuia('partido'),
           ListTile(
             title: Text(trf('Van {n} de {p}', {'n': ocupadas, 'p': partido.plazas}),
                 style: Theme.of(context).textTheme.titleLarge),

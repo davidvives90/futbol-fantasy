@@ -261,12 +261,12 @@ class _AjustesFantasyScreenState extends ConsumerState<AjustesFantasyScreen> {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Row(children: [
-            Flexible(child: Tx('Bonus por rol en la alineación')),
+            Flexible(child: Tx('Posiciones y bonus por rol')),
             InfoBoton(Ayuda.rolesBonus),
           ]),
           subtitle: Text((_bonusRoles ?? true)
-              ? 'Portero, defensa, medio y delantero suman extra según el partido'
-              : 'Desactivado: el rol de la alineación es solo estético'),
+              ? tr('Cada titular lleva posición (portero, defensa, medio o delantero) y suma extra según el partido')
+              : tr('Desactivado: solo eliges titulares y banquillo, sin posiciones')),
           value: _bonusRoles ?? true,
           onChanged: (v) => setState(() => _bonusRoles = v),
         ),

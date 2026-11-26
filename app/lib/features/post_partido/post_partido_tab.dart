@@ -14,6 +14,7 @@ import '../../core/avatar.dart';
 import '../../core/equipaciones.dart';
 import '../../core/info.dart';
 import '../../core/anuncios.dart';
+import '../../core/guias.dart';
 
 /// Encuentros que definió el admin (quién contra quién); cada asistente solo pone el marcador.
 final _encuentrosDefProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
@@ -382,6 +383,7 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
     return Column(children: [
       Expanded(
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
+          const AvisoGuia('post_partido'),
           Row(children: [
             Icon(Icons.timer_outlined, size: 18, color: cs.onSurfaceVariant),
             const SizedBox(width: 6),

@@ -75,3 +75,4 @@ aplicar tests/escenario_fase2.sql
 aplicar tests/escenario_fase3.sql
 PGOPTIONS="" aplicar tests/escenario_fase4.sql
 PGOPTIONS="" aplicar tests/escenario_mejoras_nov.sql
+PGOPTIONS="" aplicar tests/escenario_atractivo.sql

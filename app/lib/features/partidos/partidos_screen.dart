@@ -19,6 +19,7 @@ import '../../data/repos/post_partido_repo.dart';
 import '../shell/home_shell.dart';
 import 'agenda.dart';
 import 'selector_asistencia.dart';
+import '../../core/guias.dart';
 
 /// Partidos en post-partido en los que jugué y aún no he enviado nada.
 final _votacionesPendientesProvider =
@@ -72,7 +73,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
 
     return Scaffold(
       // Inicio es de todas mis ligas: sin selector de liga arriba, solo el saludo
-      appBar: LigaAppBar(titulo: _saludo(mi)),
+      appBar: LigaAppBar(titulo: _saludo(mi), actions: const [BotonGuia('inicio')]),
       floatingActionButton: mi.soyAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/partidos/nuevo'),
@@ -108,6 +109,7 @@ class _PartidosScreenState extends ConsumerState<PartidosScreen> {
             final unaLiga = filtro != null;
             return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
               if (ligas.length > 1) _SelectorLigaInicio(ligas: ligas, filtro: filtro),
+              const AvisoGuia('inicio'),
               // Lo urgente arriba; luego mis partidos (de todas mis ligas o de la elegida)
               _Pendientes(mi: mi, soloLiga: filtro),
               AgendaPersonal(ligaId: filtro),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/compartir.dart';
 import '../../core/idioma.dart';
 import '../../core/liga_activa.dart';
 import '../../core/supabase.dart';
@@ -196,12 +197,14 @@ class _AgendaPersonalState extends ConsumerState<AgendaPersonal> {
                 icono: Icons.event_available,
               ),
             ),
-          for (final c in visibles)
+          for (final (i, c) in visibles.indexed)
             _TarjetaCita(
               key: _claves.putIfAbsent(c.partidoId, GlobalKey.new),
               cita: c,
               colorLiga: colorLiga(c.ligaId),
               mostrarLiga: variasLigas,
+              // 0060: el primero, en grande: «Tu próximo partido»
+              destacada: i == 0 && _dia == null,
             ),
         ]);
       },
@@ -225,10 +228,32 @@ class _AgendaPersonalState extends ConsumerState<AgendaPersonal> {
 /// Una cita: liga (color), día y hora en grande, cuántos van, mi estado y los botones.
 /// Escucha la convocatoria en tiempo real: lo que cambie cualquiera se ve al momento.
 class _TarjetaCita extends ConsumerWidget {
-  const _TarjetaCita({super.key, required this.cita, required this.colorLiga, required this.mostrarLiga});
+  const _TarjetaCita(
+      {super.key, required this.cita, required this.colorLiga, required this.mostrarLiga, this.destacada = false});
   final CitaAgenda cita;
   final Color colorLiga;
-  final bool mostrarLiga;
+  final bool mostrarLiga, destacada;
+
+  /// «Hoy», «Mañana» o «En 3 días»
+  static String cuando(DateTime f) {
+    final hoy = DateTime.now();
+    final d = DateTime(f.year, f.month, f.day).difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    if (d <= 0) return tr('Hoy');
+    if (d == 1) return tr('Mañana');
+    return trf('En {n} días', {'n': d});
+  }
+
+  Future<void> _compartir(BuildContext context, WidgetRef ref) async {
+    final mi = ref.read(misLigasProvider).valueOrNull?.where((l) => l.liga.id == cita.ligaId).firstOrNull;
+    if (mi == null) return;
+    try {
+      final r = Map<String, dynamic>.from(await sb.rpc('resumen_compartir', params: {'p_partido': cita.partidoId}) as Map);
+      if (!context.mounted) return;
+      await compartirTexto(context, textoPartido(r, mi.liga, cita.partidoId), tarjeta: TarjetaPartido(r: r, liga: mi.liga));
+    } catch (e) {
+      if (context.mounted) mostrarError(context, e);
+    }
+  }
 
   Future<void> _abrir(BuildContext context, WidgetRef ref) async {
     await ref.read(ligaActivaIdProvider.notifier).elegir(cita.ligaId);
@@ -321,16 +346,41 @@ class _TarjetaCita extends ConsumerWidget {
       );
     }
 
+    final cabecera = !destacada
+        ? null
+        : Container(
+            padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [cs.primary, Color.lerp(cs.primary, Colors.black, 0.3)!]),
+            ),
+            child: Row(children: [
+              Icon(Icons.sports_soccer, size: 18, color: cs.onPrimary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('${tr('Tu próximo partido')} · ${cuando(cita.fecha)}',
+                    style: t.labelLarge?.copyWith(color: cs.onPrimary, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+              ),
+              IconButton(
+                tooltip: tr('Compartir en WhatsApp'),
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.share, size: 20, color: cs.onPrimary),
+                onPressed: () => _compartir(context, ref),
+              ),
+            ]),
+          );
     return Card(
-      margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      margin: EdgeInsets.fromLTRB(16, destacada ? 8 : 6, 16, destacada ? 10 : 6),
+      elevation: destacada ? 3 : null,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(destacada ? 20 : 16),
         side: sit == _Situacion.responde ? BorderSide(color: a.color, width: 2) : BorderSide.none,
       ),
       child: InkWell(
         onTap: () => _abrir(context, ref),
-        child: IntrinsicHeight(
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (cabecera != null) cabecera,
+          IntrinsicHeight(
           child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Container(width: 7, color: colorLiga),
             Expanded(
@@ -361,7 +411,7 @@ class _TarjetaCita extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text('${dia[0].toUpperCase()}${dia.substring(1)}', style: t.titleMedium),
                   Row(children: [
-                    Text(hora, style: t.headlineMedium?.copyWith(fontWeight: FontWeight.w800, height: 1.1)),
+                    Text(hora, style: (destacada ? t.displaySmall : t.headlineMedium)?.copyWith(fontWeight: FontWeight.w800, height: 1.1)),
                     if (!cita.horaConfirmada) ...[
                       const SizedBox(width: 6),
                       Tooltip(
@@ -388,7 +438,8 @@ class _TarjetaCita extends ConsumerWidget {
               ),
             ),
           ]),
-        ),
+          ),
+        ]),
       ),
     );
   }

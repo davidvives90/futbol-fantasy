@@ -12,6 +12,8 @@ import '../shell/home_shell.dart';
 import '../../core/avatar.dart';
 import '../../core/info.dart';
 import '../../data/repos/stats_repo.dart';
+import 'equipo_ideal.dart';
+import '../../core/guias.dart';
 
 /// Una pestaña del ranking: cómo ordenar y qué valor mostrar.
 class _Ranking {
@@ -64,7 +66,7 @@ class ClasificacionScreen extends ConsumerWidget {
     }
 
     return DefaultTabController(
-      length: _rankings.length + 1,
+      length: _rankings.length + 2,
       child: Scaffold(
         appBar: LigaAppBar(
           actions: [
@@ -74,8 +76,9 @@ class ClasificacionScreen extends ConsumerWidget {
               onPressed: () => context.push('/palmares'),
             ),
             const InfoBoton(Ayuda.puntos, tamano: 22),
+            const BotonGuia('clasificacion'),
           ],
-          bottom: TabBar(isScrollable: true, tabs: [for (final r in _rankings) Tab(text: r.titulo), const Tab(text: 'Récords')]),
+          bottom: TabBar(isScrollable: true, tabs: [for (final r in _rankings) Tab(text: tr(r.titulo)), Tab(text: tr('Equipo ideal')), Tab(text: tr('Récords'))]),
         ),
         body: Column(children: [
           if (inicio != null)
@@ -99,6 +102,7 @@ class ClasificacionScreen extends ConsumerWidget {
                 onRefresh: refrescar,
                 child: _Lista(ranking: rk, datos: lista, miembros: miembros, yo: mi.yo.id),
               ),
+            EquipoIdeal(ligaId: mi.liga.id, ligaNombre: mi.liga.nombre),
             _Records(ligaId: mi.liga.id, miembros: miembros),
           ]),
         )),

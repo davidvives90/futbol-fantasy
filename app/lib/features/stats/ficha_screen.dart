@@ -3,6 +3,7 @@ import '../../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/supabase.dart';
 import '../../core/theme.dart';
 import '../../core/utils.dart';
 import '../../data/models.dart';
@@ -26,6 +27,21 @@ final statsJugadorProvider = FutureProvider.autoDispose.family<Map<String, dynam
   (ref, miembroId) => StatsRepo.jugador(miembroId),
 );
 
+/// 0060: estadísticas del jugador en todas las ligas que compartes con él (y el total).
+final rendimientoPerfilProvider = FutureProvider.autoDispose.family<Map<String, dynamic>?, String>((ref, miembroId) async {
+  final r = await sb.rpc('rendimiento_perfil', params: {'p_miembro': miembroId});
+  return r == null ? null : Map<String, dynamic>.from(r as Map);
+});
+
+/// 0060: balance contra y con cada compañero.
+final caraACaraProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, miembroId) async {
+  final r = await sb.rpc('cara_a_cara', params: {'p_miembro': miembroId});
+  return [for (final x in (r as List)) Map<String, dynamic>.from(x as Map)];
+});
+
+/// Liga elegida en la ficha (null = todas). Por ficha abierta.
+final fichaLigaProvider = StateProvider.autoDispose.family<String?, String>((ref, miembroId) => null);
+
 /// Ficha de un jugador: totales y puntos por partido.
 class FichaScreen extends ConsumerWidget {
   const FichaScreen({super.key, required this.miembroId, this.conAppBar = true});
@@ -37,10 +53,24 @@ class FichaScreen extends ConsumerWidget {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const Scaffold(body: Cargando());
     final miembro = ref.watch(miembrosPorIdProvider(mi.liga.id))[miembroId];
-    final rend = (ref.watch(rendimientoProvider(mi.liga.id)).valueOrNull ?? const <Rendimiento>[])
-        .where((r) => r.miembroId == miembroId)
-        .firstOrNull;
-    final historial = ref.watch(historialProvider(miembroId));
+    // 0060: todas mis ligas o una en concreto (como en Inicio)
+    final perfil = ref.watch(rendimientoPerfilProvider(miembroId)).valueOrNull;
+    final ligasJugador = [for (final x in (perfil?['ligas'] as List? ?? const [])) Map<String, dynamic>.from(x as Map)];
+    final ligaSel = ref.watch(fichaLigaProvider(miembroId));
+    final filaSel = ligaSel == null ? null : ligasJugador.where((x) => x['liga_id'] == ligaSel).firstOrNull;
+    // Miembro de la liga elegida (el mismo jugador puede tener otra ficha en otra liga)
+    final ver = (filaSel?['miembro_id'] as String?) ?? miembroId;
+    final ligaVer = (filaSel?['liga_id'] as String?) ?? mi.liga.id;
+    final rend = perfil == null
+        ? (ref.watch(rendimientoProvider(mi.liga.id)).valueOrNull ?? const <Rendimiento>[])
+            .where((r) => r.miembroId == miembroId)
+            .firstOrNull
+        : () {
+            final m = filaSel ?? (perfil['total'] as Map?);
+            if (m == null || ((m['partidos'] as num?) ?? 0) == 0) return null;
+            return Rendimiento.fromMap({...Map<String, dynamic>.from(m), 'miembro_id': ver});
+          }();
+    final historial = ref.watch(historialProvider(ver));
 
     final cuerpo = ListView(padding: const EdgeInsets.all(16), children: [
       Row(children: [
@@ -53,6 +83,28 @@ class FichaScreen extends ConsumerWidget {
           ]),
         ),
       ]),
+      if (ligasJugador.length > 1) ...[
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            ChoiceChip(
+              label: const Tx('Todas sus ligas'),
+              selected: ligaSel == null,
+              onSelected: (_) => ref.read(fichaLigaProvider(miembroId).notifier).state = null,
+            ),
+            for (final l in ligasJugador)
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: ChoiceChip(
+                  label: Text('${l['nombre']}'),
+                  selected: ligaSel == l['liga_id'],
+                  onSelected: (_) => ref.read(fichaLigaProvider(miembroId).notifier).state = l['liga_id'] as String,
+                ),
+              ),
+          ]),
+        ),
+      ],
       const SizedBox(height: 16),
       if (rend == null)
         const Tx('Aún no ha jugado ningún partido cerrado.')
@@ -76,7 +128,7 @@ class FichaScreen extends ConsumerWidget {
         ),
       // Logros (0056: 150, con pantalla propia)
       ...() {
-        final l = ref.watch(logrosProvider(miembroId)).valueOrNull;
+        final l = ref.watch(logrosProvider(ver)).valueOrNull;
         if (l == null) return const <Widget>[];
         final recientes = l.recientes.take(6).toList();
         return <Widget>[
@@ -84,7 +136,7 @@ class FichaScreen extends ConsumerWidget {
           Row(children: [
             Expanded(child: Text(trf('Logros ({x}/{y})', {'x': l.conseguidos, 'y': l.total}),
                 style: Theme.of(context).textTheme.titleMedium)),
-            TextButton(onPressed: () => context.push('/logros/$miembroId'), child: const Tx('Ver todos')),
+            TextButton(onPressed: () => context.push('/logros/$ver'), child: const Tx('Ver todos')),
           ]),
           const SizedBox(height: 6),
           if (recientes.isEmpty)
@@ -98,7 +150,7 @@ class FichaScreen extends ConsumerWidget {
                     avatar: Text(x.emoji),
                     label: Text('${x.nombre} ${x.medalla}'),
                     visualDensity: VisualDensity.compact,
-                    onPressed: () => context.push('/logros/$miembroId'),
+                    onPressed: () => context.push('/logros/$ver'),
                   ),
                 ),
             ]),
@@ -106,7 +158,7 @@ class FichaScreen extends ConsumerWidget {
       }(),
       // Palmarés del jugador
       ...() {
-        final premios = ref.watch(premiosMiembroProvider(miembroId)).valueOrNull ?? const <Premio>[];
+        final premios = ref.watch(premiosMiembroProvider(ver)).valueOrNull ?? const <Premio>[];
         if (premios.isEmpty) return const <Widget>[];
         return <Widget>[
           const SizedBox(height: 16),
@@ -124,7 +176,7 @@ class FichaScreen extends ConsumerWidget {
       }(),
       // Bajas (lesiones, viajes…)
       ...() {
-        final bajas = ref.watch(ausenciasMiembroProvider(miembroId)).valueOrNull ?? const <Ausencia>[];
+        final bajas = ref.watch(ausenciasMiembroProvider(ver)).valueOrNull ?? const <Ausencia>[];
         if (bajas.isEmpty) return const <Widget>[];
         return <Widget>[
           const SizedBox(height: 16),
@@ -140,8 +192,13 @@ class FichaScreen extends ConsumerWidget {
             ),
         ];
       }(),
-      ...ref.watch(statsJugadorProvider(miembroId)).maybeWhen(
-            data: (e) => [const SizedBox(height: 16), _Extra(e, miembros: ref.watch(miembrosPorIdProvider(mi.liga.id)))],
+      ...ref.watch(statsJugadorProvider(ver)).maybeWhen(
+            data: (e) => [const SizedBox(height: 16), _Extra(e, miembros: ref.watch(miembrosPorIdProvider(ligaVer)))],
+            orElse: () => const <Widget>[],
+          ),
+      // 0060: rivalidades
+      ...ref.watch(caraACaraProvider(ver)).maybeWhen(
+            data: (l) => l.isEmpty ? const <Widget>[] : [const SizedBox(height: 16), _CaraACara(l, nombre: miembro?.nombre)],
             orElse: () => const <Widget>[],
           ),
       ...historial.maybeWhen(
@@ -182,6 +239,66 @@ class FichaScreen extends ConsumerWidget {
 
     if (!conAppBar) return cuerpo;
     return Scaffold(appBar: AppBar(title: Text(miembro?.nombre ?? 'Jugador')), body: cuerpo);
+  }
+}
+
+/// Balance contra cada compañero («contra Pepe has ganado 7 de 10») y partidos juntos.
+class _CaraACara extends StatefulWidget {
+  const _CaraACara(this.filas, {this.nombre});
+  final List<Map<String, dynamic>> filas;
+  final String? nombre;
+
+  @override
+  State<_CaraACara> createState() => _CaraACaraState();
+}
+
+class _CaraACaraState extends State<_CaraACara> {
+  bool _todos = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final contra = widget.filas.where((x) => ((x['contra'] as num?) ?? 0) > 0).toList()
+      ..sort((a, b) => (b['contra'] as num).compareTo(a['contra'] as num));
+    final lista = _todos ? contra : contra.take(5).toList();
+    if (contra.isEmpty) return const SizedBox.shrink();
+    Widget cifra(Object n, String l, Color c) => Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: Text('$n$l', style: t.labelLarge?.copyWith(color: c, fontWeight: FontWeight.w700)),
+        );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Tx('Cara a cara', style: t.titleMedium),
+      Text(trf('Balance de {n} contra cada uno (V-E-D) y partidos en el mismo equipo', {'n': widget.nombre ?? tr('jugador')}),
+          style: t.bodySmall),
+      const SizedBox(height: 6),
+      for (final x in lista)
+        ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: CircleAvatar(
+            radius: 16,
+            backgroundColor: switch (((x['v'] as num) - (x['d'] as num)).sign) {
+              1 => Colors.green.shade600,
+              -1 => cs.error,
+              _ => cs.outline,
+            },
+            child: Text('${x['contra']}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+          ),
+          title: Text('${x['nombre']}'),
+          subtitle: Text(trf('Juntos: {n} partidos ({v} ganados)', {'n': x['juntos'], 'v': x['juntos_v']})),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            cifra(x['v'], 'V', Colors.green.shade700),
+            cifra(x['e'], 'E', cs.outline),
+            cifra(x['d'], 'D', cs.error),
+          ]),
+        ),
+      if (contra.length > 5)
+        TextButton(
+          onPressed: () => setState(() => _todos = !_todos),
+          child: Tx(_todos ? 'Ver menos' : 'Ver todos'),
+        ),
+    ]);
   }
 }
 
