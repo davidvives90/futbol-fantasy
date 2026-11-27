@@ -283,6 +283,7 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
         ),
         grupo(tr('Liga')),
         opcion(Icons.edit_outlined, 'Datos de la liga', 'Nombre, campo, plazas, equipos y precio', '/liga/editar'),
+        opcion(Icons.palette_outlined, 'Color y logotipo', 'La imagen de tu liga dentro de la app', '/liga/marca'),
         opcion(Icons.checkroom, 'Equipaciones', 'Qué lleva cada equipo (p. ej. blanco y color)', '/liga/equipaciones'),
         opcion(Icons.menu_book_outlined, 'Normas y guía', 'Lo acordado en la liga y cómo funciona todo', '/guia'),
         grupo(tr('Partidos')),

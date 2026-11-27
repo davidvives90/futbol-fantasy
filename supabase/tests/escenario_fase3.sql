@@ -59,7 +59,7 @@ select apostar(:'p', 'sencilla', '[{"mercado":"1x2","seleccion":"2"}]', 15) ->> 
 select cancelar_apuesta(:'ap4');
 select apostar(:'p', 'sencilla', '[{"mercado":"1x2","seleccion":"2"}]', 15, true);
 select t_como(1005);
-select t_check(jsonb_array_length(porra_partido(:'p') -> 'todas') = 0, 'antes del partido no se ven los boletos de otros');
+select t_check(jsonb_array_length(porra_partido(:'p') -> 'todas') >= 1, '0061: los boletos son públicos también antes del partido');
 
 -- Juega: gana el equipo 1 (2-1), marca 1001 (y 1005 para el equipo 2)
 select t_como(1001);

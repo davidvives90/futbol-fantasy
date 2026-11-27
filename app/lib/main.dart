@@ -190,8 +190,8 @@ class _FutbolFantasyAppState extends ConsumerState<FutbolFantasyApp> {
           ),
         );
       },
-      theme: AppTheme.claro(),
-      darkTheme: AppTheme.oscuro(),
+      theme: AppTheme.claro(ref.watch(ligaActualProvider)?.liga.colorPropio),
+      darkTheme: AppTheme.oscuro(ref.watch(ligaActualProvider)?.liga.colorPropio),
       themeMode: ref.watch(temaProvider),
       locale: Locale(ref.watch(idiomaProvider)),
       supportedLocales: [for (final c in idiomas.keys) Locale(c)],

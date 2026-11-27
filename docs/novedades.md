@@ -14,6 +14,14 @@ Gracias por probar Pachanga Fantasy. Instala el APK de abajo (Android) o entra e
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Pagos más sencillos: en Inicio solo una línea «Tienes pagos pendientes». En Pagos, un único botón «Pagar» con los datos de Bizum y «Ya lo he pagado». Los jugadores ya no ven pestañas; el admin ve Mis pagos, Cobros y Facturas.
+- Porra con bote, como la quiniela (con la porra en dinero del Fantasy): entrada fija, pronostica el resultado; el pleno se lleva el 70 % y el 1X2 reparte el 30 %. Lo que nadie acierta se acumula. La liga pone un fondo inicial.
+- Las apuestas y el bote son públicos (se avisa) y hay un resumen de aciertos de cada jugador.
+- Ficha del jugador con «Todas sus ligas»: los logros salen agrupados (cada logro una vez, con las ligas donde lo tiene).
+- Fantasy: el presupuesto siempre da para la alineación completa y sobra un 10 %. En las ligas que se quedaron cortas, cada mánager ha recibido la diferencia.
+- Ligas con color y logotipo propios (Ajustes de la liga › Color y logotipo): la app se tiñe del color de la liga activa.
+
+#### Versión anterior
 - Tarjetas «Cómo funciona» en cada pantalla (botón ?): Inicio, convocatoria, después del partido, clasificación, Fantasy (5 tarjetas), porra y pagos. La primera vez sale un aviso pequeño; cada tarjeta se comparte como imagen en WhatsApp. Todas en Perfil › Cómo funciona.
 - Inicio: tu próximo partido en grande, con cuánto falta y botón para compartirlo en el grupo.
 - Ficha del jugador: «Todas sus ligas» o una en concreto, y nuevo «Cara a cara» con el balance contra cada compañero.

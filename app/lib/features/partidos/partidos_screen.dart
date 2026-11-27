@@ -20,6 +20,7 @@ import '../shell/home_shell.dart';
 import 'agenda.dart';
 import 'selector_asistencia.dart';
 import '../../core/guias.dart';
+import '../liga/marca_liga_screen.dart';
 
 /// Partidos en post-partido en los que jugué y aún no he enviado nada.
 final _votacionesPendientesProvider =
@@ -312,20 +313,30 @@ class _Pendientes extends ConsumerWidget {
       for (final l in ligas)
         ..._tareasDe(context, ref, l, etiqueta: varias ? l.liga.nombre : null, colorLiga: colorDeLiga(todas, l.liga.id)),
     ]..sort((a, b) => a.prioridad.compareTo(b.prioridad));
-    if (tareas.isEmpty) return const SizedBox.shrink();
+    // 0061: los pagos, en una sola línea discreta para todas las ligas: «Tienes pagos pendientes»
+    final deudas = <(MiLiga, double)>[
+      for (final l in ligas)
+        if (((ref.watch(saldosProvider(l.liga.id)).valueOrNull ?? const [])
+                    .where((s) => s.miembroId == l.yo.id)
+                    .firstOrNull
+                    ?.saldo ??
+                0) <
+            -0.005)
+          (l, -(ref.watch(saldosProvider(l.liga.id)).valueOrNull!.firstWhere((s) => s.miembroId == l.yo.id).saldo)),
+    ];
+    if (tareas.isEmpty && deudas.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _AccionPrincipal(tareas.first),
+      if (tareas.isNotEmpty) _AccionPrincipal(tareas.first),
       if (tareas.length > 1) ...[
         const _Cabecera('También pendiente'),
         ...tareas.skip(1),
       ],
+      if (deudas.isNotEmpty) _LineaPagos(deudas),
     ]);
   }
 
   List<_Tarea> _tareasDe(BuildContext context, WidgetRef ref, MiLiga mi, {String? etiqueta, required Color colorLiga}) {
     final votar = ref.watch(_votacionesPendientesProvider((ligaId: mi.liga.id, yo: mi.yo.id))).valueOrNull ?? const [];
-    final saldos = ref.watch(saldosProvider(mi.liga.id)).valueOrNull ?? const [];
-    final miSaldo = saldos.where((s) => s.miembroId == mi.yo.id).firstOrNull?.saldo ?? 0;
     final solicitudes = mi.soyAdmin
         ? (ref.watch(miembrosProvider(mi.liga.id)).valueOrNull ?? const [])
             .where((m) => m.estado == EstadoMiembro.solicitud)
@@ -373,16 +384,6 @@ class _Pendientes extends ConsumerWidget {
           boton: 'Votar',
           onTap: ir(() => context.push('/partidos/${p.id}')),
         ),
-      if (miSaldo < -0.005)
-        t(
-          prioridad: 1,
-          icono: Icons.account_balance_wallet_outlined,
-          color: cs.error,
-          titulo: trf('Debes {x}', {'x': euros(-miSaldo)}),
-          subtitulo: 'Págalo y pulsa «Ya he pagado» en Caja',
-          boton: 'Ir a Caja',
-          onTap: ir(() => context.go('/caja')),
-        ),
       for (final v in sinVotar)
         t(
           prioridad: 2,
@@ -422,6 +423,61 @@ class _Pendientes extends ConsumerWidget {
           },
         ),
     ];
+  }
+}
+
+/// «Tienes pagos pendientes»: una sola línea, sin agobiar. Lleva a Pagos de la liga (si hay varias, pregunta cuál).
+class _LineaPagos extends ConsumerWidget {
+  const _LineaPagos(this.deudas);
+  final List<(MiLiga, double)> deudas;
+
+  Future<void> _ir(BuildContext context, WidgetRef ref, MiLiga l) async {
+    if (ref.read(ligaActivaIdProvider) != l.liga.id) await ref.read(ligaActivaIdProvider.notifier).elegir(l.liga.id);
+    if (context.mounted) context.go('/caja');
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final total = deudas.fold<double>(0, (a, d) => a + d.$2);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+      child: Material(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () async {
+            if (deudas.length == 1) return _ir(context, ref, deudas.first.$1);
+            final l = await showModalBottomSheet<MiLiga>(
+              context: context,
+              builder: (c) => SafeArea(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  for (final d in deudas)
+                    ListTile(
+                      leading: const Icon(Icons.account_balance_wallet_outlined),
+                      title: Text(d.$1.liga.nombre),
+                      trailing: Text(euros(d.$2)),
+                      onTap: () => Navigator.pop(c, d.$1),
+                    ),
+                ]),
+              ),
+            );
+            if (l != null && context.mounted) await _ir(context, ref, l);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(children: [
+              Icon(Icons.account_balance_wallet_outlined, size: 20, color: cs.error),
+              const SizedBox(width: 10),
+              Expanded(child: Tx('Tienes pagos pendientes', style: Theme.of(context).textTheme.bodyLarge)),
+              Text(euros(total), style: Theme.of(context).textTheme.titleSmall?.copyWith(color: cs.error)),
+              const Icon(Icons.chevron_right, size: 20),
+            ]),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -583,7 +639,9 @@ class _SelectorLigaInicio extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ChoiceChip(
-              avatar: CircleAvatar(radius: 6, backgroundColor: colorDeLiga(ligas, l.liga.id)),
+              avatar: l.liga.logoUrl != null
+                  ? LogoLiga(l.liga, tamano: 20)
+                  : CircleAvatar(radius: 6, backgroundColor: colorDeLiga(ligas, l.liga.id)),
               label: Text(l.liga.nombre),
               selected: filtro == l.liga.id,
               onSelected: (_) => elegir(l.liga.id),

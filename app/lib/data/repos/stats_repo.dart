@@ -47,6 +47,10 @@ class StatsRepo {
   }
 
   /// 0056: los 150 logros con progreso, en el idioma de la app.
+  /// 0061: logros de todas las ligas del jugador (las que compartes con él), agrupados.
+  static Future<Logros> logrosPerfil(String miembroId) async => Logros(Map<String, dynamic>.from(
+      await sb.rpc('logros_perfil', params: {'p_miembro': miembroId, 'p_idioma': idiomaActual}) as Map));
+
   static Future<Logros> logrosDe(String miembroId) async => Logros(Map<String, dynamic>.from(
       await sb.rpc('logros_de', params: {'p_miembro': miembroId, 'p_idioma': idiomaActual}) as Map));
 
@@ -109,8 +113,11 @@ class Logro {
         descripcion = m['descripcion'] as String,
         valor = toDouble(m['valor']) ?? 0,
         conseguidoEn = m['conseguido_en'] == null ? null : DateTime.parse(m['conseguido_en'] as String),
-        pct = toInt(m['pct']);
+        pct = toInt(m['pct']),
+        enLigas = [for (final x in (m['en_ligas'] as List? ?? const [])) '$x'];
   final String codigo, familia, categoria, emoji, nombre, nivelNombre, descripcion;
+  /// 0061: con «todas sus ligas», en qué ligas lo consiguió.
+  final List<String> enLigas;
   final int nivel, pct;
   final double umbral, valor;
   final bool oculto;

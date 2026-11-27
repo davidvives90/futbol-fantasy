@@ -76,3 +76,4 @@ aplicar tests/escenario_fase3.sql
 PGOPTIONS="" aplicar tests/escenario_fase4.sql
 PGOPTIONS="" aplicar tests/escenario_mejoras_nov.sql
 PGOPTIONS="" aplicar tests/escenario_atractivo.sql
+PGOPTIONS="" aplicar tests/escenario_bote.sql

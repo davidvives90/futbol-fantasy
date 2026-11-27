@@ -86,7 +86,9 @@ const _coloresLiga = [Color(0xFF1E88E5), Color(0xFF8E24AA), Color(0xFFF4511E), C
 /// Color de una liga (el mismo en la agenda y en lo pendiente).
 Color colorDeLiga(List<MiLiga> ligas, String ligaId) {
   final i = ligas.indexWhere((l) => l.liga.id == ligaId);
-  return _coloresLiga[(i < 0 ? 0 : i) % _coloresLiga.length];
+  // 0061: si la liga tiene color propio, ese
+  final propio = i < 0 ? null : ligas[i].liga.colorPropio;
+  return propio ?? _coloresLiga[(i < 0 ? 0 : i) % _coloresLiga.length];
 }
 
 /// Inicio: mi agenda de TODAS mis ligas. Un calendario de 2 semanas con un punto por partido (de color según

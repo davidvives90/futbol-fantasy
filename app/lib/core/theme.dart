@@ -152,8 +152,22 @@ class AppTheme {
     surfaceTint: Colors.transparent,
   );
 
-  static ThemeData claro() => _construir(_esquemaClaro, AppColores.claro, tarjeta);
-  static ThemeData oscuro() => _construir(_esquemaOscuro, AppColores.oscuro, tarjetaOscura);
+  /// [semilla] (0061): color propio de la liga activa; cambia los colores principales manteniendo el resto.
+  static ThemeData claro([Color? semilla]) => _construir(_conSemilla(_esquemaClaro, semilla), AppColores.claro, tarjeta);
+  static ThemeData oscuro([Color? semilla]) => _construir(_conSemilla(_esquemaOscuro, semilla), AppColores.oscuro, tarjetaOscura);
+
+  static ColorScheme _conSemilla(ColorScheme base, Color? semilla) {
+    if (semilla == null) return base;
+    final g = ColorScheme.fromSeed(seedColor: semilla, brightness: base.brightness, dynamicSchemeVariant: DynamicSchemeVariant.fidelity);
+    return base.copyWith(
+      primary: g.primary,
+      onPrimary: g.onPrimary,
+      primaryContainer: g.primaryContainer,
+      onPrimaryContainer: g.onPrimaryContainer,
+      inversePrimary: g.inversePrimary,
+      surfaceTint: g.primary,
+    );
+  }
 
   /// Mismo sistema de componentes para claro y oscuro; solo cambian los colores.
   static ThemeData _construir(ColorScheme cs, AppColores colores, Color tarjeta) {

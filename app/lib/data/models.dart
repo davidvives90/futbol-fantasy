@@ -175,6 +175,8 @@ class Liga {
     this.modalidad = 'f7',
     this.recordatorioDeudas = 'mensual',
     this.bizumTelefono,
+    this.color,
+    this.logoUrl,
     this.modoEquipos = 'admin',
     this.capitanesPorEquipo = 1,
     this.nivel = 'avanzado',
@@ -217,6 +219,17 @@ class Liga {
 
   /// 0036: teléfono al que se hace Bizum (lo pone el admin).
   final String? bizumTelefono;
+
+  /// 0061: color propio (#RRGGBB) y logotipo de la liga.
+  final String? color, logoUrl;
+
+  /// El color propio como Color de Flutter (o null).
+  Color? get colorPropio {
+    final c = color;
+    if (c == null || c.length != 7) return null;
+    final v = int.tryParse(c.substring(1), radix: 16);
+    return v == null ? null : Color(0xFF000000 | v);
+  }
 
   /// 0032: post-partido avanzado (destacados, más datos, valoración por aspectos, «no le vi»). Por defecto, simple.
   final bool valoracionAvanzada;
@@ -362,6 +375,8 @@ class Liga {
       modalidad: (m['modalidad'] ?? 'f7') as String,
       recordatorioDeudas: (m['recordatorio_deudas'] ?? 'mensual') as String,
       bizumTelefono: m['bizum_telefono'] as String?,
+      color: m['color'] as String?,
+      logoUrl: m['logo_url'] as String?,
       modoEquipos: (m['modo_equipos'] ?? 'admin') as String,
       capitanesPorEquipo: toInt(m['capitanes_por_equipo'], 1),
       nivel: (m['nivel'] ?? 'avanzado') as String,

@@ -64,7 +64,10 @@ class EstadoPorra {
     this.saldo,
     this.maxGanancia,
     this.motivo,
+    this.bote,
   });
+  /// 0061: bote tipo quiniela (solo con la porra en dinero del Fantasy).
+  final Map<String, dynamic>? bote;
   /// 0059: por qué no se puede jugar ('menores' | 'desactivada'), si es el caso.
   final String? motivo;
   final bool abierta;
@@ -87,6 +90,7 @@ class EstadoPorra {
         saldo: toDouble(m['saldo']),
         maxGanancia: toDouble(m['max_ganancia']),
         motivo: m['motivo'] as String?,
+        bote: m['bote'] == null ? null : Map<String, dynamic>.from(m['bote'] as Map),
         cuotas: [for (final x in (m['cuotas'] as List? ?? const [])) Pronostico.fromMap(Map<String, dynamic>.from(x as Map))],
         mias: [for (final x in (m['mias'] as List? ?? const [])) Boleto.fromMap(Map<String, dynamic>.from(x as Map))],
         todas: [for (final x in (m['todas'] as List? ?? const [])) Boleto.fromMap(Map<String, dynamic>.from(x as Map))],
@@ -125,6 +129,10 @@ class PorraRepo {
         'p_importe': importe,
         'p_seguro': seguro,
       });
+
+  /// 0061: entra en el bote con un resultado (o lo cambia sin volver a pagar).
+  static Future<void> jugarQuiniela(String partidoId, int goles1, int goles2) =>
+      sb.rpc('jugar_quiniela', params: {'p_partido': partidoId, 'p_goles1': goles1, 'p_goles2': goles2});
 
   static Future<void> cancelar(String apuestaId) => sb.rpc('cancelar_apuesta', params: {'p_apuesta': apuestaId});
 

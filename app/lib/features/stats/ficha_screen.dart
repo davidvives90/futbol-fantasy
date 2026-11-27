@@ -128,7 +128,10 @@ class FichaScreen extends ConsumerWidget {
         ),
       // Logros (0056: 150, con pantalla propia)
       ...() {
-        final l = ref.watch(logrosProvider(ver)).valueOrNull;
+        // 0061: con «Todas sus ligas», agrupados (cada logro una vez, con las ligas donde lo tiene)
+        final todasLigas = ligaSel == null && ligasJugador.length > 1;
+        final l = ref.watch(todasLigas ? logrosPerfilProvider(miembroId) : logrosProvider(ver)).valueOrNull;
+        final rutaLogros = todasLigas ? '/logros/$miembroId?todas=1' : '/logros/$ver';
         if (l == null) return const <Widget>[];
         final recientes = l.recientes.take(6).toList();
         return <Widget>[
@@ -136,7 +139,7 @@ class FichaScreen extends ConsumerWidget {
           Row(children: [
             Expanded(child: Text(trf('Logros ({x}/{y})', {'x': l.conseguidos, 'y': l.total}),
                 style: Theme.of(context).textTheme.titleMedium)),
-            TextButton(onPressed: () => context.push('/logros/$ver'), child: const Tx('Ver todos')),
+            TextButton(onPressed: () => context.push(rutaLogros), child: const Tx('Ver todos')),
           ]),
           const SizedBox(height: 6),
           if (recientes.isEmpty)
@@ -145,12 +148,12 @@ class FichaScreen extends ConsumerWidget {
             Wrap(spacing: 6, runSpacing: 6, children: [
               for (final x in recientes)
                 Tooltip(
-                  message: trf('Conseguido el {x}', {'x': fechaCorta(x.conseguidoEn!)}),
+                  message: [trf('Conseguido el {x}', {'x': fechaCorta(x.conseguidoEn!)}), if (todasLigas) ...x.enLigas].join(' · '),
                   child: ActionChip(
                     avatar: Text(x.emoji),
                     label: Text('${x.nombre} ${x.medalla}'),
                     visualDensity: VisualDensity.compact,
-                    onPressed: () => context.push('/logros/$ver'),
+                    onPressed: () => context.push(rutaLogros),
                   ),
                 ),
             ]),

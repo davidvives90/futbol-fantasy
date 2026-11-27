@@ -47,6 +47,7 @@ import '../features/onboarding/asistente_liga_screen.dart';
 import 'supabase.dart';
 import '../features/privacidad/consentimiento.dart';
 import '../features/liga/importar_historial_screen.dart';
+import '../features/liga/marca_liga_screen.dart';
 
 /// Notifica a go_router cada vez que cambia la sesión.
 class _AuthRefresh extends ChangeNotifier {
@@ -85,6 +86,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/liga/editar', builder: (_, __) => const CrearLigaScreen(editar: true)),
       GoRoute(path: '/liga/ajustes', builder: (_, __) => const AjustesLigaScreen()),
       GoRoute(path: '/liga/equipaciones', builder: (_, __) => const EquipacionesScreen()),
+      GoRoute(path: '/liga/marca', builder: (_, __) => const MarcaLigaScreen()),
       GoRoute(path: '/guia', builder: (_, __) => const GuiaScreen()),
       GoRoute(path: '/privacidad', builder: (_, __) => const PrivacidadScreen(onEliminarCuenta: eliminarCuenta)),
       GoRoute(path: '/liga/historial', builder: (_, __) => const ImportarHistorialScreen()),
@@ -110,7 +112,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/tienda', builder: (_, __) => const TiendaScreen()),
       // Ficha fuera de las pestañas: se abre desde pantallas que están encima (Perfil, avisos…)
       GoRoute(path: '/ficha/:miembroId', builder: (_, state) => FichaScreen(miembroId: state.pathParameters['miembroId']!)),
-      GoRoute(path: '/logros/:miembroId', builder: (_, state) => LogrosScreen(miembroId: state.pathParameters['miembroId']!)),
+      GoRoute(
+          path: '/logros/:miembroId',
+          builder: (_, state) => LogrosScreen(
+              miembroId: state.pathParameters['miembroId']!, todas: state.uri.queryParameters['todas'] == '1')),
       GoRoute(path: '/ayuda', builder: (_, __) => const AyudaScreen()),
       GoRoute(
           path: '/contrasena',

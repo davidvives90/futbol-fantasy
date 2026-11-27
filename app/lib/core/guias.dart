@@ -99,6 +99,10 @@ const guias = <String, Guia>{
   'porra': Guia('porra', 'Porra', Icons.casino_outlined, [
     TarjetaGuia(Icons.casino_rounded, _naranja, 'La porra',
         'Antes del partido, pronostica quién gana, el resultado, el MVP o si alguien marca. Se juega con el dinero o los puntos del Fantasy, nunca con dinero real.'),
+    TarjetaGuia(Icons.savings_rounded, _oro, 'El bote',
+        'Como la quiniela: pagas una entrada y pronosticas el resultado. El pleno se lleva el 70 % y el 1X2 reparte el 30 %. Si nadie acierta, se acumula. La liga pone el primer fondo.'),
+    TarjetaGuia(Icons.visibility_rounded, _turquesa, 'Todo a la vista',
+        'Las apuestas y el bote son públicos: todos ven lo que juega cada uno y el resumen de aciertos de la liga.'),
     TarjetaGuia(Icons.calculate_rounded, _azul, 'Cuotas',
         'Las cuotas salen de las estadísticas de cada equipo: lo fácil paga poco y lo difícil, mucho. Se cierra cuando empieza el partido.'),
     TarjetaGuia(Icons.health_and_safety_rounded, _verde, 'Con cabeza',

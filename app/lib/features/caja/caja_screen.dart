@@ -29,18 +29,21 @@ class CajaScreen extends ConsumerWidget {
     final mi = ref.watch(ligaActualProvider);
     if (mi == null) return const Scaffold(body: Cargando());
 
-    final tabs = [
-      const Tab(text: 'Mi saldo'),
-      if (mi.soyAdmin) const Tab(text: 'Deudores'),
-      const Tab(text: 'Facturas'),
-    ];
+    // 0061: más sencillo. El jugador ve solo lo suyo (sin pestañas); el admin, además, Cobros y Facturas.
+    if (!mi.soyAdmin) {
+      return Scaffold(
+        appBar: LigaAppBar(actions: const [BotonGuia('caja')]),
+        body: _MiSaldo(mi: mi),
+      );
+    }
+    final tabs = [Tab(text: tr('Mis pagos')), Tab(text: tr('Cobros')), Tab(text: tr('Facturas'))];
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
         appBar: LigaAppBar(actions: const [BotonGuia('caja')], bottom: TabBar(tabs: tabs)),
         body: TabBarView(children: [
           _MiSaldo(mi: mi),
-          if (mi.soyAdmin) _Deudores(mi: mi),
+          _Deudores(mi: mi),
           _Facturas(mi: mi),
         ]),
       ),
@@ -58,9 +61,9 @@ class _Pagar extends ConsumerWidget {
   final MiLiga mi;
   final double deuda;
 
-  Future<void> _yaHePagado(BuildContext context, WidgetRef ref) async {
+  Future<void> _yaHePagado(BuildContext context, WidgetRef ref, {String metodoInicial = 'bizum'}) async {
     final importe = TextEditingController(text: deuda.toStringAsFixed(2));
-    var metodo = 'bizum';
+    var metodo = metodoInicial;
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => StatefulBuilder(
@@ -95,27 +98,40 @@ class _Pagar extends ConsumerWidget {
     if (hecho) ref.invalidate(avisosPagoProvider(mi.liga.id));
   }
 
-  Future<void> _bizum(BuildContext context) async {
-    final tel = mi.liga.bizumTelefono!;
-    final texto = '${deuda.toStringAsFixed(2).replaceAll('.', ',')} € · Fútbol ${mi.liga.nombre} · ${mi.yo.nombre}';
-    await Clipboard.setData(ClipboardData(text: tel.replaceAll(' ', '')));
-    if (!context.mounted) return;
-    await showDialog<void>(
+  Future<void> _hojaPagar(BuildContext context, WidgetRef ref) async {
+    final tel = mi.liga.bizumTelefono;
+    final importe = '${deuda.toStringAsFixed(2).replaceAll('.', ',')} €';
+    final concepto = '${mi.liga.nombre} · ${mi.yo.nombre}';
+    final r = await showModalBottomSheet<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: const Tx('Pagar con Bizum'),
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Tx('Abre la app de tu banco › Bizum › Enviar dinero, y usa estos datos:'),
-          const SizedBox(height: 12),
-          _DatoCopiable('Teléfono', tel),
-          _DatoCopiable('Importe', '${deuda.toStringAsFixed(2).replaceAll('.', ',')} €'),
-          _DatoCopiable('Concepto', texto),
-          const SizedBox(height: 8),
-          const Tx('Cuando lo hayas enviado, pulsa «Ya he pagado».'),
-        ]),
-        actions: [FilledButton(onPressed: () => Navigator.pop(c), child: const Tx('Entendido'))],
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(trf('Pagar {x}', {'x': importe}), style: Theme.of(c).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            if (tel != null) ...[
+              const Tx('1. Envía un Bizum con estos datos (toca para copiar):'),
+              _DatoCopiable('Teléfono', tel),
+              _DatoCopiable('Importe', importe),
+              _DatoCopiable('Concepto', concepto),
+              const SizedBox(height: 4),
+              const Tx('2. Cuando lo hayas enviado, avisa:'),
+            ] else
+              const Tx('Paga al administrador como soléis hacerlo (efectivo, Bizum, transferencia) y avisa aquí:'),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(c, true),
+              icon: const Icon(Icons.check),
+              label: const Tx('Ya lo he pagado'),
+            ),
+          ]),
+        ),
       ),
     );
+    if (r == true && context.mounted) await _yaHePagado(context, ref, metodoInicial: tel != null ? 'bizum' : 'efectivo');
   }
 
   @override
@@ -124,36 +140,24 @@ class _Pagar extends ConsumerWidget {
         .where((a) => a['miembro_id'] == mi.yo.id)
         .firstOrNull;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(children: [
-        if (pendiente != null)
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.hourglass_top),
-              title: Text('Has avisado de un pago de ${euros((pendiente['importe'] as num).toDouble())}'),
-              subtitle: const Tx('Pendiente de que lo confirme el administrador'),
-            ),
-          ),
-        Row(children: [
-          if (mi.liga.bizumTelefono != null) ...[
-            Expanded(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: pendiente != null
+          ? Card(
+              child: ListTile(
+                leading: const Icon(Icons.hourglass_top),
+                title: Text(trf('Has avisado de un pago de {x}', {'x': euros((pendiente['importe'] as num).toDouble())})),
+                subtitle: const Tx('Pendiente de que lo confirme el administrador'),
+              ),
+            )
+          : SizedBox(
+              width: double.infinity,
+              height: 52,
               child: FilledButton.icon(
-                onPressed: () => _bizum(context),
-                icon: const Icon(Icons.phone_iphone),
-                label: const Tx('Pagar con Bizum'),
+                onPressed: () => _hojaPagar(context, ref),
+                icon: const Icon(Icons.payments_outlined),
+                label: Text(trf('Pagar {x}', {'x': euros(deuda)}), style: const TextStyle(fontSize: 16)),
               ),
             ),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _yaHePagado(context, ref),
-              icon: const Icon(Icons.check),
-              label: const Tx('Ya he pagado'),
-            ),
-          ),
-        ]),
-      ]),
     );
   }
 }
@@ -166,14 +170,14 @@ class _DatoCopiable extends StatelessWidget {
   Widget build(BuildContext context) => ListTile(
         dense: true,
         contentPadding: EdgeInsets.zero,
-        title: Text(etiqueta),
+        title: Text(tr(etiqueta)),
         subtitle: Text(valor, style: Theme.of(context).textTheme.titleMedium),
         trailing: IconButton(
           tooltip: tr('Copiar'),
           icon: const Icon(Icons.copy, size: 20),
           onPressed: () {
             Clipboard.setData(ClipboardData(text: valor));
-            mostrarOk(context, '$etiqueta copiado');
+            mostrarOk(context, trf('{x} copiado', {'x': tr(etiqueta)}));
           },
         ),
       );
@@ -199,10 +203,13 @@ class _MiSaldo extends ConsumerWidget {
       child: ListView(children: [
         const SizedBox(height: 24),
         Center(child: Text(euros(saldo), style: AppTheme.numero(context, size: 40, color: color))),
-        Center(child: Text(tr(saldo < 0 ? 'Debes a la caja' : (saldo > 0 ? 'A tu favor' : 'Estás al día')))),
+        Center(child: Text(tr(saldo < 0 ? 'Tienes pagos pendientes' : (saldo > 0 ? 'A tu favor' : 'Estás al día')))),
         if (saldo < -0.005) _Pagar(mi: mi, deuda: -saldo),
         const SizedBox(height: 24),
-        const Divider(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Tx('Movimientos', style: Theme.of(context).textTheme.titleMedium),
+        ),
         ...movs.when(
           loading: () => [const Padding(padding: EdgeInsets.all(24), child: Cargando())],
           error: (e, _) => [ErrorVista(e)],

@@ -118,6 +118,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 120), children: [
           const AvisoGuia('porra'),
           _cabecera(e),
+          if (e.bote != null) _Bote(e: e, partidoId: widget.partido.id, onCambio: () => ref.invalidate(porraProvider(widget.partido.id))),
           if (e.abierta) ..._mercados(e, miembros),
           if (e.abierta && _boleto.isNotEmpty) _tarjetaBoleto(e, miembros),
           if (e.mias.isNotEmpty) ...[
@@ -132,6 +133,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
           if (e.todas.isNotEmpty) ...[
             const SizedBox(height: 16),
             Tx('Boletos de la liga', style: Theme.of(context).textTheme.titleMedium),
+            const _AvisoPublico(),
             for (final b in e.todas)
               _TarjetaBoletoHecho(b: b, e: e, nombre: (p) => _nombreSel(p, miembros), fmt: (v) => _fmt(e, v),
                   autor: miembros[b.miembroId]?.nombre),
@@ -428,20 +430,167 @@ class _RankingPorra extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Tx('🎯 Mejor pronosticador', style: t.titleMedium),
+          Tx('🎯 Resumen de aciertos', style: t.titleMedium),
+          Tx('Boletos y bote de cada jugador. Todo es público en la liga.', style: t.bodySmall),
           for (final (i, x) in r.take(10).indexed)
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Text('${i + 1}.', style: t.titleSmall),
-              title: Text(miembros[x['miembro_id']]?.nombre ?? '…'),
-              subtitle: Text(trf('{a} de {b} boletos ganados', {'a': x['aciertos'], 'b': x['boletos']})),
+              title: Text(miembros[x['miembro_id']]?.nombre ?? (x['nombre'] as String?) ?? '…'),
+              subtitle: Text([
+                if (((x['boletos'] as num?) ?? 0) > 0) trf('{a} de {b} boletos ganados', {'a': x['aciertos'], 'b': x['boletos']}),
+                if (((x['quinielas'] as num?) ?? 0) > 0)
+                  trf('bote: {p} plenos y {s} 1X2 en {q}', {'p': x['plenos'], 's': x['signos'], 'q': x['quinielas']}),
+              ].join(' · ')),
               trailing: Text(
-                  '${(x['beneficio'] as num) >= 0 ? '+' : ''}${(x['beneficio'] as num).toStringAsFixed(1).replaceAll('.', ',')} $unidad',
+                  '${((x['beneficio_total'] ?? x['beneficio']) as num) >= 0 ? '+' : ''}${((x['beneficio_total'] ?? x['beneficio']) as num).toStringAsFixed(1).replaceAll('.', ',')} $unidad',
                   style: AppTheme.tabular(t.titleSmall)),
             ),
         ]),
       ),
+    );
+  }
+}
+
+
+/// 0061: las apuestas son públicas.
+class _AvisoPublico extends StatelessWidget {
+  const _AvisoPublico();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 2, bottom: 6),
+        child: Row(children: [
+          Icon(Icons.visibility_outlined, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Tx('Las apuestas y el bote son públicos: todos los de la liga ven lo que juega cada uno.',
+                style: Theme.of(context).textTheme.bodySmall),
+          ),
+        ]),
+      );
+}
+
+/// 0061: bote del partido, como la quiniela. Entrada fija, pronóstico del resultado; pleno 70 %, 1X2 30 %, si no, se acumula.
+class _Bote extends StatelessWidget {
+  const _Bote({required this.e, required this.partidoId, required this.onCambio});
+  final EstadoPorra e;
+  final String partidoId;
+  final VoidCallback onCambio;
+
+  String _m(num v) => '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1).replaceAll('.', ',')} M';
+
+  Future<void> _jugar(BuildContext context, Map<String, dynamic>? mia) async {
+    var g1 = (mia?['goles1'] as num?)?.toInt() ?? 1, g2 = (mia?['goles2'] as num?)?.toInt() ?? 1;
+    final entrada = (e.bote!['entrada'] as num?) ?? 1;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(builder: (c, setD) {
+        Widget marcador(String equipo, int v, void Function(int) cambia) => Column(children: [
+              Text(equipo, style: Theme.of(c).textTheme.titleSmall, textAlign: TextAlign.center),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(onPressed: v > 0 ? () => setD(() => cambia(v - 1)) : null, icon: const Icon(Icons.remove_circle_outline)),
+                SizedBox(width: 36, child: Text('$v', textAlign: TextAlign.center, style: Theme.of(c).textTheme.headlineMedium)),
+                IconButton(onPressed: v < 30 ? () => setD(() => cambia(v + 1)) : null, icon: const Icon(Icons.add_circle_outline)),
+              ]),
+            ]);
+        return AlertDialog(
+          title: const Tx('¿Cómo acabará?'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              Expanded(child: marcador(nombreEquipo(context, 1), g1, (x) => g1 = x)),
+              Expanded(child: marcador(nombreEquipo(context, 2), g2, (x) => g2 = x)),
+            ]),
+            const SizedBox(height: 8),
+            Text(mia == null
+                ? trf('Entrada: {x}. Puedes cambiar el resultado hasta que empiece el partido sin volver a pagar.', {'x': _m(entrada)})
+                : tr('Puedes cambiar el resultado hasta que empiece el partido sin volver a pagar.'),
+                style: Theme.of(c).textTheme.bodySmall),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Tx('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: Tx(mia == null ? 'Jugar' : 'Guardar')),
+          ],
+        );
+      }),
+    );
+    if (ok != true || !context.mounted) return;
+    final hecho = await ejecutar(context, () => PorraRepo.jugarQuiniela(partidoId, g1, g2),
+        ok: mia == null ? tr('¡Estás en el bote!') : tr('Resultado cambiado'));
+    if (hecho) onCambio();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final b = e.bote!;
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final mia = b['mia'] == null ? null : Map<String, dynamic>.from(b['mia'] as Map);
+    final res = b['resultado'] == null ? null : Map<String, dynamic>.from(b['resultado'] as Map);
+    final lista = [for (final x in (b['quinielas'] as List? ?? const [])) Map<String, dynamic>.from(x as Map)];
+    const oro = Color(0xFFF2A229);
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFC8102E), Color(0xFF7A0A1C)])),
+          child: Row(children: [
+            const Text('💰', style: TextStyle(fontSize: 30)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Tx(res == null ? 'Bote del partido' : 'Bote repartido', style: t.labelLarge?.copyWith(color: Colors.white70)),
+                Text(_m(b['total'] as num), style: t.headlineMedium?.copyWith(color: oro, fontWeight: FontWeight.w900)),
+              ]),
+            ),
+            if (e.abierta)
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: oro, foregroundColor: Colors.black),
+                onPressed: () => _jugar(context, mia),
+                child: Text(mia == null
+                    ? trf('Jugar · {x}', {'x': _m((b['entrada'] as num?) ?? 1)})
+                    : '${tr('Mi resultado')} ${mia['goles1']}-${mia['goles2']}'),
+              ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+          child: Text(
+              res != null
+                  ? trf('Acabó {a}-{b}: {p} plenos y {s} aciertos del 1X2. Pasan al siguiente bote {x}.',
+                      {'a': res['goles1'], 'b': res['goles2'], 'p': res['plenos'], 's': res['signos'], 'x': _m(res['arrastre'] as num)})
+                  : tr('Pronostica el resultado. El resultado exacto se lleva el 70 % y quien acierte el ganador o el empate se reparte el 30 %. Lo que nadie acierta se acumula para el próximo partido.'),
+              style: t.bodySmall),
+        ),
+        if (res == null && b['acumulado'] != null && (b['entradas'] as num) > 0)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(trf('Fondo de la liga {f} + entradas {e}', {'f': _m(b['acumulado'] as num), 'e': _m(b['entradas'] as num)}),
+                style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+          ),
+        if (lista.isNotEmpty) ...[
+          const Padding(padding: EdgeInsets.fromLTRB(16, 8, 16, 0), child: _AvisoPublico()),
+          for (final q in lista)
+            ListTile(
+              dense: true,
+              leading: Text(switch (q['acierto']) { 'pleno' => '🎯', 'signo' => '✅', 'nada' => '❌', 'anulada' => '↩️', _ => '⏳' },
+                  style: const TextStyle(fontSize: 18)),
+              title: Text('${q['nombre']}'),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('${q['goles1']}-${q['goles2']}', style: AppTheme.tabular(t.titleSmall)),
+                if (((q['premio'] as num?) ?? 0) > 0 && q['acierto'] != 'anulada')
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Text('+${_m(q['premio'] as num)}', style: t.labelLarge?.copyWith(color: Colors.green.shade700)),
+                  ),
+              ]),
+            ),
+        ],
+        const SizedBox(height: 6),
+      ]),
     );
   }
 }

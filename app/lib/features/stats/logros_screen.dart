@@ -11,6 +11,12 @@ final logrosProvider = FutureProvider.autoDispose.family<Logros, String>((ref, m
   return StatsRepo.logrosDe(miembroId);
 });
 
+/// 0061: los de todas sus ligas, agrupados (un logro cuenta una vez aunque lo tenga en varias).
+final logrosPerfilProvider = FutureProvider.autoDispose.family<Logros, String>((ref, miembroId) {
+  ref.watch(idiomaProvider);
+  return StatsRepo.logrosPerfil(miembroId);
+});
+
 /// Categorías en el orden en que se muestran.
 const categoriasLogros = <(String, String)>[
   ('ataque', 'Ataque'),
@@ -26,9 +32,11 @@ const categoriasLogros = <(String, String)>[
 String _num(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
 class LogrosScreen extends ConsumerStatefulWidget {
-  const LogrosScreen({super.key, required this.miembroId, this.nombre});
+  const LogrosScreen({super.key, required this.miembroId, this.nombre, this.todas = false});
   final String miembroId;
   final String? nombre;
+  /// 0061: todas sus ligas, agrupados.
+  final bool todas;
 
   @override
   ConsumerState<LogrosScreen> createState() => _LogrosScreenState();
@@ -39,9 +47,10 @@ class _LogrosScreenState extends ConsumerState<LogrosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(logrosProvider(widget.miembroId));
+    final prov = widget.todas ? logrosPerfilProvider(widget.miembroId) : logrosProvider(widget.miembroId);
+    final async = ref.watch(prov);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.nombre == null ? tr('Logros') : '${tr('Logros')} · ${widget.nombre}')),
+      appBar: AppBar(title: Text([tr('Logros'), if (widget.nombre != null) widget.nombre!, if (widget.todas) tr('Todas sus ligas')].join(' · '))),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(mensajeError(e)))),
@@ -54,7 +63,7 @@ class _LogrosScreenState extends ConsumerState<LogrosScreen> {
           }
           final cs = Theme.of(context).colorScheme;
           return RefreshIndicator(
-            onRefresh: () => ref.refresh(logrosProvider(widget.miembroId).future),
+            onRefresh: () => ref.refresh(prov.future),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
               children: [
@@ -181,8 +190,12 @@ class _Familia extends StatelessWidget {
               leading: Opacity(opacity: n.conseguido ? 1 : 0.3, child: Text(n.medalla, style: const TextStyle(fontSize: 26))),
               title: Text('${n.nivelNombre} · ${n.descripcion}'),
               subtitle: Text(n.conseguido
-                  ? '${trf('Conseguido el {x}', {'x': fechaCorta(n.conseguidoEn!)})} · ${trf('lo tiene el {x} % de la liga', {'x': n.pct})}'
-                  : '${trf('Llevas {x}', {'x': _num(n.valor)})} · ${trf('lo tiene el {x} % de la liga', {'x': n.pct})}'),
+                  ? (widget.todas
+                      ? '${trf('Conseguido el {x}', {'x': fechaCorta(n.conseguidoEn!)})} · ${n.enLigas.join(', ')}'
+                      : '${trf('Conseguido el {x}', {'x': fechaCorta(n.conseguidoEn!)})} · ${trf('lo tiene el {x} % de la liga', {'x': n.pct})}')
+                  : (widget.todas
+                      ? trf('Llevas {x}', {'x': _num(n.valor)})
+                      : '${trf('Llevas {x}', {'x': _num(n.valor)})} · ${trf('lo tiene el {x} % de la liga', {'x': n.pct})}')),
               trailing: n.conseguido ? const Icon(Icons.check_circle, color: Color(0xFF2E7D32)) : null,
             ),
         ]),

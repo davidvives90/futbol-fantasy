@@ -23,7 +23,7 @@ do $$ begin
 end $$;
 reset role;
 update ligas set fantasy_activo = true where id = :'lf';
-select t_check(presupuesto_liga(:'lf') = 260, 'presupuesto F5 = 260 M');
+select t_check(presupuesto_liga(:'lf') = 275, 'presupuesto F5 = 5 × 50 × 1,10 = 275 M (0061)');
 set role authenticated;
 
 -- ═════════ Reparto pagado del presupuesto
@@ -34,7 +34,7 @@ reset role;
 select t_check((select count(*) from fantasy_managers where liga_id = :'lf') = 4, '4 mánagers');
 select t_check((select bool_and((select count(*) from fichas f where f.liga_id = fm.liga_id and f.propietario_id = fm.miembro_id) = 5)
                   from fantasy_managers fm where fm.liga_id = :'lf'), 'reparto: 5 jugadores cada uno (todos los mánagers)');
-select t_check((select bool_and(saldo >= 0 and saldo < 260) from fantasy_managers where liga_id = :'lf'),
+select t_check((select bool_and(saldo >= 0 and saldo < 275) from fantasy_managers where liga_id = :'lf'),
                'el reparto se paga del presupuesto');
 select t_check((select copias_por_jugador from ligas where id = :'lf') = ceil(4 * 6 / 11.0), 'copias = ⌈M·(N+1)/P⌉');
 select t_check((select count(*) from fichas where liga_id = :'lf') >= 4 * 6, 'copias suficientes para alineación + 1');

@@ -11,6 +11,7 @@ import '../auth/perfil_form_screen.dart';
 import '../onboarding/bienvenida.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'notificaciones_screen.dart';
+import '../liga/marca_liga_screen.dart';
 
 /// Barra inferior + "puerta" de sesión: sin perfil → completar perfil;
 /// sin liga → crear o unirse.
@@ -166,6 +167,7 @@ class LigaAppBar extends ConsumerWidget implements PreferredSizeWidget {
           const PopupMenuItem(value: '_buscar', child: ListTile(leading: Icon(Icons.search), title: Tx('Buscar ligas'))),
         ],
         child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (actual != null) ...[LogoLiga(actual.liga, tamano: 28), const SizedBox(width: 10)],
           Flexible(child: Text(actual?.liga.nombre ?? 'Pachanga Fantasy', overflow: TextOverflow.ellipsis)),
           const Icon(Icons.arrow_drop_down),
         ]),
