@@ -105,7 +105,7 @@ class _LogrosScreenState extends ConsumerState<LogrosScreen> {
                   ]),
                 ),
                 const SizedBox(height: 8),
-                for (final f in familias.values) _Familia(niveles: f, colores: cs),
+                for (final f in familias.values) _Familia(niveles: f, colores: cs, todas: widget.todas),
               ],
             ),
           );
@@ -116,7 +116,8 @@ class _LogrosScreenState extends ConsumerState<LogrosScreen> {
 }
 
 class _Familia extends StatelessWidget {
-  const _Familia({required this.niveles, required this.colores});
+  const _Familia({required this.niveles, required this.colores, this.todas = false});
+  final bool todas;
   final List<Logro> niveles;
   final ColorScheme colores;
 
@@ -190,10 +191,10 @@ class _Familia extends StatelessWidget {
               leading: Opacity(opacity: n.conseguido ? 1 : 0.3, child: Text(n.medalla, style: const TextStyle(fontSize: 26))),
               title: Text('${n.nivelNombre} · ${n.descripcion}'),
               subtitle: Text(n.conseguido
-                  ? (widget.todas
+                  ? (todas
                       ? '${trf('Conseguido el {x}', {'x': fechaCorta(n.conseguidoEn!)})} · ${n.enLigas.join(', ')}'
                       : '${trf('Conseguido el {x}', {'x': fechaCorta(n.conseguidoEn!)})} · ${trf('lo tiene el {x} % de la liga', {'x': n.pct})}')
-                  : (widget.todas
+                  : (todas
                       ? trf('Llevas {x}', {'x': _num(n.valor)})
                       : '${trf('Llevas {x}', {'x': _num(n.valor)})} · ${trf('lo tiene el {x} % de la liga', {'x': n.pct})}')),
               trailing: n.conseguido ? const Icon(Icons.check_circle, color: Color(0xFF2E7D32)) : null,
