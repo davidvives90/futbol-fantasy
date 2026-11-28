@@ -15,15 +15,10 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-enum _Modo { contrasena, codigo }
-
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _clave = TextEditingController();
-  final _codigo = TextEditingController();
-  _Modo _modo = _Modo.contrasena;
   bool _enviando = false;
-  bool _enviado = false; // código/enlace enviado
   bool _verClave = false;
   late final TapGestureRecognizer _tapCondiciones = TapGestureRecognizer()
     ..onTap = () => abrirUrl(context, urlCondiciones);
@@ -34,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _email.dispose();
     _clave.dispose();
-    _codigo.dispose();
     _tapCondiciones.dispose();
     _tapPrivacidad.dispose();
     super.dispose();
@@ -131,28 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  // ───── Con código o enlace al correo (sin contraseña)
-  Future<void> _enviarCodigo() async {
-    if (_cuentaPrueba.hasMatch(_mail)) return _entrarPrueba(_mail);
-    if (!_emailValido()) return;
-    await _ocupado(() async {
-      final ok = await ejecutar(context, () => sb.auth.signInWithOtp(email: _mail, emailRedirectTo: Env.loginRedirect));
-      if (mounted) setState(() => _enviado = ok);
-    });
-  }
-
-  /// Entrar con el código del correo (imprescindible en la web instalada en iPhone: el enlace se abriría en Safari).
-  Future<void> _entrarConCodigo() async {
-    final codigo = _codigo.text.replaceAll(' ', '');
-    if (codigo.length < 6) {
-      mostrarError(context, 'Escribe el código del correo');
-      return;
-    }
-    await _ocupado(() async {
-      await ejecutar(context, () => sb.auth.verifyOTP(email: _mail, token: codigo, type: OtpType.email));
-    });
-  }
-
   Future<void> _google() => _ocupado(() async {
         await ejecutar(context, () => sb.auth.signInWithOAuth(OAuthProvider.google, redirectTo: Env.loginRedirect));
       });
@@ -206,24 +178,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                   TextField(
                     controller: _email,
-                    enabled: !_enviado,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email, AutofillHints.username],
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(labelText: tr('Email'), prefixIcon: const Icon(Icons.mail_outline)),
                   ),
                   const SizedBox(height: 12),
-                  if (!_enviado)
-                    SegmentedButton<_Modo>(
-                      segments: [
-                        ButtonSegment(value: _Modo.contrasena, icon: const Icon(Icons.lock_outline), label: Text(tr('Contraseña'))),
-                        ButtonSegment(value: _Modo.codigo, icon: const Icon(Icons.mark_email_read_outlined), label: Text(tr('Código al correo'))),
-                      ],
-                      selected: {_modo},
-                      onSelectionChanged: (s) => setState(() => _modo = s.first),
-                    ),
-                  const SizedBox(height: 12),
-                  if (_modo == _Modo.contrasena && !_enviado) ...[
+                  ...[
                     TextField(
                       controller: _clave,
                       obscureText: !_verClave,
@@ -250,40 +211,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     TextButton(onPressed: _enviando ? null : _crearCuenta, child: const Tx('¿Primera vez? Crear cuenta con esta contraseña')),
-                  ],
-                  if (_modo == _Modo.codigo && !_enviado) ...[
-                    FilledButton(
-                      onPressed: _enviando ? null : _enviarCodigo,
-                      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                      child: Text(tr(_enviando ? 'Enviando…' : 'Enviarme un código')),
-                    ),
-                    const SizedBox(height: 8),
-                    Tx('Sin contraseña: te mandamos un enlace y un código al correo. Si es tu primera vez, la cuenta se crea sola.',
+                    // 0062: ya no se entra con código. Quien entraba así crea su contraseña con «¿Has olvidado…?»
+                    Tx('¿Antes entrabas con un código del correo? Pulsa «¿Has olvidado la contraseña?» y crea una.',
                         textAlign: TextAlign.center, style: t.bodySmall),
-                  ],
-                  if (_enviado) ...[
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          trf('Te hemos enviado un correo a {e}. Abre el enlace desde este móvil o escribe aquí el código que viene en el correo.',
-                              {'e': _mail}),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _codigo,
-                      keyboardType: TextInputType.number,
-                      autofillHints: const [AutofillHints.oneTimeCode],
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(labelText: tr('Código del correo'), prefixIcon: const Icon(Icons.pin_outlined)),
-                      onSubmitted: (_) => _entrarConCodigo(),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton.tonal(onPressed: _enviando ? null : _entrarConCodigo, child: const Tx('Entrar con el código')),
-                    TextButton(onPressed: () => setState(() => _enviado = false), child: const Tx('Usar otro email')),
                   ],
                   const SizedBox(height: 28),
                   // Condiciones y privacidad, visibles antes de entrar

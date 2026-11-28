@@ -44,6 +44,7 @@ import '../features/liga/votaciones_screen.dart';
 import '../features/liga/asistencia_screen.dart';
 import '../features/stats/palmares_screen.dart';
 import '../features/onboarding/asistente_liga_screen.dart';
+import 'liga_activa.dart';
 import 'supabase.dart';
 import '../features/privacidad/consentimiento.dart';
 import '../features/liga/importar_historial_screen.dart';
@@ -74,6 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       Errores.pantalla = state.matchedLocation; // para saber dónde ocurre cada error
       final logueado = sb.auth.currentSession != null;
       final enLogin = state.matchedLocation == '/login';
+      // 0062: un enlace de invitación sin sesión: se guarda el código y se usa al terminar de entrar
+      final codigo = state.uri.queryParameters['codigo'];
+      if (!logueado && state.matchedLocation == '/unirse' && codigo != null && codigo.isNotEmpty) {
+        ref.read(invitacionPendienteProvider.notifier).state = codigo;
+      }
       if (!logueado) return enLogin ? null : '/login';
       if (enLogin) return '/partidos';
       return null;

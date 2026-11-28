@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.futbolfantasy.futbol_fantasy",
+    "sha256_cert_fingerprints": [
+      "A4:DF:94:7E:D1:4A:F1:99:9F:81:15:58:9D:64:46:CB:DB:8A:42:CF:41:06:DF:73:74:21:5E:9E:5F:2B:FF:82"
+    ]
+  }
+}]

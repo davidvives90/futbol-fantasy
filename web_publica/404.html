@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pachanga Fantasy</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+<div class="heroe">
+  <div class="contenedor" style="grid-template-columns:1fr">
+    <div>
+      <h1>¡Te han invitado a una liga!</h1>
+      <p>Únete a tu grupo en Pachanga Fantasy. Elige cómo quieres entrar:</p>
+      <div class="botones">
+        <a class="boton blanco" id="app">Abrir en la app de Android</a>
+        <a class="boton oro" id="web">Entrar desde el navegador</a>
+      </div>
+      <p style="margin-top:20px">Si el enlace no funciona, abre la app y en <b>Unirme a una liga</b> pega este código:</p>
+      <p><code id="codigo" style="font-size:1.4rem;background:#fff;color:#7A0A1C;padding:6px 14px;border-radius:10px;letter-spacing:1px"></code>
+         <a class="boton blanco" id="copiar" style="padding:6px 14px;margin-left:8px">Copiar</a></p>
+      <p style="margin-top:20px;font-size:.95rem">¿No tienes la app? <a style="color:#fff" href="https://github.com/davidvives90/futbol-fantasy/releases/latest/download/app-release.apk">Descárgala para Android</a> y vuelve a abrir este enlace.</p>
+    </div>
+  </div>
+</div>
+<script>
+  if (location.pathname.split('/')[1] !== 'i') {
+    document.querySelector('.heroe .contenedor > div').innerHTML =
+      '<h1>Esta página no existe</h1><p><a class="boton oro" href="/">Ir a Pachanga Fantasy</a></p>';
+  } else {
+  // /i/<código> → app (io.futbolfantasy://invite/<código>) o web (/app/#/unirse?codigo=<código>)
+  var partes = location.pathname.split('/');
+  var token = decodeURIComponent((partes[2] || new URLSearchParams(location.search).get('c') || '').trim());
+  document.getElementById('codigo').textContent = token || '—';
+  document.getElementById('copiar').onclick = function () {
+    if (navigator.clipboard) navigator.clipboard.writeText(token).then(function () {
+      document.getElementById('copiar').textContent = '¡Copiado!';
+    });
+  };
+  document.getElementById('app').href = 'io.futbolfantasy://invite/' + encodeURIComponent(token);
+  document.getElementById('web').href = '/app/#/unirse?codigo=' + encodeURIComponent(token);
+  if (!/Android/i.test(navigator.userAgent) && token) location.replace('/app/#/unirse?codigo=' + encodeURIComponent(token));
+  }
+</script>
+</body>
+</html>

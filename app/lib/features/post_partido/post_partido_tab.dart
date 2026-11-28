@@ -15,23 +15,36 @@ import '../../core/equipaciones.dart';
 import '../../core/info.dart';
 import '../../core/anuncios.dart';
 import '../../core/guias.dart';
+import '../shell/sincronizacion.dart';
 
 /// Encuentros que definió el admin (quién contra quién); cada asistente solo pone el marcador.
 final _encuentrosDefProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
-  (ref, partidoId) => PartidosRepo.encuentros(partidoId),
+  (ref, partidoId) {
+    ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
+    return PartidosRepo.encuentros(partidoId);
+  },
 );
 
 final _numReportesProvider = FutureProvider.autoDispose.family<int, String>(
-  (ref, partidoId) => PostPartidoRepo.numReportes(partidoId),
+  (ref, partidoId) {
+    ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
+    return PostPartidoRepo.numReportes(partidoId);
+  },
 );
 
 /// Lo que ya envié (vacío si nada): sirve para saber si ya envié y para precargar al corregir.
 final _puedoActaProvider = FutureProvider.autoDispose.family<bool, String>(
-  (ref, partidoId) => PostPartidoRepo.puedoRellenarActa(partidoId),
+  (ref, partidoId) {
+    ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
+    return PostPartidoRepo.puedoRellenarActa(partidoId);
+  },
 );
 
 final _miEnvioProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
-  (ref, partidoId) => PostPartidoRepo.miPostPartido(partidoId),
+  (ref, partidoId) {
+    ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
+    return PostPartidoRepo.miPostPartido(partidoId);
+  },
 );
 
 /// Borrador del post-partido (vive mientras la app esté abierta, aunque cambies de pestaña).

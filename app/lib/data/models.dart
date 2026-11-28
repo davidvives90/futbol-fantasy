@@ -637,6 +637,8 @@ class Partido {
     required this.costeTotal,
     required this.estado,
     this.votacionCierra,
+    this.equiposPor,
+    this.equiposEn,
     this.temporadaId,
     this.arbitroId,
     this.eventoEspecial,
@@ -657,6 +659,10 @@ class Partido {
   final EstadoPartido estado;
   final DateTime? votacionCierra;
 
+  /// 0062: qué admin (o capitán) confirmó los equipos y cuándo.
+  final String? equiposPor;
+  final DateTime? equiposEn;
+
   factory Partido.fromMap(Map<String, dynamic> m) => Partido(
         id: m['id'] as String,
         ligaId: m['liga_id'] as String,
@@ -668,6 +674,8 @@ class Partido {
         costeTotal: toDouble(m['coste_total']) ?? 0,
         estado: _enum(EstadoPartido.values, m['estado'], EstadoPartido.abierto),
         votacionCierra: m['votacion_cierra'] == null ? null : DateTime.parse(m['votacion_cierra'] as String),
+        equiposPor: m['equipos_por'] as String?,
+        equiposEn: m['equipos_en'] == null ? null : DateTime.parse(m['equipos_en'] as String),
         temporadaId: m['temporada_id'] as String?,
         arbitroId: m['arbitro_id'] as String?,
         eventoEspecial: m['evento_especial'] as String?,

@@ -51,6 +51,16 @@
                 <data android:scheme="io.futbolfantasy" android:host="login" />
             </intent-filter>
 
+            <!-- 0062 · Android App Links: https://www.pachangafantasy.com/i/<token> abre la app directamente
+                 (verificado con /.well-known/assetlinks.json; si no, Android ofrece abrirlo con la app) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.pachangafantasy.com" android:pathPrefix="/i/" />
+                <data android:scheme="https" android:host="pachangafantasy.com" android:pathPrefix="/i/" />
+            </intent-filter>
+
             <!-- Invitaciones: io.futbolfantasy://invite/<token> -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

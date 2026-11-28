@@ -37,13 +37,21 @@ class _UnirseScreenState extends ConsumerState<UnirseScreen> {
   }
 
   /// Acepta el código suelto o un enlace completo pegado.
+  /// Acepta el código suelto, el enlace (…/i/<código>, ?c=, ?codigo=) o el mensaje entero de WhatsApp pegado.
   String _extraer(String texto) {
     final t = texto.trim();
-    final uri = Uri.tryParse(t);
-    if (uri != null && uri.pathSegments.isNotEmpty && (uri.scheme == 'https' || uri.host == 'invite')) {
-      return uri.pathSegments.last;
+    final enlace = RegExp(r'(https?://\S+|io\.futbolfantasy://\S+)').firstMatch(t)?.group(0);
+    final uri = Uri.tryParse(enlace ?? t);
+    if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http' || uri.host == 'invite')) {
+      final q = uri.queryParameters['c'] ?? uri.queryParameters['codigo'];
+      if (q != null && q.isNotEmpty) return q;
+      final i = uri.pathSegments.indexOf('i');
+      if (i >= 0 && i + 1 < uri.pathSegments.length) return uri.pathSegments[i + 1];
+      if (uri.host == 'invite' && uri.pathSegments.isNotEmpty) return uri.pathSegments.first;
     }
-    return t;
+    // «Código: ABC123» dentro de un texto
+    final c = RegExp(r'(?:código|codigo|code)\s*:?\s*([A-Za-z0-9_-]{4,})', caseSensitive: false).firstMatch(t)?.group(1);
+    return c ?? t;
   }
 
   Future<void> _unirse() async {

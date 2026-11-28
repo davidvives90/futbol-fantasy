@@ -13,6 +13,7 @@ import '../../data/repos/post_partido_repo.dart';
 import '../fantasy/widgets_fantasy.dart';
 import '../../core/avatar.dart';
 import '../../core/equipaciones.dart';
+import '../shell/sincronizacion.dart';
 
 class _DatosResultado {
   _DatosResultado(this.encuentros, this.puntos, this.acta, this.equipoJornada);
@@ -23,6 +24,7 @@ class _DatosResultado {
 }
 
 final _resultadoProvider = FutureProvider.autoDispose.family<_DatosResultado, String>((ref, partidoId) async {
+  ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
   final r = await Future.wait([
     PartidosRepo.encuentros(partidoId),
     PostPartidoRepo.puntos(partidoId),

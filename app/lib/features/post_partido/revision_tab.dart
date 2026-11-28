@@ -10,13 +10,20 @@ import '../../data/repos/partidos_repo.dart';
 import '../../data/repos/post_partido_repo.dart';
 import '../../core/info.dart';
 import '../../core/equipaciones.dart';
+import '../shell/sincronizacion.dart';
 
 final _disputasProvider = FutureProvider.autoDispose.family<List<Disputa>, String>(
-  (ref, partidoId) => PostPartidoRepo.disputas(partidoId),
+  (ref, partidoId) {
+    ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
+    return PostPartidoRepo.disputas(partidoId);
+  },
 );
 
 final _encuentrosProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
-  (ref, partidoId) => PartidosRepo.encuentros(partidoId),
+  (ref, partidoId) {
+    ref.watch(latidoProvider('partido:$partidoId')); // 0062: en vivo
+    return PartidosRepo.encuentros(partidoId);
+  },
 );
 
 const _nombresCampo = {

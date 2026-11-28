@@ -1,0 +1,4 @@
+# Netlify (también en subidas arrastrando la carpeta): rutas que deben servir una página concreta
+/privacidad.html   /privacidad          301
+/i/*               /i/index.html        200
+/app/*             /app/index.html      200

@@ -83,7 +83,11 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     });
   }
 
-  void _generar(List<JugadorBalanceo> js) {
+  /// 0062: true si este admin está cambiando los equipos a propósito (no es solo la propuesta automática).
+  bool _manual = false;
+
+  void _generar(List<JugadorBalanceo> js, {bool manual = false}) {
+    _manual = manual;
     final opciones = balancear(js, _k, rng: _rng, fijos: _fijos);
     final elegido = elegirConVariedad(opciones, rng: _rng);
     setState(() {
@@ -114,6 +118,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
   }
 
   void _elegir(JugadorBalanceo j) {
+    _manual = true;
     setState(() {
       _equipos![_turno].add(j);
       _pool!.remove(j);
@@ -123,6 +128,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
 
   void _otraOpcion() {
     if (_opciones.length < 2) return;
+    _manual = true;
     setState(() {
       _opcion = (_opcion + 1) % _opciones.length;
       _equipos = [for (final e in _opciones[_opcion].equipos) [...e]];
@@ -130,6 +136,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
   }
 
   void _mover(JugadorBalanceo j, int destino) {
+    _manual = true;
     setState(() {
       for (final e in _equipos!) {
         e.removeWhere((x) => x.id == j.id);
@@ -154,6 +161,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
       if (ok) {
         _equipos = null; // se muestran los guardados y el resultado esperado
         _pool = null;
+        _manual = false;
       }
     });
     if (ok) ref.invalidate(prediccionProvider(widget.partido.id));
@@ -191,7 +199,13 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
     final sinEquipo = [for (final j in js) if (!guardados.any((e) => e.contains(j))) j];
     final hayGuardados = guardados.any((e) => e.isNotEmpty) &&
         (widget.partido.estado == EstadoPartido.equipos_hechos || sinEquipo.isEmpty);
-    final mostrar = _equipos ?? (hayGuardados ? guardados : null);
+    // 0062: si otro admin ya los confirmó, la propuesta automática de este móvil se descarta: no hace falta confirmar dos veces
+    if (hayGuardados && _equipos != null && !_manual && _pool == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_manual) setState(() => _equipos = null);
+      });
+    }
+    final mostrar = (hayGuardados && !_manual && _pool == null) ? guardados : (_equipos ?? (hayGuardados ? guardados : null));
 
     if (conf.length < _k * 2) {
       return Vacio('Hacen falta al menos ${_k * 2} confirmados para hacer equipos (hay ${conf.length}).',
@@ -268,7 +282,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
       if (editable)
         Wrap(spacing: 8, runSpacing: 8, children: [
           FilledButton.tonalIcon(
-            onPressed: () => _generar(js),
+            onPressed: () => _generar(js, manual: true),
             icon: const Icon(Icons.auto_awesome),
             label: Tx(mostrar == null ? 'Generar equipos' : 'Volver a generar'),
           ),
@@ -325,6 +339,24 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
           ),
         )
       else ...[
+        // 0062: quién los confirmó (cualquier admin puede hacerlo solo; vale el primero)
+        if (hayGuardados && _equipos == null && widget.partido.equiposEn != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(children: [
+              Icon(Icons.verified_outlined, size: 18, color: cs.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  trf('Equipos confirmados por {n} · {h}', {
+                    'n': widget.partido.equiposPor == null ? tr('la app') : nombre(widget.partido.equiposPor!),
+                    'h': fechaCorta(widget.partido.equiposEn!.toLocal()),
+                  }),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ]),
+          ),
         if (hayGuardados && _equipos == null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -371,6 +403,7 @@ class _EquiposTabState extends ConsumerState<EquiposTab> {
         if (editable && _equipos == null && hayGuardados)
           TextButton(
             onPressed: () => setState(() {
+              _manual = true;
               _equipos = [for (final e in guardados) [...e]];
               // Los que se apuntaron después de hacer los equipos van al equipo con menos gente
               for (final j in sinEquipo) {

@@ -16,6 +16,7 @@ import '../post_partido/revision_tab.dart';
 import 'convocatoria_tab.dart';
 import '../porra/porra_tab.dart';
 import '../../core/guias.dart';
+import '../shell/sincronizacion.dart';
 
 /// Detalle de un partido. Las pestañas visibles dependen del estado y del rol.
 class PartidoDetalleScreen extends ConsumerWidget {
@@ -27,7 +28,8 @@ class PartidoDetalleScreen extends ConsumerWidget {
     final mi = ref.watch(ligaActualProvider);
     final partido = ref.watch(partidoProvider(partidoId));
 
-    return partido.when(
+    // 0062: todo lo del partido se actualiza solo en todos los móviles
+    return SincronizacionPartido(partidoId: partidoId, child: partido.when(
       loading: () => Scaffold(appBar: AppBar(), body: const Cargando()),
       error: (e, _) => Scaffold(appBar: AppBar(), body: ErrorVista(e)),
       data: (p) {
@@ -99,12 +101,12 @@ class PartidoDetalleScreen extends ConsumerWidget {
             ),
             body: Column(children: [
               if (admin) _SiguientePaso(partido: p, pestanas: [for (final t in tabs) t.$1]),
-              Expanded(child: TabBarView(children: [for (final t in tabs) t.$2])),
+              Expanded(child: TabBarView(children: [for (final t in tabs) RefrescarPartido(partidoId: partidoId, child: t.$2)])),
             ]),
           ),
         );
       },
-    );
+    ));
   }
 }
 

@@ -12,6 +12,7 @@ import '../onboarding/bienvenida.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'notificaciones_screen.dart';
 import '../liga/marca_liga_screen.dart';
+import 'sincronizacion.dart';
 
 /// Barra inferior + "puerta" de sesión: sin perfil → completar perfil;
 /// sin liga → crear o unirse.
@@ -82,7 +83,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     }
 
     // Pantallas anchas (tableta horizontal, ordenador): menú lateral en vez de barra inferior.
-    return LayoutBuilder(builder: (context, c) {
+    // 0062: tiempo real de todas mis ligas
+    return SincronizacionLigas(child: LayoutBuilder(builder: (context, c) {
       if (c.maxWidth >= 720) {
         return Scaffold(
           body: Row(children: [
@@ -116,7 +118,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ],
         ),
       );
-    });
+    }));
   }
 }
 
