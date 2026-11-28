@@ -277,6 +277,36 @@ class _Invitar extends ConsumerWidget {
               label: const Tx('Pre-crear jugadores'),
             ),
           ]),
+        // 0063: explicar bien los jugadores sin la app
+        if (mi.soyAdmin)
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(Icons.phone_android, color: Theme.of(context).colorScheme.onSecondaryContainer),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Tx('¿Tus amigos aún no tienen la app?', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 2),
+                  Tx('Créalos aquí como «Jugadores de liga» y envíales su enlace personal más tarde: al entrar heredarán todas sus estadísticas.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _precrear(context, ref),
+                      icon: const Icon(Icons.person_add_alt, size: 18),
+                      label: const Tx('Crear jugador'),
+                    ),
+                  ),
+                ]),
+              ),
+            ]),
+          ),
       ]),
     );
   }

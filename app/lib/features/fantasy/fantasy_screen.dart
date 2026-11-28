@@ -11,7 +11,7 @@ import 'clasificacion_managers_tab.dart';
 import 'fantasy_providers.dart';
 import 'mercado_tab.dart';
 import 'mi_equipo_tab.dart';
-import 'ofertas_tab.dart';
+import 'actividad_tab.dart';
 import '../../core/guias.dart';
 
 /// Pestaña inferior "Fantasy": Mi equipo · Mercado · Ofertas · Ranking.
@@ -32,16 +32,16 @@ class FantasyScreen extends ConsumerWidget {
           actions: const [BotonGuia('fantasy')],
           bottom: TabBar(tabs: [
             Tab(icon: const Icon(Icons.shield_outlined), text: tr('Mi equipo')),
-            Tab(icon: const Icon(Icons.storefront_outlined), text: tr('Mercado')),
             Tab(
               icon: Badge(
                 isLabelVisible: pendientes > 0,
                 label: Text('$pendientes'),
-                child: const Icon(Icons.handshake_outlined),
+                child: const Icon(Icons.storefront_outlined),
               ),
-              text: tr('Ofertas'),
+              text: tr('Mercado'),
             ),
-            Tab(icon: const Icon(Icons.emoji_events_outlined), text: tr('Ranking')),
+            Tab(icon: const Icon(Icons.history), text: tr('Actividad')),
+            Tab(icon: const Icon(Icons.emoji_events_outlined), text: tr('Clasificación')),
           ]),
         ),
         body: Column(children: [
@@ -51,7 +51,7 @@ class FantasyScreen extends ConsumerWidget {
             child: TabBarView(children: [
               MiEquipoTab(mi: mi),
               MercadoTab(mi: mi),
-              OfertasTab(mi: mi),
+              ActividadTab(mi: mi),
               ClasificacionManagersTab(mi: mi),
             ]),
           ),

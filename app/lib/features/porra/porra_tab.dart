@@ -49,6 +49,9 @@ class _PorraTabState extends ConsumerState<PorraTab> {
       if (_boleto.containsKey(p.clave)) {
         _boleto.remove(p.clave);
       } else {
+        // 0063: sin combinadas ni múltiples, el boleto lleva un solo pronóstico (el nuevo sustituye al anterior)
+        final l = widget.mi.liga;
+        if (!l.porraModulo('combinadas') && !l.porraModulo('multiples')) _boleto.clear();
         // Un solo 1-X-2 y un solo MVP por boleto: el nuevo sustituye al anterior
         if (p.mercado == '1x2' || p.mercado == 'mvp') _boleto.removeWhere((_, x) => x.mercado == p.mercado);
         // «Marca» y «no marca» del mismo jugador se excluyen
@@ -62,15 +65,21 @@ class _PorraTabState extends ConsumerState<PorraTab> {
     });
   }
 
-  List<String> get _tiposPosibles => switch (_boleto.length) {
-        0 => const [],
-        1 => const ['sencilla'],
-        2 => const ['combinada'],
-        3 || 4 => const ['combinada', 'multiple'],
-        _ => const ['combinada'],
-      };
+  List<String> get _tiposPosibles {
+    final l = widget.mi.liga;
+    final c = l.porraModulo('combinadas'), m = l.porraModulo('multiples');
+    return switch (_boleto.length) {
+      0 => const [],
+      1 => const ['sencilla'],
+      2 => [if (c) 'combinada'],
+      3 || 4 => [if (c) 'combinada', if (m) 'multiple'],
+      _ => [if (c) 'combinada'],
+    };
+  }
 
-  String get _tipo => _tipoElegido != null && _tiposPosibles.contains(_tipoElegido) ? _tipoElegido! : _tiposPosibles.first;
+  String get _tipo => _tipoElegido != null && _tiposPosibles.contains(_tipoElegido)
+      ? _tipoElegido!
+      : (_tiposPosibles.isEmpty ? 'combinada' : _tiposPosibles.first);
 
   String _nombreSel(Pronostico p, Map<String, Miembro> miembros) => switch (p.mercado) {
         '1x2' => switch (p.seleccion) {
@@ -118,7 +127,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 120), children: [
           const AvisoGuia('porra'),
           _cabecera(e),
-          if (e.bote != null) _Bote(e: e, partidoId: widget.partido.id, onCambio: () => ref.invalidate(porraProvider(widget.partido.id))),
+          if (e.bote != null && widget.mi.liga.porraModulo('bote')) _Bote(e: e, partidoId: widget.partido.id, onCambio: () => ref.invalidate(porraProvider(widget.partido.id))),
           if (e.abierta) ..._mercados(e, miembros),
           if (e.abierta && _boleto.isNotEmpty) _tarjetaBoleto(e, miembros),
           if (e.mias.isNotEmpty) ...[
@@ -184,51 +193,70 @@ class _PorraTabState extends ConsumerState<PorraTab> {
       );
     }
 
+    final liga = widget.mi.liga;
+    final hayMas = liga.porraModulo('goleador') || liga.porraModulo('mvp');
     return [
       const SizedBox(height: 8),
-      Tx('Quiniela 1-X-2', style: t.titleMedium),
-      const SizedBox(height: 6),
-      Row(children: [
-        for (final p in q)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: _boleto.containsKey(p.clave)
-                  ? FilledButton(onPressed: () => _alternar(p), child: _BotonSigno(p: p, equipo: _equipoDe(p)))
-                  : OutlinedButton(onPressed: () => _alternar(p), child: _BotonSigno(p: p, equipo: _equipoDe(p))),
+      if (liga.porraModulo('1x2')) ...[
+        Tx('¿Quién gana?', style: t.titleMedium),
+        const SizedBox(height: 6),
+        // 0063: modo sencillo por defecto: tres botones grandes 1 · X · 2
+        Row(children: [
+          for (final p in q)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: SizedBox(
+                  height: 84,
+                  child: _boleto.containsKey(p.clave)
+                      ? FilledButton(onPressed: () => _alternar(p), child: _BotonSigno(p: p, equipo: _equipoDe(p)))
+                      : OutlinedButton(onPressed: () => _alternar(p), child: _BotonSigno(p: p, equipo: _equipoDe(p))),
+                ),
+              ),
             ),
-          ),
-      ]),
-      const SizedBox(height: 12),
-      ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: Tx('Goleador (marca al menos un gol)', style: t.titleSmall),
-        subtitle: Tx('Fácil de acertar: paga muy poco', style: t.bodySmall),
-        children: [
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            for (final p in e.cuotas.where((c) => c.mercado == 'goleador')) chipJugador(p),
-          ]),
-        ],
-      ),
-      ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: Tx('No marca (ningún gol)', style: t.titleSmall),
-        subtitle: Tx('Fácil de acertar: paga muy poco', style: t.bodySmall),
-        children: [
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            for (final p in e.cuotas.where((c) => c.mercado == 'no_goleador')) chipJugador(p),
-          ]),
-        ],
-      ),
-      ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: Tx('MVP del partido', style: t.titleSmall),
-        children: [
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            for (final p in e.cuotas.where((c) => c.mercado == 'mvp')) chipJugador(p),
-          ]),
-        ],
-      ),
+        ]),
+      ],
+      if (hayMas)
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          leading: const Icon(Icons.add_circle_outline),
+          title: Tx('Más mercados y opciones', style: t.titleSmall),
+          initiallyExpanded: !liga.porraModulo('1x2'),
+          children: [
+            if (liga.porraModulo('goleador')) ...[
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Tx('Goleador (marca al menos un gol)', style: t.titleSmall),
+                subtitle: Tx('Fácil de acertar: paga muy poco', style: t.bodySmall),
+                children: [
+                  Wrap(spacing: 6, runSpacing: 6, children: [
+                    for (final p in e.cuotas.where((c) => c.mercado == 'goleador')) chipJugador(p),
+                  ]),
+                ],
+              ),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Tx('No marca (ningún gol)', style: t.titleSmall),
+                subtitle: Tx('Fácil de acertar: paga muy poco', style: t.bodySmall),
+                children: [
+                  Wrap(spacing: 6, runSpacing: 6, children: [
+                    for (final p in e.cuotas.where((c) => c.mercado == 'no_goleador')) chipJugador(p),
+                  ]),
+                ],
+              ),
+            ],
+            if (liga.porraModulo('mvp'))
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Tx('MVP del partido', style: t.titleSmall),
+                children: [
+                  Wrap(spacing: 6, runSpacing: 6, children: [
+                    for (final p in e.cuotas.where((c) => c.mercado == 'mvp')) chipJugador(p),
+                  ]),
+                ],
+              ),
+          ],
+        ),
       if (_boleto.isEmpty)
         Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -303,6 +331,7 @@ class _PorraTabState extends ConsumerState<PorraTab> {
             ),
             onChanged: (_) => setState(() {}),
           ),
+          if (widget.mi.liga.porraModulo('seguro'))
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             secondary: const Text('🛡️', style: TextStyle(fontSize: 22)),

@@ -13,6 +13,7 @@ import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
 import 'tarjetas_jugador.dart';
 import '../../core/info.dart';
+import '../../core/guias.dart';
 
 
 /// Saldo, plantilla (fichas propias + la recibida en cesión) y alineación del próximo partido.
@@ -63,6 +64,7 @@ class MiEquipoTab extends ConsumerWidget {
         ref.invalidate(partidosProvider(mi.liga.id));
       },
       child: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 96), children: [
+        const ConsejoUnaVez('fantasy_equipo', 'Aquí está tu equipo: elige titulares y banquillo antes de cada partido. Tus puntos de la jornada salen arriba en grande.'),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),

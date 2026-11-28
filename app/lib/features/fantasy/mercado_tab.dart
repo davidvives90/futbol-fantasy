@@ -11,6 +11,8 @@ import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
 import 'tarjetas_jugador.dart';
 import 'subastas_draft.dart';
+import 'ofertas_tab.dart';
+import '../../core/guias.dart';
 
 enum _Orden { media, precio, variacion, forma, fichado, libres }
 
@@ -57,10 +59,22 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
     // 0059: jugadores puestos en subasta por sus mánagers (en cualquier modo de inicio)
     final hayVentas = (ref.watch(subastasProvider(widget.mi.liga.id)).valueOrNull ?? const [])
         .any((s) => s.abierta && s.vendedorId != null);
+    final ofertas = ref.watch(ofertasRecibidasPendientesProvider(widget.mi.liga.id));
+    final hayAbiertas = (ref.watch(subastasProvider(widget.mi.liga.id)).valueOrNull ?? const []).any((s) => s.abierta);
     return Column(children: [
       if (!abierto) BannerMercadoCerrado(mi: widget.mi),
+      const ConsejoUnaVez('fantasy_mercado', 'Toca un jugador libre para ficharlo. Verde: su precio sube; rojo: baja. Las ofertas de otros mánagers están justo debajo.'),
+      // 0063: bandeja de ofertas entre mánagers dentro del Mercado
+      ListTile(
+        dense: true,
+        leading: Badge(isLabelVisible: ofertas > 0, label: Text('$ofertas'), child: const Icon(Icons.handshake_outlined)),
+        title: Tx(ofertas > 0 ? 'Tienes ofertas por responder' : 'Ofertas recibidas y enviadas'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => Scaffold(appBar: AppBar(title: const Tx('Ofertas')), body: OfertasTab(mi: widget.mi)))),
+      ),
       // 0054: subasta diaria o draft por turnos
-      if (modo == 'subasta' || modo == 'draft' || hayVentas)
+      if ((modo == 'subasta' && (hayAbiertas || widget.mi.soyAdmin)) || modo == 'draft' || hayVentas)
         ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
           child: SingleChildScrollView(

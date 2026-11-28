@@ -429,3 +429,47 @@ class GuiasScreen extends StatelessWidget {
     );
   }
 }
+
+/// 0063: consejo rápido que sale la primera vez en una pestaña y se cierra con la X (no vuelve a salir).
+class ConsejoUnaVez extends ConsumerStatefulWidget {
+  const ConsejoUnaVez(this.clave, this.texto, {super.key, this.icono = Icons.lightbulb_outline});
+  final String clave, texto;
+  final IconData icono;
+
+  @override
+  ConsumerState<ConsejoUnaVez> createState() => _ConsejoUnaVezState();
+}
+
+class _ConsejoUnaVezState extends ConsumerState<ConsejoUnaVez> {
+  bool _oculto = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = ref.watch(prefsProvider);
+    if (_oculto || (prefs.getBool('consejo_${widget.clave}') ?? false)) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      color: cs.tertiaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+        child: Row(children: [
+          Icon(widget.icono, color: cs.onTertiaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(tr(widget.texto),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onTertiaryContainer)),
+          ),
+          IconButton(
+            tooltip: tr('Entendido'),
+            icon: Icon(Icons.close, size: 18, color: cs.onTertiaryContainer),
+            onPressed: () {
+              prefs.setBool('consejo_${widget.clave}', true);
+              setState(() => _oculto = true);
+            },
+          ),
+        ]),
+      ),
+    );
+  }
+}

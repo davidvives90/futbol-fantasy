@@ -16,6 +16,7 @@ import '../../core/info.dart';
 import '../../core/anuncios.dart';
 import '../../core/guias.dart';
 import '../shell/sincronizacion.dart';
+import 'parte_widgets.dart';
 
 /// Encuentros que definió el admin (quién contra quién); cada asistente solo pone el marcador.
 final _encuentrosDefProvider = FutureProvider.autoDispose.family<List<Encuentro>, String>(
@@ -73,6 +74,9 @@ class _Borrador {
 
   /// Modo podio (0053): 1.º, 2.º y 3.º mejor del partido.
   final podio = <String?>[null, null, null];
+
+  /// 0063: el resultado se calcula solo con los goles de cada equipo hasta que lo toques a mano.
+  bool marcadorManual = false;
 }
 
 final _borradores = <String, _Borrador>{};
@@ -215,6 +219,19 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       }
     }
     return (equipos: equipos, error: error);
+  }
+
+  /// 0063: con un solo encuentro, el marcador = goles de cada equipo + autogoles del rival (salvo que lo hayas tocado).
+  void _autoMarcador() {
+    final b = _b!;
+    if (b.marcadorManual || b.encuentros.length != 1) return;
+    final e = b.encuentros.first;
+    int goles(int eq) => _equipoDe.entries.where((x) => x.value == eq).fold<int>(0, (s, x) => s + (b.goles[x.key] ?? 0));
+    int autogoles(int eq) => _equipoDe.entries.where((x) => x.value == eq).fold<int>(0, (s, x) => s + (b.autogoles[x.key] ?? 0));
+    final local = goles(e.equipoLocal) + autogoles(e.equipoVisitante);
+    final visitante = goles(e.equipoVisitante) + autogoles(e.equipoLocal);
+    e.golesLocal = local;
+    e.golesVisitante = visitante;
   }
 
   /// Goles que marcó el equipo [eq] según el resultado que has puesto (null si hay varios encuentros: tope total).
@@ -397,6 +414,8 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
       Expanded(
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
           const AvisoGuia('post_partido'),
+          // 0063: participación transparente
+          ParticipacionParte(partidoId: widget.partido.id),
           Row(children: [
             Icon(Icons.timer_outlined, size: 18, color: cs.onSurfaceVariant),
             const SizedBox(width: 6),
@@ -426,6 +445,11 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
           if (hagoActa) ...[
           // ───── 1. Resultado
           _Titulo('1', 'Resultado'),
+          if (b.encuentros.length == 1 && !b.marcadorManual)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Tx('Se calcula solo con los goles que pongas abajo. Si quieres, cámbialo aquí.', style: t.bodySmall),
+            ),
           if (b.encuentros.isEmpty) const Tx('El administrador aún no ha definido los equipos de este partido.'),
           for (final e in b.encuentros)
             Card(
@@ -437,13 +461,19 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                     _Marcador(
                       equipo: e.equipoLocal,
                       valor: e.golesLocal,
-                      onCambio: (v) => setState(() => e.golesLocal = v),
+                      onCambio: (v) => setState(() {
+                        b.marcadorManual = true;
+                        e.golesLocal = v;
+                      }),
                     ),
                     Text('–', style: t.headlineMedium),
                     _Marcador(
                       equipo: e.equipoVisitante,
                       valor: e.golesVisitante,
-                      onCambio: (v) => setState(() => e.golesVisitante = v),
+                      onCambio: (v) => setState(() {
+                        b.marcadorManual = true;
+                        e.golesVisitante = v;
+                      }),
                     ),
                   ]),
                 ]),
@@ -478,7 +508,10 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                     nombre: '${miembros[a.miembroId]?.nombre ?? '…'}${a.miembroId == widget.mi.yo.id ? ' (tú)' : ''}',
                     goles: b.goles[a.miembroId] ?? 0,
                     asistencias: b.asistencias[a.miembroId] ?? 0,
-                    onGoles: (v) => setState(() => b.goles[a.miembroId] = v),
+                    onGoles: (v) => setState(() {
+                      b.goles[a.miembroId] = v;
+                      _autoMarcador();
+                    }),
                     onAsistencias: (v) {
                       // Cada asistencia es de un gol: no deja pasar de los goles del equipo
                       if (v > (b.asistencias[a.miembroId] ?? 0) && v > 0) {
@@ -496,7 +529,10 @@ class _PostPartidoTabState extends ConsumerState<PostPartidoTab> {
                     extras: avanzado && b.masDatos
                         ? [
                             _Mini('Autogol', b.autogoles[a.miembroId] ?? 0,
-                                (v) => setState(() => b.autogoles[a.miembroId] = v)),
+                                (v) => setState(() {
+                                      b.autogoles[a.miembroId] = v;
+                                      _autoMarcador();
+                                    })),
                             _Mini('Paradas', b.paradas[a.miembroId] ?? 0,
                                 (v) => setState(() => b.paradas[a.miembroId] = v)),
                             _Mini('Penalti parado', b.penParados[a.miembroId] ?? 0,

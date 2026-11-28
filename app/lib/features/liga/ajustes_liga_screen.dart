@@ -36,7 +36,7 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    if (await ejecutar(context, () => LigasRepo.actualizarLiga(l.id, ajustesNivel(nivel)),
+    if (await ejecutar(context, () => LigasRepo.actualizarLiga(l.id, ajustesNivelEnMarcha(nivel)),
         ok: trf('Modo {n} activado', {'n': nombre}))) {
       refrescarLigas(ref);
     }
@@ -97,6 +97,17 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
     var activa = l.porraActiva;
     var modo = l.porraModo;
     final tope = TextEditingController(text: l.porraMax == null ? '' : l.porraMax!.toStringAsFixed(0));
+    // 0063: cada módulo de la porra se activa o se quita por separado
+    const modulos = <(String, String, String)>[
+      ('1x2', 'Quiniela 1-X-2', 'Quién gana o empate: lo que se ve primero'),
+      ('bote', 'Bote', 'Pronosticar el resultado con entrada fija (solo con dinero Fantasy)'),
+      ('goleador', 'Goleadores', 'Quién marca y quién no'),
+      ('mvp', 'MVP', 'Quién será el mejor del partido'),
+      ('combinadas', 'Combinadas', 'Varios pronósticos en un boleto: se multiplican las cuotas'),
+      ('multiples', 'Múltiples', 'Todas las parejas posibles de 3 o 4 pronósticos'),
+      ('seguro', 'Seguro de apuesta', 'Si fallas recuperas la mitad; si aciertas ganas algo menos'),
+    ];
+    final elegidos = {for (final (k, _, _) in modulos) k: l.porraModulo(k)};
     final ok = await showDialog<bool>(
       context: context,
       builder: (d) => StatefulBuilder(
@@ -137,6 +148,17 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
                       : tr('Vacío = 50 puntos'),
                 ),
               ),
+              const SizedBox(height: 12),
+              Align(alignment: Alignment.centerLeft, child: Tx('Qué se puede jugar', style: Theme.of(d).textTheme.titleSmall)),
+              for (final (k, nombre, desc) in modulos)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: elegidos[k],
+                  title: Text(tr(nombre)),
+                  subtitle: Text(tr(desc)),
+                  onChanged: (v) => setD(() => elegidos[k] = v ?? false),
+                ),
             ]),
           ),
           actions: [
@@ -148,9 +170,10 @@ class _AjustesLigaScreenState extends ConsumerState<AjustesLigaScreen> {
     );
     if (ok != true || !mounted) return;
     final max = double.tryParse(tope.text.trim().replaceAll(',', '.'));
-    final hecho = await ejecutar(context,
-        () => LigasRepo.actualizarLiga(l.id, {'porra_activa': activa, 'porra_modo': modo, 'porra_max': max != null && max > 0 ? max : null}),
-        ok: tr('Guardado'));
+    final hecho = await ejecutar(context, () async {
+      await LigasRepo.actualizarLiga(l.id, {'porra_activa': activa, 'porra_modo': modo, 'porra_max': max != null && max > 0 ? max : null});
+      await sb.rpc('porra_modulos_liga', params: {'p_liga': l.id, 'p_modulos': elegidos});
+    }, ok: tr('Guardado'));
     if (hecho) refrescarLigas(ref);
   }
 

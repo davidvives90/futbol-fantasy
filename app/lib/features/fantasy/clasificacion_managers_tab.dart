@@ -10,6 +10,7 @@ import '../../data/providers.dart';
 import '../../data/repos/fantasy_repo.dart';
 import 'fantasy_providers.dart';
 import 'widgets_fantasy.dart';
+import '../../core/guias.dart';
 
 /// Clasificación de mánagers (v_clasificacion_managers).
 class ClasificacionManagersTab extends ConsumerWidget {
@@ -31,8 +32,14 @@ class ClasificacionManagersTab extends ConsumerWidget {
           onRefresh: () => ref.refresh(clasificacionManagersProvider(mi.liga.id).future),
           child: ListView.builder(
             padding: const EdgeInsets.only(bottom: 96),
-            itemCount: lista.length,
-            itemBuilder: (_, i) {
+            itemCount: lista.length + 1,
+            itemBuilder: (_, i0) {
+              // 0063: consejo la primera vez
+              if (i0 == 0) {
+                return const ConsejoUnaVez(
+                    'fantasy_clasificacion', 'La tabla de mánagers: puntos de la temporada y lo que vale cada equipo.');
+              }
+              final i = i0 - 1;
               final c = lista[i];
               final m = miembros[c.managerId];
               final yo = c.managerId == mi.yo.id;

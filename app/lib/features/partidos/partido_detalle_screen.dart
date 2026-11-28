@@ -17,6 +17,7 @@ import 'convocatoria_tab.dart';
 import '../porra/porra_tab.dart';
 import '../../core/guias.dart';
 import '../shell/sincronizacion.dart';
+import '../post_partido/parte_widgets.dart';
 
 /// Detalle de un partido. Las pestañas visibles dependen del estado y del rol.
 class PartidoDetalleScreen extends ConsumerWidget {
@@ -148,9 +149,9 @@ class _MenuAdmin extends ConsumerWidget {
               }
             }
           case 'cerrar':
+            // 0063: un solo toque: cierra, calcula todo y enseña el resumen de la jornada
             if (context.mounted) {
-              await ejecutar(context, () => PartidosRepo.cerrarPostPartido(partido.id),
-                  ok: 'Partes cruzados: revisa el acta y las disputas');
+              await cerrarPartidoConResumen(context, partido.id, () => PartidosRepo.cerrarPostPartido(partido.id));
             }
           case 'evento':
             final evento = await showDialog<String>(
@@ -192,7 +193,7 @@ class _MenuAdmin extends ConsumerWidget {
         if (e == EstadoPartido.equipos_hechos)
           const PopupMenuItem(value: 'jugado', child: Tx('Partido jugado: cobrar y abrir post-partido')),
         if (e == EstadoPartido.post_partido)
-          const PopupMenuItem(value: 'cerrar', child: Tx('Cerrar plazo y cruzar partes')),
+          const PopupMenuItem(value: 'cerrar', child: Tx('Cerrar partido (calcula todo)')),
         if (e.antesDeJugar)
           PopupMenuItem(
             value: 'evento',

@@ -14,6 +14,7 @@ import '../fantasy/widgets_fantasy.dart';
 import '../../core/avatar.dart';
 import '../../core/equipaciones.dart';
 import '../shell/sincronizacion.dart';
+import 'parte_widgets.dart';
 
 class _DatosResultado {
   _DatosResultado(this.encuentros, this.puntos, this.acta, this.equipoJornada);
@@ -73,6 +74,16 @@ class ResultadoTab extends ConsumerWidget {
       data: (d) {
         final podio = d.puntos.where((p) => p.puesto != null).toList()..sort((a, b) => a.puesto!.compareTo(b.puesto!));
         return ListView(padding: const EdgeInsets.all(16), children: [
+          // 0063: resumen de la jornada y desglose del podio
+          FilledButton.tonalIcon(
+            onPressed: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => ResumenJornadaScreen(partidoId: partido.id))),
+            icon: const Icon(Icons.summarize_outlined),
+            label: const Tx('Resumen de la jornada: por qué sumó cada uno'),
+          ),
+          const SizedBox(height: 12),
+          ParticipacionParte(partidoId: partido.id, abierto: false),
+          PodioDesglose(partidoId: partido.id),
           for (final e in d.encuentros)
             Card(
               child: Padding(

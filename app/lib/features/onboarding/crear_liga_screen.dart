@@ -237,6 +237,10 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
   bool _fantasy = true, _postDetallado = true, _xg = true, _cesiones = false, _publica = false;
   String _modoEquipos = 'admin';
   int _capitanes = 1;
+  // 0063: tipo de mercado y ajustes avanzados (opcionales) del Fantasy
+  String _mercado = 'mercado';
+  final _valorBase = TextEditingController(text: '50');
+  final _comision = TextEditingController(text: '5');
 
   static const _formatos = <(int, String, String, String)>[
     (5, 'Fútbol sala', '5 contra 5', 'sala'),
@@ -246,12 +250,13 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
     (3, 'Fútbol 3', '3 contra 3', 'f3'),
   ];
 
-  List<String> get _pasos => ['modo', 'liga', if (_nivel == 'avanzado') 'opciones', 'cuando', 'fin'];
+  List<String> get _pasos =>
+      ['modo', 'liga', if (_nivel == 'avanzado') 'opciones', if (_fantasy) 'mercado', 'cuando', 'fin'];
   String get _actual => _pasos[_paso];
 
   @override
   void dispose() {
-    for (final c in [_nombre, _campo, _precio]) {
+    for (final c in [_nombre, _campo, _precio, _valorBase, _comision]) {
       c.dispose();
     }
     super.dispose();
@@ -268,6 +273,7 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
       _xg = a['prediccion_activa'] as bool;
       _cesiones = a['cesiones_activas'] as bool;
       _modoEquipos = a['modo_equipos'] as String;
+      _mercado = (a['modo_inicio'] as String?) ?? 'mercado';
       _paso = 1;
     });
   }
@@ -287,7 +293,7 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
         'requiere_aprobacion': true,
       });
       // Nivel elegido y lo que activa (en avanzado, lo que se haya marcado)
-      await LigasRepo.actualizarLiga(id, {
+      await LigasRepo.actualizarLiga(id, <String, dynamic>{
         ...ajustesNivel(_nivel, avanzado
             ? {
                 'fantasy_activo': _fantasy,
@@ -299,7 +305,19 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
               }
             : const {}),
         'modalidad': _formatos.firstWhere((f) => f.$1 == _jugadores).$4,
-      });
+        if (_fantasy) 'modo_inicio': _mercado,
+        if (_fantasy && double.tryParse(_valorBase.text.replaceAll(',', '.')) != null)
+          'valor_base': double.parse(_valorBase.text.replaceAll(',', '.')).clamp(5, 500),
+        if (_fantasy && double.tryParse(_comision.text.replaceAll(',', '.')) != null)
+          'comision_venta': (double.parse(_comision.text.replaceAll(',', '.')) / 100).clamp(0, 0.5),
+      }..removeWhere((k, _) => k.startsWith('porra_')));
+      // La porra aparte: si alguien no pudiera tenerla (p. ej. menores), la liga se crea igual
+      final porra = {for (final e in ajustesNivel(_nivel).entries) if (e.key.startsWith('porra_')) e.key: e.value};
+      if (_fantasy && porra.isNotEmpty) {
+        try {
+          await LigasRepo.actualizarLiga(id, porra);
+        } catch (_) {}
+      }
       await ref.read(ligaActivaIdProvider.notifier).elegir(id);
       // Quien crea la liga juega: queda como fijo
       final yo = await sb.from('miembros').select('id').eq('liga_id', id).eq('perfil_id', uidActual!).maybeSingle();
@@ -423,6 +441,51 @@ class _NuevaLigaState extends ConsumerState<_NuevaLiga> {
                 ),
               ]),
             ],
+          ]),
+        ),
+      'mercado' => (
+          '¿Cómo se fichan los jugadores?',
+          ListView(padding: const EdgeInsets.all(16), children: [
+            Tx('En el Fantasy cada uno es mánager de un equipo con jugadores de la liga. Elige cómo se consiguen:',
+                style: t.bodyMedium),
+            const SizedBox(height: 12),
+            for (final (id, icono, nombre, desc) in tiposMercado)
+              Card(
+                color: _mercado == id ? cs.primaryContainer : null,
+                child: ListTile(
+                  leading: Icon(icono, color: _mercado == id ? cs.primary : null),
+                  title: Text(tr(nombre), style: t.titleMedium),
+                  subtitle: Text(tr(desc)),
+                  trailing: Icon(_mercado == id ? Icons.radio_button_checked : Icons.radio_button_off,
+                      color: _mercado == id ? cs.primary : null),
+                  onTap: () => setState(() => _mercado = id),
+                ),
+              ),
+            const SizedBox(height: 8),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              leading: const Icon(Icons.tune),
+              title: const Tx('Ajustes avanzados (opcional)'),
+              subtitle: const Tx('No hace falta tocarlos para empezar'),
+              children: [
+                TextField(
+                  controller: _valorBase,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                      labelText: tr('Precio base de cada jugador'), suffixText: 'M', helperText: tr('Por defecto, 50 M')),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _comision,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                      labelText: tr('Comisión al vender'), suffixText: '%', helperText: tr('Por defecto, 5 %')),
+                ),
+                const SizedBox(height: 8),
+                Tx('El resto (copias, cláusulas, subastas, puntos por acción…) está en Fantasy › Ajustes.', style: t.bodySmall),
+                const SizedBox(height: 8),
+              ],
+            ),
           ]),
         ),
       'cuando' => (

@@ -14,6 +14,15 @@ Gracias por probar Pachanga Fantasy. Instala el APK de abajo (Android) o entra e
 Perfil › **Enviar comentarios**. Cuenta qué estabas haciendo, qué esperabas y qué pasó.
 
 ### Novedades de esta versión
+- Crear liga en 3 modos: Básico (pachanga rápida), Medio (liga entre amigos, con Fantasy sencillo y porra 1-X-2 + bote) y Avanzado (Mánager Pro). Con Fantasy, se elige el tipo de mercado: libre, subasta diaria o draft; lo técnico va en «Ajustes avanzados».
+- Fantasy en 4 pestañas: Mi equipo, Mercado (con la bandeja de ofertas y solo las subastas abiertas), Actividad (registro público de fichajes, ventas, cláusulas, subastas y cesiones) y Clasificación. Un consejo rápido la primera vez en cada una.
+- Porra sencilla: tres botones grandes 1 · X · 2; lo demás en «Más mercados y opciones». El admin activa o quita cada módulo (1X2, bote, goleadores, MVP, combinadas, múltiples y seguro).
+- Miembros: aviso para crear «Jugadores de liga» a los amigos que aún no tienen la app.
+- Parte post-partido: «Han votado 8 de 10», quién falta y botón para recordárselo; el resultado se calcula solo con los goles; podio con el desglose de votos.
+- «Cerrar partido» en un toque (MVP, capitán, ariete, suplentes, precios, porra y bote) y «Resumen de la jornada» con por qué sumó cada uno.
+- Arreglado: guardar la alineación sin capitán o sin ariete; con dos admins ya no hace falta confirmar los equipos dos veces; los enlaces de invitación; todo se actualiza en vivo sin cerrar la app.
+
+#### Versión anterior
 - Pagos más sencillos: en Inicio solo una línea «Tienes pagos pendientes». En Pagos, un único botón «Pagar» con los datos de Bizum y «Ya lo he pagado». Los jugadores ya no ven pestañas; el admin ve Mis pagos, Cobros y Facturas.
 - Porra con bote, como la quiniela (con la porra en dinero del Fantasy): entrada fija, pronostica el resultado; el pleno se lleva el 70 % y el 1X2 reparte el 30 %. Lo que nadie acierta se acumula. La liga pone un fondo inicial.
 - Las apuestas y el bote son públicos (se avisa) y hay un resumen de aciertos de cada jugador.

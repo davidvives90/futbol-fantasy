@@ -136,8 +136,10 @@ class _SubastasPanelState extends ConsumerState<SubastasPanel> {
           lista.when(
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(subastasProvider(ligaId))),
-            data: (l) {
-              if (l.isEmpty) return Padding(padding: const EdgeInsets.all(8), child: Tx('Hoy aún no ha salido ninguna subasta.', style: t.bodySmall));
+            data: (todas) {
+              // 0063: las subastas cerradas desaparecen (su resultado queda en Actividad)
+              final l = todas.where((s) => s.abierta).toList();
+              if (l.isEmpty) return Padding(padding: const EdgeInsets.all(8), child: Tx('Ahora no hay subastas abiertas.', style: t.bodySmall));
               return Column(children: [
                 for (final s in l)
                   ListTile(

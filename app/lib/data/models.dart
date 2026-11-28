@@ -177,6 +177,7 @@ class Liga {
     this.bizumTelefono,
     this.color,
     this.logoUrl,
+    this.porraModulos = const {},
     this.modoEquipos = 'admin',
     this.capitanesPorEquipo = 1,
     this.nivel = 'avanzado',
@@ -222,6 +223,10 @@ class Liga {
 
   /// 0061: color propio (#RRGGBB) y logotipo de la liga.
   final String? color, logoUrl;
+
+  /// 0063: módulos de la porra que ha activado el admin (1x2, bote, goleador, mvp, combinadas, multiples, seguro).
+  final Map<String, bool> porraModulos;
+  bool porraModulo(String m) => porraModulos[m] ?? true;
 
   /// El color propio como Color de Flutter (o null).
   Color? get colorPropio {
@@ -377,6 +382,9 @@ class Liga {
       bizumTelefono: m['bizum_telefono'] as String?,
       color: m['color'] as String?,
       logoUrl: m['logo_url'] as String?,
+      porraModulos: {
+        for (final e in ((m['porra_modulos'] as Map?) ?? const {}).entries) '${e.key}': e.value == true,
+      },
       modoEquipos: (m['modo_equipos'] ?? 'admin') as String,
       capitanesPorEquipo: toInt(m['capitanes_por_equipo'], 1),
       nivel: (m['nivel'] ?? 'avanzado') as String,
@@ -1103,39 +1111,85 @@ const nombresModalidad = <String, String>{
 
 /// Niveles de liga (0045): qué se activa con cada uno. El avanzado parte del medio y se ajusta a mano.
 const nivelesLiga = <(String, IconData, String, String)>[
-  ('basico', Icons.directions_walk, 'Básico', 'Lista de quién va, equipos automáticos, resultados y pagos. Sin Fantasy.'),
-  ('medio', Icons.directions_run, 'Medio', 'Lo básico más el Fantasy y estrellas a los compañeros tras el partido. El recomendado.'),
-  ('avanzado', Icons.bolt, 'Avanzado', 'Todo a tu gusto: post-partido detallado, resultado esperado, cesiones y capitanes.'),
+  ('basico', Icons.directions_walk, 'Básico · Pachanga rápida',
+      'Quién va, equipos equilibrados, votación rápida del Top 3 y pagos. Sin Fantasy ni porra. Listo en 1 minuto.'),
+  ('medio', Icons.directions_run, 'Medio · Liga entre amigos',
+      'Lo básico más el Fantasy: mercado sencillo, presupuesto cerrado y suplente automático. Porra con 1-X-2 y bote.'),
+  ('avanzado', Icons.bolt, 'Avanzado · Mánager Pro',
+      'Todo: copias por rareza, cláusulas, subastas, ariete, cesiones y porra completa con combinadas y seguro.'),
 ];
 
-/// Valores de cada nivel. [extra] sobrescribe (lo que el admin elige en el modo avanzado).
+/// Valores de cada nivel. [extra] sobrescribe (lo que el admin elige en el asistente).
 Map<String, dynamic> ajustesNivel(String nivel, [Map<String, dynamic> extra = const {}]) => {
       'nivel': nivel,
       ...switch (nivel) {
         'basico' => {
             'fantasy_activo': false,
+            'porra_activa': false,
             'prediccion_activa': false,
             'valoracion_avanzada': false,
+            'modo_valoracion': 'podio',
             'cesiones_activas': false,
             'modo_equipos': 'automatico',
           },
         'avanzado' => {
             'fantasy_activo': true,
+            'fantasy_sencillo': false,
             'prediccion_activa': true,
             'valoracion_avanzada': true,
-            'cesiones_activas': false,
+            'modo_valoracion': 'detallada',
+            'cesiones_activas': true,
             'modo_equipos': 'admin',
+            'modo_copias': 'rareza',
+            'modo_inicio': 'subasta',
+            'ariete_activo': true,
+            'capitan_activo': true,
+            'bonus_roles': true,
+            'modo_alineacion': 'tactico',
+            'suplentes': 1,
+            'porra_activa': true,
+            'porra_modo': 'dinero',
+            'porra_modulos': {'1x2': true, 'bote': true, 'goleador': true, 'mvp': true, 'combinadas': true, 'multiples': true, 'seguro': true},
           },
         _ => {
             'fantasy_activo': true,
+            'fantasy_sencillo': true,
             'prediccion_activa': true,
             'valoracion_avanzada': false,
+            'modo_valoracion': 'rapida',
             'cesiones_activas': false,
             'modo_equipos': 'automatico',
+            'modo_copias': 'clasico',
+            'modo_inicio': 'mercado',
+            'ariete_activo': false,
+            'bonus_roles': false,
+            'modo_alineacion': 'libre',
+            'suplentes': 1,
+            'porra_activa': true,
+            'porra_modo': 'dinero',
+            'porra_modulos': {'1x2': true, 'bote': true, 'goleador': false, 'mvp': false, 'combinadas': false, 'multiples': false, 'seguro': false},
           },
       },
       ...extra,
     };
+
+/// 0063: al cambiar de modo una liga ya en marcha no se tocan el mercado ni la porra (se cambian en sus ajustes):
+/// cambiar el tipo de mercado o las copias a mitad de temporada rompería las plantillas.
+Map<String, dynamic> ajustesNivelEnMarcha(String nivel) => {
+      for (final e in ajustesNivel(nivel).entries)
+        if (!const {'modo_inicio', 'modo_copias', 'porra_activa', 'porra_modo', 'porra_modulos', 'fantasy_sencillo'}.contains(e.key))
+          e.key: e.value,
+    };
+
+/// 0063: cómo se reparten los jugadores al empezar el Fantasy (valor, nombre, explicación de 2 líneas).
+const tiposMercado = <(String, IconData, String, String)>[
+  ('mercado', Icons.storefront_outlined, 'Mercado libre',
+      'Cada uno ficha a quien quiera con su presupuesto.\nEl más rápido y el más sencillo.'),
+  ('subasta', Icons.gavel, 'Subasta diaria',
+      'Cada día salen jugadores a subasta y gana la puja más alta.\nMás emoción, pero hay que estar atento.'),
+  ('draft', Icons.format_list_numbered, 'Draft',
+      'Por turnos, cada mánager elige un jugador hasta completar la plantilla.\nComo en la NBA: todos empiezan igual.'),
+];
 
 /// 0050: los cinco modos de convocatoria que puede elegir cada liga (valor, nombre, explicación).
 const modosConvocatoria = <(String, String, String)>[
