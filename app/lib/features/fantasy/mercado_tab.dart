@@ -61,7 +61,8 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
         .any((s) => s.abierta && s.vendedorId != null);
     final ofertas = ref.watch(ofertasRecibidasPendientesProvider(widget.mi.liga.id));
     final hayAbiertas = (ref.watch(subastasProvider(widget.mi.liga.id)).valueOrNull ?? const []).any((s) => s.abierta);
-    return Column(children: [
+    // 0064: todo se desplaza junto (subastas, buscador y jugadores): antes las subastas tapaban el mercado
+    final cabecera = <Widget>[
       if (!abierto) BannerMercadoCerrado(mi: widget.mi),
       const ConsejoUnaVez('fantasy_mercado', 'Toca un jugador libre para ficharlo. Verde: su precio sube; rojo: baja. Las ofertas de otros mánagers están justo debajo.'),
       // 0063: bandeja de ofertas entre mánagers dentro del Mercado
@@ -75,16 +76,18 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
       ),
       // 0054: subasta diaria o draft por turnos
       if ((modo == 'subasta' && (hayAbiertas || widget.mi.soyAdmin)) || modo == 'draft' || hayVentas)
-        ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
-          child: SingleChildScrollView(
-            child: modo == 'draft' && !hayVentas ? DraftPanel(mi: widget.mi) : SubastasPanel(mi: widget.mi),
-          ),
-        ),
+        modo == 'draft' && !hayVentas ? DraftPanel(mi: widget.mi) : SubastasPanel(mi: widget.mi),
       Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+        child: Row(children: [
+          Expanded(child: Tx('Jugadores del mercado', style: Theme.of(context).textTheme.titleMedium)),
+          if (saldo != null) Text('${tr('Tu saldo')}: ${millones(saldo)}'),
+        ]),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
         child: TextField(
-          decoration:  InputDecoration(prefixIcon: Icon(Icons.search), hintText: tr('Buscar jugador'), isDense: true),
+          decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: tr('Buscar jugador'), isDense: true),
           onChanged: (v) => setState(() => _texto = v.trim().toLowerCase()),
         ),
       ),
@@ -104,15 +107,14 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
           ),
         ]),
       ),
-      if (saldo != null)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-          child: Align(alignment: Alignment.centerRight, child: Text('Tu saldo: ${millones(saldo)}')),
-        ),
-      Expanded(
-        child: mercado.when(
-          loading: () => const Cargando(),
-          error: (e, _) => ErrorVista(e, onRetry: () => ref.invalidate(mercadoProvider(ligaId))),
+    ];
+    return RefreshIndicator(
+      onRefresh: () async => refrescarFantasy(ref, k),
+      child: CustomScrollView(slivers: [
+        SliverList(delegate: SliverChildListDelegate(cabecera)),
+        ...mercado.when(
+          loading: () => [const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(24), child: Cargando()))],
+          error: (e, _) => [SliverToBoxAdapter(child: ErrorVista(e, onRetry: () => ref.invalidate(mercadoProvider(ligaId))))],
           data: (lista) {
             final filtrada = lista.where((j) {
               final nombre = miembros[j.miembroId]?.nombre.toLowerCase() ?? '';
@@ -134,42 +136,52 @@ class _MercadoTabState extends ConsumerState<MercadoTab> {
                 };
             filtrada.sort((a, b) => clave(b).compareTo(clave(a)));
             if (filtrada.isEmpty) {
-              return Vacio(lista.isEmpty ? 'Todavía no hay jugadores en el mercado.' : 'Ningún jugador coincide.');
+              return [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Vacio(lista.isEmpty ? 'Todavía no hay jugadores en el mercado.' : 'Ningún jugador coincide.'),
+                  ),
+                ),
+              ];
             }
-            return RefreshIndicator(
-              onRefresh: () async => refrescarFantasy(ref, k),
-              child: ListView.builder(
+            return [
+              SliverPadding(
                 padding: const EdgeInsets.only(bottom: 96),
-                itemCount: filtrada.length,
-                itemBuilder: (_, i) {
-                  final j = filtrada[i];
-                  final m = miembros[j.miembroId];
-                  // Tarjeta: foto, rango, posición, valor, media por partido y últimas 5
-                  return TarjetaJugadorLista(
-                    miembro: m,
-                    precio: j.precio,
-                    variacion: j.variacion,
-                    resumen: resumen[j.miembroId],
-                    mio: mios.contains(j.miembroId),
-                    insignia: j.noHabitual
-                        ? InsigniaNoHabitual(bonus: widget.mi.liga.fantasy.bonusNoHabitual, corta: true)
-                        : null,
-                    extra: j.fichasTotales == 0
-                        ? null
-                        : j.hayLibres
-                            ? trf('{l} de {t} disponibles', {'l': j.fichasLibres, 't': j.fichasTotales})
-                            : j.clausulaMinima != null
-                                ? trf('Agotado · cláusula desde {x}', {'x': millones(j.clausulaMinima)})
-                                : tr('Agotado'),
-                    onTap: () => context.push('/fantasy/jugador/${j.miembroId}'),
-                  );
-                },
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    childCount: filtrada.length,
+                    (_, i) {
+                      final j = filtrada[i];
+                      final m = miembros[j.miembroId];
+                      // Tarjeta: foto, rango, posición, valor, media por partido y últimas 5
+                      return TarjetaJugadorLista(
+                        miembro: m,
+                        precio: j.precio,
+                        variacion: j.variacion,
+                        resumen: resumen[j.miembroId],
+                        mio: mios.contains(j.miembroId),
+                        insignia: j.noHabitual
+                            ? InsigniaNoHabitual(bonus: widget.mi.liga.fantasy.bonusNoHabitual, corta: true)
+                            : null,
+                        extra: j.fichasTotales == 0
+                            ? null
+                            : j.hayLibres
+                                ? trf('{l} de {t} disponibles', {'l': j.fichasLibres, 't': j.fichasTotales})
+                                : j.clausulaMinima != null
+                                    ? trf('Agotado · cláusula desde {x}', {'x': millones(j.clausulaMinima)})
+                                    : tr('Agotado'),
+                        onTap: () => context.push('/fantasy/jugador/${j.miembroId}'),
+                      );
+                    },
+                  ),
+                ),
               ),
-            );
+            ];
           },
         ),
-      ),
-    ]);
+      ]),
+    );
   }
 }
 
