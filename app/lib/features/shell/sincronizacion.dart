@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/supabase.dart';
+import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../caja/caja_screen.dart';
 import '../equipos/prediccion_card.dart';
@@ -197,7 +198,7 @@ class _SincronizacionLigasState extends ConsumerState<SincronizacionLigas> {
 
   @override
   Widget build(BuildContext context) {
-    final ids = [for (final l in ref.watch(misLigasProvider).valueOrNull ?? const []) l.liga.id];
+    final ids = <String>[for (final l in ref.watch(misLigasProvider).valueOrNull ?? const <MiLiga>[]) l.liga.id];
     _sincronizar(ids);
     return widget.child;
   }
